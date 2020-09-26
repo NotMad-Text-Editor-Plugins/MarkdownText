@@ -54,19 +54,9 @@ wkeWebView onCreateView(wkeWebView webWindow, void* param, wkeNavigationType nav
 	return newWindow;
 }
 
+const char InternalResHead[] = "mdbr://";
 
-std::wstring getResourcesPath(const std::wstring& name)
-{
-	TCHAR ResPath[MAX_PATH];
-	::GetModuleFileName(nullptr, ResPath, MAX_PATH);
-	::PathRemoveFileSpecW(ResPath);
-	::PathAppendW(ResPath, name.c_str());
-	return ResPath;
-}
-
-const char kPreHead[] = "mdbr://";
-
-CHAR* readJsFile(const char* path, DWORD& dataLen)
+CHAR* loadPluginAsset(const char* path, DWORD & dataLen)
 {
 	CHAR ResPath[MAX_PATH];
 	::GetModuleFileNameA((HINSTANCE)g_hModule, ResPath, MAX_PATH);
@@ -94,14 +84,18 @@ CHAR* readJsFile(const char* path, DWORD& dataLen)
 
 bool onLoadUrlBegin(wkeWebView webView, void* param, const char* url, void *job)
 {
-	if(strspn(url, kPreHead)==8)
+	if(strspn(url, InternalResHead)==8)
 	{
 		auto path = url+7;
 		const utf8* decodeURL = wkeUtilDecodeURLEscape(path);
 		if(decodeURL)
 		{
+			if(strstr(decodeURL, "..")) // security check
+			{
+				return false;
+			}
 			DWORD dataLen;
-			auto buffer = readJsFile(path, dataLen);
+			auto buffer = loadPluginAsset(path, dataLen);
 			if(buffer)
 			{
 				wkeNetSetData(job, buffer, dataLen);
