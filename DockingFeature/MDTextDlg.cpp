@@ -112,6 +112,47 @@ void onLoadUrlEnd(wkeWebView webView, void* param, const char *url, void *job, v
 	return;
 }
 
+UINT ScintillaGetText(HWND hWnd, char *text, INT start, INT end)
+{
+	Sci_TextRange tr;
+	tr.chrg.cpMin = start;
+	tr.chrg.cpMax = end;
+	tr.lpstrText  = text;
+	return (UINT)::SendMessage(hWnd, SCI_GETTEXTRANGE, 0, reinterpret_cast<LPARAM>(&tr));
+}
+
+//synchronous callback
+jsValue WKE_CALL_TYPE GetDocText(jsExecState es, void* param)
+{
+	//if (0 == jsArgCount(es))
+	//	return jsUndefined();
+	//jsValue arg0 = jsArg(es, 0);
+	//if (!jsIsString(arg0))
+	//	return jsUndefined();
+	//
+	//std::string path;
+	//path = jsToTempString(es, arg0);
+	//if ("runEchars" == path) {
+	//	createECharsTest();
+	//} else if ("wkeBrowser" == path) {
+	//	wkeBrowserMain(nullptr, nullptr, nullptr, TRUE);
+	//}
+	//
+	//path += "\n";
+	//OutputDebugStringA(path.c_str());
+
+	int curScintilla;
+	SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&curScintilla);
+	auto currrentSc = curScintilla?nppData._scintillaSecondHandle:nppData._scintillaMainHandle;
+	INT		maxLength1 = SendMessage(currrentSc, SCI_GETTEXTLENGTH, 0, 0);
+	CHAR*	buffer1 = new CHAR[maxLength1+1];
+	ScintillaGetText(currrentSc, buffer1, 0, maxLength1);
+	buffer1[maxLength1] = '\0';
+	auto ret=jsString(es, buffer1);
+	//::MessageBox(NULL, TEXT("111"), TEXT(""), MB_OK);
+	return ret;
+	//return jsString(es, "# Hello `md.html` World!");
+}
 
 void MarkDownTextDlg::display(bool toShow){
 	DockingDlgInterface::display(toShow);
@@ -146,16 +187,10 @@ void MarkDownTextDlg::display(bool toShow){
 				wkeOnLoadUrlEnd(mWebView, onLoadUrlEnd, this);
 				wkeSetDebugConfig(mWebView, "decodeUrlRequest", nullptr);
 
-				//wkeJsBindFunction("eMsg", &onMsg, nullptr, 5);
-				//wkeJsBindFunction("eShellExec", &onShellExec, nullptr, 3);
-				//wkeMoveToCenter(mWebView);
-				//wkeLoadURLW(mWebView, app->url.c_str());
+				wkeJsBindFunction("GetDocText", &GetDocText, nullptr, 1);
 			}
 		}
-
-		if(mWebView) {
-			wkeLoadHTML(mWebView, "<!doctype html><meta charset=\"utf-8\"> <script src=\"mdbr://main.js\"></script><body><script>window.APMD('# Hello `md.html` World!');</script></body>");
-		}
+		RefreshWebview();
 	}
 
 	::SendMessage( _hSelf, SELF_REFRESH, 0, 1);
@@ -167,14 +202,21 @@ void MarkDownTextDlg::setClosed(bool toClose) {
 		funcItem[menuOption]._cmdID, MF_BYCOMMAND | (toClose?MF_UNCHECKED:MF_CHECKED));
 }
 
+void MarkDownTextDlg::RefreshWebview() {
+	if(mWebView) {
+		wkeLoadHTML(mWebView, "<!doctype html><meta charset=\"utf-8\"> <script src=\"mdbr://main.js\"></script><body><script>window.APMD(GetDocText(''));</script></body>");
+	}
+}
+
 void MarkDownTextDlg::refreshDlg(bool updateList) {
-	bool AlwaysRefreshBtns=1;
+	bool AlwaysRefreshBtns=0;
 	if (isCreated() && isVisible())
 	{
 		::SendMessage( _hSelf, SELF_REFRESH, AlwaysRefreshBtns, updateList);
 		if(!AlwaysRefreshBtns&&!updateList) {
 			hasChanged=1;
 		}
+		RefreshWebview();
 	} else {
 		if(AlwaysRefreshBtns) {
 			::SendMessage( _hSelf, SELF_REFRESH, 1, 0);

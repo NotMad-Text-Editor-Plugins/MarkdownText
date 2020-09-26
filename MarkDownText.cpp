@@ -91,7 +91,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 {
 	int ModifyType = notifyCode->modificationType;
 	int code = notifyCode->nmhdr.code;
-
+	bool NeedUpdate=0;
 	switch (code) 
 	{
 		case NPPN_TBMODIFICATION:
@@ -146,6 +146,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 		// 页面切换
 		case NPPN_BUFFERACTIVATED:
 		{
+			NeedUpdate=1;
 		}
 		break;
 		case SCN_UPDATEUI:
@@ -166,7 +167,10 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 		break;
 	}
 	//processNavActions();
-
+	if(NeedUpdate)
+	{
+		_MDText.refreshDlg(false);
+	}
 }
 
 

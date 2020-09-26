@@ -60,6 +60,8 @@ public :
 
 	virtual void setClosed(bool toClose);
 
+	void RefreshWebview();
+
 	void refreshDlg(bool updateList);
 
 	void setParent(HWND parent2set){
