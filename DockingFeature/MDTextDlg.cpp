@@ -18,16 +18,6 @@
 #include "MDTextDlg.h"
 #include "PluginDefinition.h"
 
-std::wstring getResourcesPath(const std::wstring& name)
-{
-	TCHAR ResPath[MAX_PATH];
-	::GetModuleFileName(nullptr, ResPath, MAX_PATH);
-	::PathRemoveFileSpecW(ResPath);
-	::PathAppendW(ResPath, name.c_str());
-	return ResPath;
-}
-
-
 void WKE_CALL_TYPE onDidCreateScriptContextCallback(wkeWebView webView, void* param, wkeWebFrameHandle frameId, void* context, int extensionGroup, int worldId)
 {
 
@@ -65,8 +55,60 @@ wkeWebView onCreateView(wkeWebView webWindow, void* param, wkeNavigationType nav
 }
 
 
+std::wstring getResourcesPath(const std::wstring& name)
+{
+	TCHAR ResPath[MAX_PATH];
+	::GetModuleFileName(nullptr, ResPath, MAX_PATH);
+	::PathRemoveFileSpecW(ResPath);
+	::PathAppendW(ResPath, name.c_str());
+	return ResPath;
+}
+
+const char kPreHead[] = "mdbr://";
+
+CHAR* readJsFile(const char* path, DWORD& dataLen)
+{
+	CHAR ResPath[MAX_PATH];
+	::GetModuleFileNameA((HINSTANCE)g_hModule, ResPath, MAX_PATH);
+	::PathRemoveFileSpecA(ResPath);
+	::PathAppendA(ResPath, path);
+	if(PathFileExistsA(ResPath)) 
+	{
+		HANDLE hFile = CreateFileA(ResPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		if (INVALID_HANDLE_VALUE == hFile) { 
+			return NULL;
+		}
+		DWORD fileSizeHigh;
+		dataLen = ::GetFileSize(hFile, &fileSizeHigh);
+		DWORD numberOfBytesRead = 0;
+		CHAR* buffer = new CHAR[dataLen];
+		if(buffer && ::ReadFile(hFile, buffer, dataLen, &numberOfBytesRead, nullptr))
+		{
+			::CloseHandle(hFile);
+			return buffer;
+		} 
+		::CloseHandle(hFile);
+	}
+	return NULL;
+}
+
 bool onLoadUrlBegin(wkeWebView webView, void* param, const char* url, void *job)
 {
+	if(strspn(url, kPreHead)==8)
+	{
+		auto path = url+7;
+		const utf8* decodeURL = wkeUtilDecodeURLEscape(path);
+		if(decodeURL)
+		{
+			DWORD dataLen;
+			auto buffer = readJsFile(path, dataLen);
+			if(buffer)
+			{
+				wkeNetSetData(job, buffer, dataLen);
+				return true;
+			}
+		}
+	}
 	return false;
 }
 
@@ -75,7 +117,6 @@ void onLoadUrlEnd(wkeWebView webView, void* param, const char *url, void *job, v
 	//wkeRunJS();
 	return;
 }
-
 
 
 void MarkDownTextDlg::display(bool toShow){
@@ -119,7 +160,7 @@ void MarkDownTextDlg::display(bool toShow){
 		}
 
 		if(mWebView) {
-			wkeLoadHTML(mWebView, "HeheDaHeheDaHeheDaHeheDaHeheDaHeheDaHeheDaHeheDaHeheDa");
+			wkeLoadHTML(mWebView, "<!doctype html><meta charset=\"utf-8\"> <script src=\"mdbr://main.js\"></script><body><script>window.APMD('# Hello `md.html` World!');</script></body>");
 		}
 	}
 
