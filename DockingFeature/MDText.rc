@@ -1,0 +1,198 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Chinese (Simplified, PRC) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+#pragma code_page(936)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_LOCATIONNAVIGATE DIALOGEX 26, 41, 515, 267
+STYLE DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_TOOLWINDOW | WS_EX_WINDOWEDGE
+CAPTION "Markdown Text"
+FONT 8, "MS Sans Serif", 400, 0, 0x0
+BEGIN
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_LOCATIONNAVIGATE, DIALOG
+    BEGIN
+        RIGHTMARGIN, 369
+        BOTTOMMARGIN, 263
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_BITMAP1             BITMAP                  "previous16.bmp"
+
+IDB_BITMAP2             BITMAP                  "next16.bmp"
+
+IDB_BITMAP3             BITMAP                  "cprevious16.bmp"
+
+IDB_BITMAP4             BITMAP                  "cnext16.bmp"
+
+IDB_EX_UP               BITMAP                  "..\\res\\up.bmp"
+
+IDB_EX_DOWN             BITMAP                  "..\\res\\down.bmp"
+
+IDB_EX_DELETE           BITMAP                  "..\\res\\delete.bmp"
+
+IDB_EX_DELETE_ALL       BITMAP                  "..\\res\\bin_empty.bmp"
+
+IDB_EX_OPTIONS          BITMAP                  "..\\res\\cog.bmp"
+
+IDB_EX_BREFNAME         BITMAP                  "..\\res\\briefname.bmp"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 0,4,7,7
+ PRODUCTVERSION 0,4,7,7
+ FILEFLAGSMASK 0x17L
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x0L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080404b0"
+        BEGIN
+            VALUE "CompanyName", "Pattazl, Lark Stuio"
+            VALUE "FileDescription", "LocationNavigate for code/text view and edit"
+            VALUE "FileVersion", "0, 4, 7, 7"
+            VALUE "InternalName", "LocationNavigate"
+            VALUE "LegalCopyright", "Copyleft (C) 2011-2012"
+            VALUE "OriginalFilename", "LocationNavigate"
+            VALUE "ProductName", "LocationNavigate"
+            VALUE "ProductVersion", "0, 4, 7, 7"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x804, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON1               ICON                    "icon1.ico"
+
+IDI_ICON_NEXT           ICON                    "next.ico"
+
+IDI_ICON_PREV           ICON                    "prev.ico"
+
+IDI_ICON_NEXT1          ICON                    "next1.ico"
+
+IDI_ICON_PREV1          ICON                    "prev1.ico"
+
+IDI_ICON_PREV1_ACT      ICON                    "prev1_act.ico"
+
+IDI_ICON_PREV1_OFF      ICON                    "prev1_off.ico"
+
+IDI_ICON_PREV_ACT       ICON                    "prev_act.ico"
+
+IDI_ICON_PREV_OFF       ICON                    "prev_off.ico"
+
+IDI_ICON_NEXT1_ACT      ICON                    "next1_act.ico"
+
+IDI_ICON_NEXT1_OFF      ICON                    "next1_off.ico"
+
+IDI_ICON_NEXT_ACT       ICON                    "next_act.ico"
+
+IDI_ICON_NEXT_OFF       ICON                    "next_off.ico"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_LOCATIONNAVIGATE AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+#endif    // Chinese (Simplified, PRC) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
