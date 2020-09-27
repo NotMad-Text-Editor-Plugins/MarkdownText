@@ -26,6 +26,7 @@
 #include "menuCmdID.h"
 #include "ToolbarPanel.h"
 #include <wke.h>
+#include <mb.h>
 
 #define SELF_REFRESH WM_USER+9
 
@@ -68,7 +69,8 @@ public :
 		_hParent = parent2set;
 	};
 	wkeWebView mWebView;
-
+	mbWebView mWebView_1;
+	HWND mWebView_1_hwnd;
 protected :
 	virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam);
 	SelfCtrl _color,_savecolor;
