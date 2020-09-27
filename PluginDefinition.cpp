@@ -189,14 +189,14 @@ void commandMenuInit()
 	ShortcutKey *NextKey = new ShortcutKey{1,0,1,VK_OEM_MINUS};
 	ShortcutKey *PreChgKey = new ShortcutKey{1,1,0,0x5A};//VK_Z
 	ShortcutKey *NextChgKey = new ShortcutKey{1,1,0,0x59};//VK_Y
-	ShortcutKey *optionsKey = new ShortcutKey{1,1,1,VK_OEM_MINUS};
 	ShortcutKey *AutoKey = new ShortcutKey{1,0,1,VK_F9};
 	ShortcutKey *ManualKey = new ShortcutKey{0,0,0,VK_F9};
 	ShortcutKey *ClearRecordsKey = new ShortcutKey{1,1,1,VK_F9};
 	ShortcutKey *incurrKey = new ShortcutKey{0,1,0,VK_OEM_MINUS};
 	ShortcutKey *markKey = new ShortcutKey{1,1,0,0x4D};// VK_M
 
-	setCommand(menuOption, TEXT("Show List and Option"), ToggleHistoryPanel, optionsKey, false);
+	ShortcutKey *optionsKey = new ShortcutKey{1,1,1,0x4D}; // VK_M
+	setCommand(menuOption, TEXT("Preview As Markdown"), ToggleHistoryPanel, optionsKey, false);
 
 	setCommand(menuSeparator0, TEXT("-SEPARATOR-"),NULL, NULL, false);
 
