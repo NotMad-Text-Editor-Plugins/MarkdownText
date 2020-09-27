@@ -70,6 +70,7 @@ public :
 	};
 	wkeWebView mWebView;
 	mbWebView mWebView_1;
+	intptr_t currentKernal;
 	HWND mWebView_1_hwnd;
 protected :
 	virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam);

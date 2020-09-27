@@ -49,9 +49,11 @@ void handleTitleChanged(wkeWebView webWindow, void* param, const wkeString title
 // 回调：创建新的页面，比如说调用了 window.open 或者点击了 <a target="_blank" .../>
 wkeWebView onCreateView(wkeWebView webWindow, void* param, wkeNavigationType navType, const wkeString url, const wkeWindowFeatures* features)
 {
-	wkeWebView newWindow = wkeCreateWebWindow(WKE_WINDOW_TYPE_POPUP, NULL, features->x, features->y, features->width, features->height);
-	wkeShowWindow(newWindow, true);
-	return newWindow;
+	//wkeWebView newWindow = wkeCreateWebWindow(WKE_WINDOW_TYPE_POPUP, NULL, features->x, features->y, features->width, features->height);
+	//wkeShowWindow(newWindow, true);
+	//return newWindow;
+	wkeLoadURL(webWindow, (CHAR*)url);
+	return 0;
 }
 
 const char InternalResHead[] = "mdbr://";
@@ -333,8 +335,10 @@ LRESULT WINAPI testWindowProc(
 		if (wParam & MK_RBUTTON)
 			flags |= MB_RBUTTON;
 
-		if (mbFireContextMenuEvent(view, pt.x, pt.y, flags))
-			return 0;
+		//if (mbFireContextMenuEvent(view, pt.x, pt.y, flags))
+		//	return 0;
+
+
 		break;
 	}
 	case WM_MOUSEWHEEL:
@@ -494,30 +498,6 @@ BOOL MB_CALL_TYPE handleLoadUrlBegin(mbWebView webView, void* param, const char*
 	return false;
 }
 
-//bool onLoadUrlBegin(wkeWebView webView, void* param, const char* url, void *job)
-//{
-//	if(strspn(url, InternalResHead)==8)
-//	{
-//		auto path = url+7;
-//		const utf8* decodeURL = wkeUtilDecodeURLEscape(path);
-//		if(decodeURL)
-//		{
-//			if(strstr(decodeURL, "..")) // security check
-//			{
-//				return false;
-//			}
-//			DWORD dataLen;
-//			auto buffer = loadPluginAsset(path, dataLen);
-//			if(buffer)
-//			{
-//				wkeNetSetData(job, buffer, dataLen);
-//				return true;
-//			}
-//		}
-//	}
-//	return false;
-//}
-
 void MB_CALL_TYPE handleDocumentReady(mbWebView webView, void* param, mbWebFrameHandle frameId)
 {
 	OutputDebugStringA("HandleDocumentReady\n");
@@ -565,99 +545,101 @@ void MB_CALL_TYPE onJsQuery(mbWebView webView, void* param, mbJsExecState es, in
 {
 	if(customMsg==0x666)
 	{
-		mbResponseQuery(webView, queryId, customMsg, GetDocTex());
+		auto res=GetDocTex();
+		mbResponseQuery(webView, queryId, customMsg, res);
+		delete[] res;
 	}
 }
 
 void MarkDownTextDlg::display(bool toShow){
 	DockingDlgInterface::display(toShow);
-	if (toShow)
-		::SetFocus(::GetDlgItem(_hSelf, IDOK));
 
 	setClosed(false);
 
-	if(toShow) 
+	if(toShow && currentKernal==0) 
 	{
-#if 0
-	if(!mWebView)
-	{
+		int kernalType=1; // -1 auto 0 wke 1 mb
 		TCHAR NodePath[MAX_PATH]={0};
 		::GetModuleFileName((HINSTANCE)g_hModule, NodePath, MAX_PATH);
 		::PathRemoveFileSpec(NodePath);
-		::PathAppendW(NodePath, L"miniblink_x64.dll");
-		wkeSetWkeDllPath(NodePath);
+		::PathAppend(NodePath, L"miniblink_x64.dll");
 
-		if(wkeInitialize()) {
-			mWebView = wkeCreateWebWindow(WKE_WINDOW_TYPE_CONTROL, _hSelf , 0, 0, 640, 480); 
-
-			if (mWebView)
+		if(PathFileExists(NodePath))
+		{ // ThriveEngines !
+			if(!mWebView && kernalType<=0)
 			{
-				//setMoveWindowArea(0, 0, 640, 30); // 设置窗口可拖动区域，用于无边框窗体
-				wkeSetWindowTitleW(mWebView, NPP_PLUGIN_NAME);
+				wkeSetWkeDllPath(NodePath);
+				if(wkeInitialize()) 
+				{
+					mWebView = wkeCreateWebWindow(WKE_WINDOW_TYPE_CONTROL, _hSelf , 0, 0, 640, 480); 
 
-				wkeOnDidCreateScriptContext(mWebView, onDidCreateScriptContextCallback, this);
-				wkeOnWindowClosing(mWebView, handleWindowClosing, this);
-				wkeOnWindowDestroy(mWebView, handleWindowDestroy, this);
-				wkeOnDocumentReady(mWebView, handleDocumentReady, this);
-				wkeOnTitleChanged(mWebView, handleTitleChanged, this);
-				wkeOnCreateView(mWebView, onCreateView, this);
-				wkeOnLoadUrlBegin(mWebView, onLoadUrlBegin, this);
-				wkeOnLoadUrlEnd(mWebView, onLoadUrlEnd, this);
-				wkeSetDebugConfig(mWebView, "decodeUrlRequest", nullptr);
+					if (currentKernal=(intptr_t)mWebView)
+					{
+						//setMoveWindowArea(0, 0, 640, 30); // 设置窗口可拖动区域，用于无边框窗体
+						//wkeSetWindowTitleW(mWebView, NPP_PLUGIN_NAME);
+						wkeOnDidCreateScriptContext(mWebView, onDidCreateScriptContextCallback, this);
+						wkeOnWindowClosing(mWebView, handleWindowClosing, this);
+						wkeOnWindowDestroy(mWebView, handleWindowDestroy, this);
+						wkeOnDocumentReady(mWebView, handleDocumentReady, this);
+						wkeOnTitleChanged(mWebView, handleTitleChanged, this);
+						wkeOnCreateView(mWebView, onCreateView, this);
+						wkeOnLoadUrlBegin(mWebView, onLoadUrlBegin, this);
+						wkeOnLoadUrlEnd(mWebView, onLoadUrlEnd, this);
+						wkeSetDebugConfig(mWebView, "decodeUrlRequest", nullptr);
+						wkeJsBindFunction("GetDocText", &GetDocText, nullptr, 1);
+					}
+				}
+			}
+			if(!currentKernal && kernalType<=1)
+			{
+				mbSetMbMainDllPath(NodePath);
+				TCHAR NodePath1[MAX_PATH]={0};
+				::GetModuleFileName((HINSTANCE)g_hModule, NodePath1, MAX_PATH);
+				::PathRemoveFileSpec(NodePath1);
+				::PathAppend(NodePath1, L"mb_x64.dll");
+				if(PathFileExists(NodePath1))
+				{
+					mbSetMbDllPath(NodePath1);
+					mbSettings settings;
+					memset(&settings, 0, sizeof(settings));
+					//settings.mask = MB_ENABLE_NODEJS;
+					mbInit(&settings);
+					{
+						mWebView_1 = mbCreateWebView();
+						if(currentKernal=mWebView_1)
+						{
+							regWndClass(kClassWindow, CS_HREDRAW | CS_VREDRAW);
+							mWebView_1_hwnd = ::CreateWindowEx(0 , kClassWindow , NULL
+								, WS_CHILD , 0 , 0 , 840 , 680 , _hSelf , NULL , ::GetModuleHandle(NULL), NULL);
+							::SetProp(mWebView_1_hwnd, L"mb", (HANDLE)mWebView_1);
+							mbSetHandle(mWebView_1, mWebView_1_hwnd);
+							mbOnPaintUpdated(mWebView_1, handlePaintUpdatedCallback, mWebView_1_hwnd);
+							mbOnLoadUrlBegin(mWebView_1, handleLoadUrlBegin, (void*)mWebView_1);
+							mbOnDocumentReady(mWebView_1, handleDocumentReady, (void*)mWebView_1);
+							mbOnLoadingFinish(mWebView_1, handleLoadingFinish, (void*)mWebView_1);
+							mbOnCreateView(mWebView_1, handleCreateView, (void*)mWebView_1);
+							mbSetNavigationToNewWindowEnable(mWebView_1, 1);
+							mbSetCspCheckEnable(mWebView_1, false);
+							mbMoveToCenter(mWebView_1);
+							mbOnJsQuery(mWebView_1, onJsQuery, (void*)1);
+						}
+					}
+				}
+			}
 
-				wkeJsBindFunction("GetDocText", &GetDocText, nullptr, 1);
+			if(currentKernal)
+			{
+				RefreshWebview();
+				if(mWebView) {
+					wkeShowWindow(mWebView, TRUE);
+				} else if(mWebView_1){
+					mbShowWindow(mWebView_1, TRUE);
+				}
 			}
 		}
 	}
-#endif
-	if(!mWebView_1)
-	{
-		TCHAR NodePath[MAX_PATH]={0};
-		::GetModuleFileName((HINSTANCE)g_hModule, NodePath, MAX_PATH);
-		::PathRemoveFileSpec(NodePath);
-		::PathAppend(NodePath, L"mb_x64.dll");
-		mbSetMbDllPath(NodePath);
-		TCHAR NodePath1[MAX_PATH]={0};
-		::GetModuleFileName((HINSTANCE)g_hModule, NodePath1, MAX_PATH);
-		::PathRemoveFileSpec(NodePath1);
-		::PathAppend(NodePath1, L"miniblink_x64.dll");
-		mbSetMbMainDllPath(NodePath1);
 
-		mbSettings settings;
-		memset(&settings, 0, sizeof(settings));
-		//settings.mask = MB_ENABLE_NODEJS;
-		mbInit(&settings);
-
-		regWndClass(kClassWindow, CS_HREDRAW | CS_VREDRAW);
-		mWebView_1 = mbCreateWebView();
-		mWebView_1_hwnd = ::CreateWindowEx(0
-			, kClassWindow
-			, NULL
-			, WS_CHILD
-			, 0
-			, 0
-			, 840
-			, 680
-			, _hSelf
-			, NULL
-			, ::GetModuleHandle(NULL), NULL);
-		::SetProp(mWebView_1_hwnd, L"mb", (HANDLE)mWebView_1);
-		mbSetHandle(mWebView_1, mWebView_1_hwnd);
-		mbOnPaintUpdated(mWebView_1, handlePaintUpdatedCallback, mWebView_1_hwnd);
-		mbOnLoadUrlBegin(mWebView_1, handleLoadUrlBegin, (void*)mWebView_1);
-		mbOnDocumentReady(mWebView_1, handleDocumentReady, (void*)mWebView_1);
-		mbOnLoadingFinish(mWebView_1, handleLoadingFinish, (void*)mWebView_1);
-		mbOnCreateView(mWebView_1, handleCreateView, (void*)mWebView_1);
-		mbSetNavigationToNewWindowEnable(mWebView_1, 1);
-		mbSetCspCheckEnable(mWebView_1, false);
-		mbMoveToCenter(mWebView_1);
-		mbOnJsQuery(mWebView_1, onJsQuery, (void*)1);
-
-		RefreshWebview();
-		mbShowWindow(mWebView_1, TRUE);
-	} }
-
-	::SendMessage( _hSelf, SELF_REFRESH, 0, 1);
+	//::SendMessage( _hSelf, SELF_REFRESH, 0, 1);
 };
 
 void MarkDownTextDlg::setClosed(bool toClose) {
@@ -667,11 +649,13 @@ void MarkDownTextDlg::setClosed(bool toClose) {
 }
 
 void MarkDownTextDlg::RefreshWebview() {
-	if(mWebView) {
-		wkeLoadHTML(mWebView, "<!doctype html><meta charset=\"utf-8\"> <script src=\"mdbr://main.js\"></script><body><script>window.APMD(GetDocText(''));</script></body>");
-	}
-	if(mWebView_1) {
-		mbLoadHtmlWithBaseUrl(mWebView_1, "<!doctype html><meta charset=\"utf-8\"> <script src=\"mdbr://main.js\"></script><body><script>function onNative(msg,rsp){if(msg==0x666)window.APMD(rsp)}window.mbQuery(0x666,\"\",onNative);</script></body>", "file://");
+	if(currentKernal)
+	{
+		if(mWebView) {
+			wkeLoadHTML(mWebView, "<!doctype html><meta charset=\"utf-8\"> <script src=\"mdbr://main.js\"></script><body><script>window.APMD(GetDocText(''));</script></body>");
+		} else if(mWebView_1) {
+			mbLoadHtmlWithBaseUrl(mWebView_1, "<!doctype html><meta charset=\"utf-8\"> <script src=\"mdbr://main.js\"></script><body><script>function onNative(msg,rsp){if(msg==0x666)window.APMD(rsp)}window.mbQuery(0x666,\"\",onNative);</script></body>", "file://");
+		}
 	}
 }
 
@@ -756,14 +740,14 @@ INT_PTR CALLBACK MarkDownTextDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 
 			//rc.top+=100;
 			//rc.bottom-=100;
-
-			if(mWebView) {
-				wkeMoveWindow(mWebView,rc.left, rc.top+toolbarHeight, rc.right, rc.bottom-toolbarHeight);
-				//::MoveWindow(wkeGetWindowHandle(mWebView), rc.left, rc.top, rc.right, rc.bottom,TRUE);
-			}
-
-			if(mWebView_1 && mWebView_1_hwnd) {
-				::MoveWindow(mWebView_1_hwnd, rc.left, rc.top+toolbarHeight, rc.right, rc.bottom-toolbarHeight,1);
+			if(currentKernal)
+			{
+				if(mWebView) {
+					wkeMoveWindow(mWebView,rc.left, rc.top+toolbarHeight, rc.right, rc.bottom-toolbarHeight);
+					//::MoveWindow(wkeGetWindowHandle(mWebView), rc.left, rc.top, rc.right, rc.bottom,TRUE);
+				} else if(mWebView_1 && mWebView_1_hwnd) {
+					::MoveWindow(mWebView_1_hwnd, rc.left, rc.top+toolbarHeight, rc.right, rc.bottom-toolbarHeight,1);
+				}
 			}
 
 			rc.bottom=toolbarHeight;
