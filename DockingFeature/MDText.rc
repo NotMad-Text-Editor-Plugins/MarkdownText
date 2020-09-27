@@ -105,8 +105,8 @@ IDB_EX_BREFNAME         BITMAP                  "..\\res\\briefname.bmp"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,4,7,7
- PRODUCTVERSION 0,4,7,7
+ FILEVERSION 0,1,1
+ PRODUCTVERSION 0,1,1
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -121,14 +121,14 @@ BEGIN
     BEGIN
         BLOCK "080404b0"
         BEGIN
-            VALUE "CompanyName", "Pattazl, Lark Stuio"
-            VALUE "FileDescription", "LocationNavigate for code/text view and edit"
-            VALUE "FileVersion", "0, 4, 7, 7"
-            VALUE "InternalName", "LocationNavigate"
-            VALUE "LegalCopyright", "Copyleft (C) 2011-2012"
-            VALUE "OriginalFilename", "LocationNavigate"
-            VALUE "ProductName", "LocationNavigate"
-            VALUE "ProductVersion", "0, 4, 7, 7"
+            VALUE "CompanyName", "knziha"
+            VALUE "FileDescription", "MarkdownText for code/text view and edit"
+            VALUE "FileVersion", "0, 1, 1"
+            VALUE "InternalName", "MarkdownText"
+            VALUE "LegalCopyright", "Copyleft (C) 2020"
+            VALUE "OriginalFilename", "MarkdownText"
+            VALUE "ProductName", "MarkdownText"
+            VALUE "ProductVersion", "0, 1, 1"
         END
     END
     BLOCK "VarFileInfo"

@@ -196,7 +196,7 @@ void commandMenuInit()
 	ShortcutKey *markKey = new ShortcutKey{1,1,0,0x4D};// VK_M
 
 	ShortcutKey *optionsKey = new ShortcutKey{1,1,1,0x4D}; // VK_M
-	setCommand(menuOption, TEXT("Preview As Markdown"), ToggleHistoryPanel, optionsKey, false);
+	setCommand(menuOption, TEXT("Preview Markdown Text"), ToggleHistoryPanel, optionsKey, false);
 
 	setCommand(menuSeparator0, TEXT("-SEPARATOR-"),NULL, NULL, false);
 
