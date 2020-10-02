@@ -23,6 +23,8 @@
 //
 #include "PluginInterface.h"
 
+class MarkDownTextDlg;
+
 //-------------------------------------//
 //-- STEP 1. DEFINE YOUR PLUGIN NAME --//
 //-------------------------------------//
@@ -112,9 +114,13 @@ void ClearAllRecords();
 //void ShowAbout();
 //void PinMenu();
 
+extern MarkDownTextDlg _MDText;
+
 extern toolbarIcons		g_TBPrevious;
 
 extern bool pinMenu;
 
 extern HANDLE  g_hModule;
+
+__declspec(selectany) bool NPPRunning = false;
 #endif //PLUGINDEFINITION_H

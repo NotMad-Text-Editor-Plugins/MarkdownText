@@ -23,6 +23,8 @@ void WKE_CALL_TYPE onDidCreateScriptContextCallback(wkeWebView webView, void* pa
 
 }
 
+extern int PlusOne(FN_wkeAwaken val);
+
 // 回调：点击了关闭、返回 true 将销毁窗口，返回 false 什么都不做。
 bool handleWindowClosing(wkeWebView webWindow, void* param)
 {
@@ -57,6 +59,7 @@ wkeWebView onCreateView(wkeWebView webWindow, void* param, wkeNavigationType nav
 }
 
 const char InternalResHead[] = "mdbr://";
+const char InternalResHead1[] = "http://mdbr/";
 
 CHAR* loadPluginAsset(const char* path, DWORD & dataLen)
 {
@@ -123,15 +126,29 @@ UINT ScintillaGetText(HWND hWnd, char *text, INT start, INT end)
 	return (UINT)::SendMessage(hWnd, SCI_GETTEXTRANGE, 0, reinterpret_cast<LPARAM>(&tr));
 }
 
-CHAR* GetDocTex()
+CHAR* GetDocTex(int & maxLength1, LONG_PTR bid)
 {
 	int curScintilla;
 	SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&curScintilla);
 	auto currrentSc = curScintilla?nppData._scintillaSecondHandle:nppData._scintillaMainHandle;
-	INT		maxLength1 = SendMessage(currrentSc, SCI_GETTEXTLENGTH, 0, 0);
+
+	if(bid)
+	{
+		LONG_PTR DOCUMENTPTR = SendMessage(nppData._nppHandle, NPPM_GETDOCUMENTPTR, bid, bid);
+		int textL = SendMessage(currrentSc, SCI_GETTEXTLENGTH, DOCUMENTPTR, DOCUMENTPTR);
+		auto raw_data = (CHAR*)SendMessage(currrentSc, SCI_GETRAWTEXT, DOCUMENTPTR, DOCUMENTPTR);
+		if(textL&&raw_data)
+		{
+			return raw_data;
+		}
+	}
+
+	maxLength1 = SendMessage(currrentSc, SCI_GETTEXTLENGTH, 0, 0);
+
 	CHAR*	buffer1 = new CHAR[maxLength1+1];
 	ScintillaGetText(currrentSc, buffer1, 0, maxLength1);
 	buffer1[maxLength1] = '\0';
+
 	return buffer1;
 }
 
@@ -155,8 +172,8 @@ jsValue WKE_CALL_TYPE GetDocText(jsExecState es, void* param)
 	//path += "\n";
 	//OutputDebugStringA(path.c_str());
 
-	
-	auto ret=jsString(es, GetDocTex());
+	int len;
+	auto ret=jsString(es, GetDocTex(len, 0));
 	//::MessageBox(NULL, TEXT("111"), TEXT(""), MB_OK);
 	return ret;
 	//return jsString(es, "# Hello `md.html` World!");
@@ -545,11 +562,107 @@ void MB_CALL_TYPE onJsQuery(mbWebView webView, void* param, mbJsExecState es, in
 {
 	if(customMsg==0x666)
 	{
-		auto res=GetDocTex();
+		int len;
+		auto res=GetDocTex(len, 0);
 		mbResponseQuery(webView, queryId, customMsg, res);
 		delete[] res;
 	}
 }
+
+void STR2LONGPTR(TCHAR* STR, LONG_PTR & LONGPTR)
+{
+	int len = lstrlen(STR);
+	bool intOpened=false;
+	for(int i=0;i<len;i++) {
+		int intVal = STR[i]-'0';
+		int valval = intVal>=0&&intVal<=9||STR[i]=='-';
+		if(!intOpened)
+		{
+			intOpened=valval;
+		}
+		else if(!valval)
+		{
+			break;
+		}
+		if(intOpened)
+		{
+			LONGPTR = LONGPTR*10+intVal;
+		}
+	}
+}
+
+#ifdef  UNICODE
+void LONGPTR2STR(TCHAR* STR, LONG_PTR LONGPTR)
+{
+	TCHAR* start=STR;
+	while(LONGPTR)
+	{
+		*(STR++)='0'+(LONGPTR%10);
+		LONGPTR/=10;
+	}
+	*STR='\0';
+	wcsrev(start);
+}
+#endif
+
+BJSCV* GetDocText1(LONG_PTR funcName, int argc, LONG_PTR argv, int sizeofBJSCV)
+{
+	//::MessageBoxA(NULL, ("GetDocText1"), (""), MB_OK);
+	LONG_PTR bid=0;
+	int structSize=0;
+	if(argc==1)
+	{
+		char* args = bwParseCefV8Args(argv, structSize);
+		if(structSize)
+		{
+			BJSCV* val = (BJSCV*)(args+0*structSize);
+			if(val->value_type==typeString)
+			{
+				STR2LONGPTR((TCHAR*)val->charVal, bid);
+			}
+			// testJs('Hah')
+		}
+	}
+	int len;
+	return new BJSCV{typeString, 0, GetDocTex(len, bid)};
+}
+
+void onBrowserPrepared(bwWebView browserPtr)
+{
+	bwInstallJsNativeToWidget(browserPtr, "GetDocText1", GetDocText1);
+	_MDText.mWebView_2 = browserPtr;
+	_MDText.currentKernal = (LONG_PTR)browserPtr;
+	_MDText.hBrowser = bwGetHWNDForBrowser(browserPtr);
+	::SendMessage(_MDText.getHSelf(), WM_SIZE, 0, 0);
+	_MDText.RefreshWebview();
+}
+
+url_intercept_result* InterceptBrowserWidget(std::string url)
+{
+	if(url=="https://www.bing.com/") {
+		return new url_intercept_result{(CHAR*)"HAPPY", 5, 200, (CHAR*)"OK"};
+	}
+	if(strspn(url.data(), InternalResHead1)==13)
+	{
+		auto path = url.data()+12;
+		if(path)
+		{
+			if(strstr(path, "..")) // security check
+			{
+				return false;
+			}
+			DWORD dataLen;
+			auto buffer = loadPluginAsset(path, dataLen);
+			if(buffer)
+			{
+				return new url_intercept_result{buffer, dataLen, 200, (CHAR*)"OK"};
+			}
+		}
+	}
+	return nullptr;
+}
+
+bool browser_deferred_creating=0;
 
 void MarkDownTextDlg::display(bool toShow){
 	DockingDlgInterface::display(toShow);
@@ -558,75 +671,97 @@ void MarkDownTextDlg::display(bool toShow){
 
 	if(toShow && currentKernal==0) 
 	{
-		int kernalType=1; // -1 auto 0 wke 1 mb
-		TCHAR NodePath[MAX_PATH]={0};
-		::GetModuleFileName((HINSTANCE)g_hModule, NodePath, MAX_PATH);
-		::PathRemoveFileSpec(NodePath);
-		::PathAppend(NodePath, L"miniblink_x64.dll");
-
-		if(PathFileExists(NodePath))
+		int kernalType=2; // -1_auto 0_wke 1_mb 2_bw
+		TCHAR WKPath[MAX_PATH]={0};
+		TCHAR WKPath1[MAX_PATH]={0};
+		::GetModuleFileName((HINSTANCE)g_hModule, WKPath, MAX_PATH);
+		::PathRemoveFileSpec(WKPath);
+		int error_code=0;
+		if(PathFileExists(WKPath))
 		{ // ThriveEngines !
-			if(!mWebView && kernalType<=0)
+			if(!browser_deferred_creating && !currentKernal && kernalType==2||kernalType==-1)
 			{
-				wkeSetWkeDllPath(NodePath);
-				if(wkeInitialize()) 
+				lstrcpy(WKPath1, WKPath);
+				::PathAppend(WKPath1, L"..\\BrowserWidget\\cefclient.dll");
+				if(PathFileExists(WKPath1))
 				{
-					mWebView = wkeCreateWebWindow(WKE_WINDOW_TYPE_CONTROL, _hSelf , 0, 0, 640, 480); 
-
-					if (currentKernal=(intptr_t)mWebView)
+					if(bwInit(WKPath1) && bwCreateBrowser({_hSelf, "www.bing.com", onBrowserPrepared, InterceptBrowserWidget}))
 					{
-						//setMoveWindowArea(0, 0, 640, 30); // 设置窗口可拖动区域，用于无边框窗体
-						//wkeSetWindowTitleW(mWebView, NPP_PLUGIN_NAME);
-						wkeOnDidCreateScriptContext(mWebView, onDidCreateScriptContextCallback, this);
-						wkeOnWindowClosing(mWebView, handleWindowClosing, this);
-						wkeOnWindowDestroy(mWebView, handleWindowDestroy, this);
-						wkeOnDocumentReady(mWebView, handleDocumentReady, this);
-						wkeOnTitleChanged(mWebView, handleTitleChanged, this);
-						wkeOnCreateView(mWebView, onCreateView, this);
-						wkeOnLoadUrlBegin(mWebView, onLoadUrlBegin, this);
-						wkeOnLoadUrlEnd(mWebView, onLoadUrlEnd, this);
-						wkeSetDebugConfig(mWebView, "decodeUrlRequest", nullptr);
-						wkeJsBindFunction("GetDocText", &GetDocText, nullptr, 1);
+						browser_deferred_creating=1;
+						//::MessageBox(NULL, TEXT("111"), TEXT(""), MB_OK);
 					}
 				}
 			}
-			if(!currentKernal && kernalType<=1)
+			if(!browser_deferred_creating)
 			{
-				mbSetMbMainDllPath(NodePath);
-				TCHAR NodePath1[MAX_PATH]={0};
-				::GetModuleFileName((HINSTANCE)g_hModule, NodePath1, MAX_PATH);
-				::PathRemoveFileSpec(NodePath1);
-				::PathAppend(NodePath1, L"mb_x64.dll");
-				if(PathFileExists(NodePath1))
+				::PathAppend(WKPath, L"miniblink_x64.dll");
+				if(PathFileExists(WKPath))
 				{
-					mbSetMbDllPath(NodePath1);
-					mbSettings settings;
-					memset(&settings, 0, sizeof(settings));
-					//settings.mask = MB_ENABLE_NODEJS;
-					mbInit(&settings);
+					if(!currentKernal && kernalType!=0)
 					{
-						mWebView_1 = mbCreateWebView();
-						if(currentKernal=mWebView_1)
+						mbSetMbMainDllPath(WKPath);
+						::GetModuleFileName((HINSTANCE)g_hModule, WKPath1, MAX_PATH);
+						::PathRemoveFileSpec(WKPath1);
+						::PathAppend(WKPath1, L"mb_x64.dll");
+						if(PathFileExists(WKPath1))
 						{
-							regWndClass(kClassWindow, CS_HREDRAW | CS_VREDRAW);
-							mWebView_1_hwnd = ::CreateWindowEx(0 , kClassWindow , NULL
-								, WS_CHILD , 0 , 0 , 840 , 680 , _hSelf , NULL , ::GetModuleHandle(NULL), NULL);
-							::SetProp(mWebView_1_hwnd, L"mb", (HANDLE)mWebView_1);
-							mbSetHandle(mWebView_1, mWebView_1_hwnd);
-							mbOnPaintUpdated(mWebView_1, handlePaintUpdatedCallback, mWebView_1_hwnd);
-							mbOnLoadUrlBegin(mWebView_1, handleLoadUrlBegin, (void*)mWebView_1);
-							mbOnDocumentReady(mWebView_1, handleDocumentReady, (void*)mWebView_1);
-							mbOnLoadingFinish(mWebView_1, handleLoadingFinish, (void*)mWebView_1);
-							mbOnCreateView(mWebView_1, handleCreateView, (void*)mWebView_1);
-							mbSetNavigationToNewWindowEnable(mWebView_1, 1);
-							mbSetCspCheckEnable(mWebView_1, false);
-							mbMoveToCenter(mWebView_1);
-							mbOnJsQuery(mWebView_1, onJsQuery, (void*)1);
+							mbSetMbDllPath(WKPath1);
+							mbSettings settings;
+							memset(&settings, 0, sizeof(settings));
+							//settings.mask = MB_ENABLE_NODEJS;
+							mbInit(&settings);
+							{
+								mWebView_1 = mbCreateWebView();
+								if(currentKernal=mWebView_1)
+								{
+									regWndClass(kClassWindow, CS_HREDRAW | CS_VREDRAW);
+									hBrowser = ::CreateWindowEx(0 , kClassWindow , NULL
+										, WS_CHILD , 0 , 0 , 840 , 680 , _hSelf , NULL , ::GetModuleHandle(NULL), NULL);
+									::SetProp(hBrowser, L"mb", (HANDLE)mWebView_1);
+									mbSetHandle(mWebView_1, hBrowser);
+									mbOnPaintUpdated(mWebView_1, handlePaintUpdatedCallback, hBrowser);
+									mbOnLoadUrlBegin(mWebView_1, handleLoadUrlBegin, (void*)mWebView_1);
+									mbOnDocumentReady(mWebView_1, handleDocumentReady, (void*)mWebView_1);
+									mbOnLoadingFinish(mWebView_1, handleLoadingFinish, (void*)mWebView_1);
+									mbOnCreateView(mWebView_1, handleCreateView, (void*)mWebView_1);
+									mbSetNavigationToNewWindowEnable(mWebView_1, 1);
+									mbSetCspCheckEnable(mWebView_1, false);
+									mbMoveToCenter(mWebView_1);
+									mbOnJsQuery(mWebView_1, onJsQuery, (void*)1);
+								}
+							}
+						}
+					}
+					if(!currentKernal && kernalType<=1)
+					{
+						wkeSetWkeDllPath(WKPath);
+						if(wkeInitialize()) 
+						{
+							mWebView = wkeCreateWebWindow(WKE_WINDOW_TYPE_CONTROL, _hSelf , 0, 0, 640, 480); 
+
+							if (currentKernal=(intptr_t)mWebView)
+							{
+								//setMoveWindowArea(0, 0, 640, 30); // 设置窗口可拖动区域，用于无边框窗体
+								//wkeSetWindowTitleW(mWebView, NPP_PLUGIN_NAME);
+								wkeOnDidCreateScriptContext(mWebView, onDidCreateScriptContextCallback, this);
+								wkeOnWindowClosing(mWebView, handleWindowClosing, this);
+								wkeOnWindowDestroy(mWebView, handleWindowDestroy, this);
+								wkeOnDocumentReady(mWebView, handleDocumentReady, this);
+								wkeOnTitleChanged(mWebView, handleTitleChanged, this);
+								wkeOnCreateView(mWebView, onCreateView, this);
+								wkeOnLoadUrlBegin(mWebView, onLoadUrlBegin, this);
+								wkeOnLoadUrlEnd(mWebView, onLoadUrlEnd, this);
+								wkeSetDebugConfig(mWebView, "decodeUrlRequest", nullptr);
+								wkeJsBindFunction("GetDocText", &GetDocText, nullptr, 1);
+							} else {
+								error_code = 101;
+							}
+						} else {
+							error_code = 100;
 						}
 					}
 				}
 			}
-
 			if(currentKernal)
 			{
 				RefreshWebview();
@@ -648,13 +783,63 @@ void MarkDownTextDlg::setClosed(bool toClose) {
 		funcItem[menuOption]._cmdID, MF_BYCOMMAND | (toClose?MF_UNCHECKED:MF_CHECKED));
 }
 
-void MarkDownTextDlg::RefreshWebview() {
-	if(currentKernal)
+std::string page_data="<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/main.js\"></script><body><script>window.APMD(GetDocText1(''));</script></body>";
+//std::string page_data="";
+
+void LONGPTR2STR(CHAR* STR, LONG_PTR LONGPTR)
+{
+	CHAR* start=STR;
+	while(LONGPTR)
 	{
+		*(STR++)='0'+(LONGPTR%10);
+		LONGPTR/=10;
+	}
+	*STR='\0';
+	strrev(start);
+}
+
+void MarkDownTextDlg::RefreshWebview() {
+	if(currentKernal&&NPPRunning)
+	{
+		
+		LONG_PTR bid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
 		if(mWebView) {
 			wkeLoadHTML(mWebView, "<!doctype html><meta charset=\"utf-8\"> <script src=\"mdbr://main.js\"></script><body><script>window.APMD(GetDocText(''));</script></body>");
 		} else if(mWebView_1) {
 			mbLoadHtmlWithBaseUrl(mWebView_1, "<!doctype html><meta charset=\"utf-8\"> <script src=\"mdbr://main.js\"></script><body><script>function onNative(msg,rsp){if(msg==0x666)window.APMD(rsp)}window.mbQuery(0x666,\"\",onNative);</script></body>", "file://");
+		} else if(mWebView_2) {
+			TCHAR url[MAX_PATH];
+			::SendMessage(nppData._nppHandle, NPPM_GETFULLCURRENTPATH, 0, (LPARAM)url);
+			for(int i=0;i<MAX_PATH;i++)
+			{
+				if(url[i]=='\\') url[i]='/';
+				else if(url[i]=='\0') break; 
+			}
+			int urlLen = WideCharToMultiByte(CP_ACP, 0, url, -1, NULL, 0, NULL, NULL); 
+			CHAR url_[MAX_PATH];
+			WideCharToMultiByte(CP_ACP, 0, url, -1, url_, urlLen, NULL, NULL);  
+			strcpy(url_+urlLen-1, ".html");
+
+			//auto page_data = new CHAR[MAX_PATH];
+
+			//MessageBoxA(NULL, url_, (""), MB_OK);
+			//std::string page_data=;
+
+			//::MessageBoxA(NULL, page_data.data(), (""), MB_OK);
+			//bwLoadStrData(mWebView_2, url_, page_data.data(), page_data.length());
+			// LIBCEF 需要拟构网址。 传文件名，只传ID吧。
+			CHAR* page_id = new CHAR[64];
+			CHAR* page_content = new CHAR[256];
+			strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/main.js\"></script><body><script>window.APMD(GetDocText1('");
+			strcpy(page_id, "MDT/");
+			LONGPTR2STR(page_id+strlen(page_id), bid);
+			strcpy(page_content+strlen(page_content), page_id+4);
+			strcpy(page_content+strlen(page_content), "'));</script></body>");
+			strcpy(page_id+strlen(page_id), ".html");
+			//::MessageBoxA(NULL, page_id, (""), MB_OK);
+			//::MessageBoxA(NULL,page_content, (""), MB_OK);
+			bwLoadStrData(mWebView_2, page_id, page_content, 0);
+			//bwLoadStrData(mWebView_2, url_, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/main.js\"></script><body><script>window.APMD(GetDocText1(0));</script></body>", 0);
 		}
 	}
 }
@@ -742,11 +927,14 @@ INT_PTR CALLBACK MarkDownTextDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 			//rc.bottom-=100;
 			if(currentKernal)
 			{
-				if(mWebView) {
-					wkeMoveWindow(mWebView,rc.left, rc.top+toolbarHeight, rc.right, rc.bottom-toolbarHeight);
-					//::MoveWindow(wkeGetWindowHandle(mWebView), rc.left, rc.top, rc.right, rc.bottom,TRUE);
-				} else if(mWebView_1 && mWebView_1_hwnd) {
-					::MoveWindow(mWebView_1_hwnd, rc.left, rc.top+toolbarHeight, rc.right, rc.bottom-toolbarHeight,1);
+				//if(mWebView) {
+				//	wkeMoveWindow(mWebView,rc.left, rc.top+toolbarHeight, rc.right, rc.bottom-toolbarHeight);
+				//	//::MoveWindow(wkeGetWindowHandle(mWebView), rc.left, rc.top, rc.right, rc.bottom,TRUE);
+				//} else if(mWebView_1 && hBrowser) {
+				//}
+				if(hBrowser)
+				{
+					::MoveWindow(hBrowser, rc.left, rc.top+toolbarHeight, rc.right, rc.bottom-toolbarHeight,1);
 				}
 			}
 

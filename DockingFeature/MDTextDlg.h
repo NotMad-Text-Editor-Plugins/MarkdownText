@@ -27,6 +27,7 @@
 #include "ToolbarPanel.h"
 #include <wke.h>
 #include <mb.h>
+#include <BrowserUI.h>
 
 #define SELF_REFRESH WM_USER+9
 
@@ -70,8 +71,9 @@ public :
 	};
 	wkeWebView mWebView;
 	mbWebView mWebView_1;
+	bwWebView mWebView_2;
 	intptr_t currentKernal;
-	HWND mWebView_1_hwnd;
+	HWND hBrowser;
 protected :
 	virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam);
 	SelfCtrl _color,_savecolor;

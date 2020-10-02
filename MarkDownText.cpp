@@ -33,7 +33,6 @@ extern FuncItem funcItem[nbFunc];
 extern NppData nppData;
 
 extern HANDLE				g_hModule;
-extern MarkDownTextDlg _MDText;
 
 //////////  SELF FUNCTION END ////////
 BOOL APIENTRY DllMain( HANDLE hModule, 
@@ -49,6 +48,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 	  }
 
       case DLL_PROCESS_DETACH:
+		NPPRunning=0;
         pluginCleanUp();
         break;
       case DLL_THREAD_ATTACH:
@@ -115,13 +115,24 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 		case NPPN_SHUTDOWN:
 		{
 			commandMenuCleanUp();
+			NPPRunning=0;
 			//bIsPaused=1;
 			//AllCloseFlag=1;
 		}
 		break;
 		case NPPN_READY:
 		{
-
+			NeedUpdate=NPPRunning=true;
+		}
+		break;
+		case NPPN_BEFORESHUTDOWN:
+		{
+			NPPRunning=false;
+		}
+		break;
+		case NPPN_CANCELSHUTDOWN:
+		{
+			NPPRunning=true;
 		}
 		break;
 		// mark setting remove to SCN_SAVEPOINTREACHED
@@ -146,7 +157,10 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 		// 页面切换
 		case NPPN_BUFFERACTIVATED:
 		{
-			NeedUpdate=1;
+			if(NPPRunning)
+			{
+				NeedUpdate=1;
+			}
 		}
 		break;
 		case SCN_UPDATEUI:
