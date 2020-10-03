@@ -126,30 +126,58 @@ UINT ScintillaGetText(HWND hWnd, char *text, INT start, INT end)
 	return (UINT)::SendMessage(hWnd, SCI_GETTEXTRANGE, 0, reinterpret_cast<LPARAM>(&tr));
 }
 
-CHAR* GetDocTex(int & maxLength1, LONG_PTR bid)
+
+CHAR*	universal_buffer = new CHAR[4];
+int buffer_cap=4;
+
+
+LONG_PTR nextPowerOfTwo(size_t v)
+{
+	size_t vbk = v;
+	v--;
+	int mv=1;
+#ifdef _WIN64
+	for(;mv<=32;mv<<=1)
+#else
+	for(;mv<=16;mv<<=1)
+#endif
+	{
+		v |= v >> mv;
+	}
+	v++;
+	if(v<vbk)
+	{
+		v=vbk;
+	}
+	return v;
+}
+
+CHAR* GetDocTex(size_t & docLength, LONG_PTR bid)
 {
 	int curScintilla;
 	SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&curScintilla);
 	auto currrentSc = curScintilla?nppData._scintillaSecondHandle:nppData._scintillaMainHandle;
 
-	if(bid)
+	if(bid && !legacy)
 	{
 		LONG_PTR DOCUMENTPTR = SendMessage(nppData._nppHandle, NPPM_GETDOCUMENTPTR, bid, bid);
-		int textL = SendMessage(currrentSc, SCI_GETTEXTLENGTH, DOCUMENTPTR, DOCUMENTPTR);
+		docLength = SendMessage(currrentSc, SCI_GETTEXTLENGTH, DOCUMENTPTR, DOCUMENTPTR);
 		auto raw_data = (CHAR*)SendMessage(currrentSc, SCI_GETRAWTEXT, DOCUMENTPTR, DOCUMENTPTR);
-		if(textL&&raw_data)
+		if(docLength&&raw_data)
 		{
 			return raw_data;
 		}
 	}
-
-	maxLength1 = SendMessage(currrentSc, SCI_GETTEXTLENGTH, 0, 0);
-
-	CHAR*	buffer1 = new CHAR[maxLength1+1];
-	ScintillaGetText(currrentSc, buffer1, 0, maxLength1);
-	buffer1[maxLength1] = '\0';
-
-	return buffer1;
+	docLength = SendMessage(currrentSc, SCI_GETTEXTLENGTH, 0, 0);
+	if(docLength-1>buffer_cap)
+	{
+		delete[] universal_buffer;
+		universal_buffer = new CHAR[nextPowerOfTwo(docLength)];
+	}
+	ScintillaGetText(currrentSc, universal_buffer, 0, docLength);
+	universal_buffer[docLength] = '\0';
+	//return 0;
+	return universal_buffer;
 }
 
 //synchronous callback
@@ -172,7 +200,7 @@ jsValue WKE_CALL_TYPE GetDocText(jsExecState es, void* param)
 	//path += "\n";
 	//OutputDebugStringA(path.c_str());
 
-	int len;
+	size_t len;
 	auto ret=jsString(es, GetDocTex(len, 0));
 	//::MessageBox(NULL, TEXT("111"), TEXT(""), MB_OK);
 	return ret;
@@ -562,7 +590,7 @@ void MB_CALL_TYPE onJsQuery(mbWebView webView, void* param, mbJsExecState es, in
 {
 	if(customMsg==0x666)
 	{
-		int len;
+		size_t len;
 		auto res=GetDocTex(len, 0);
 		mbResponseQuery(webView, queryId, customMsg, res);
 		delete[] res;
@@ -623,7 +651,7 @@ BJSCV* GetDocText1(LONG_PTR funcName, int argc, LONG_PTR argv, int sizeofBJSCV)
 			// testJs('Hah')
 		}
 	}
-	int len;
+	size_t len;
 	return new BJSCV{typeString, 0, GetDocTex(len, bid)};
 }
 
