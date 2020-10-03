@@ -163,13 +163,16 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 			}
 		}
 		break;
-		case SCN_UPDATEUI:
-		{
-		}
-		break;
 		case SCN_MODIFIED:
 		{
-
+			if(NPPRunning)
+			{
+				NeedUpdate=2;
+			}
+		}
+		break;
+		case SCN_UPDATEUI:
+		{
 		}
 		break;
 		case SCN_SAVEPOINTREACHED:

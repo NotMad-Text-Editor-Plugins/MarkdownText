@@ -23,8 +23,6 @@ void WKE_CALL_TYPE onDidCreateScriptContextCallback(wkeWebView webView, void* pa
 
 }
 
-extern int PlusOne(FN_wkeAwaken val);
-
 // 回调：点击了关闭、返回 true 将销毁窗口，返回 false 什么都不做。
 bool handleWindowClosing(wkeWebView webWindow, void* param)
 {
@@ -158,7 +156,7 @@ CHAR* GetDocTex(size_t & docLength, LONG_PTR bid)
 	SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&curScintilla);
 	auto currrentSc = curScintilla?nppData._scintillaSecondHandle:nppData._scintillaMainHandle;
 
-	if(bid && !legacy)
+	if(!_MDText.mWebView_1 && bid && !legacy)
 	{
 		LONG_PTR DOCUMENTPTR = SendMessage(nppData._nppHandle, NPPM_GETDOCUMENTPTR, bid, bid);
 		docLength = SendMessage(currrentSc, SCI_GETTEXTLENGTH, DOCUMENTPTR, DOCUMENTPTR);
@@ -168,11 +166,17 @@ CHAR* GetDocTex(size_t & docLength, LONG_PTR bid)
 			return raw_data;
 		}
 	}
+	
 	docLength = SendMessage(currrentSc, SCI_GETTEXTLENGTH, 0, 0);
-	if(docLength-1>buffer_cap)
+	if(_MDText.mWebView_1 || docLength-1>buffer_cap)
 	{
-		delete[] universal_buffer;
-		universal_buffer = new CHAR[nextPowerOfTwo(docLength)];
+		if(!_MDText.mWebView_1)
+		{
+			delete[] universal_buffer;
+		}
+		int cap = nextPowerOfTwo(docLength);
+		universal_buffer = new CHAR[cap];
+		buffer_cap = cap;
 	}
 	ScintillaGetText(currrentSc, universal_buffer, 0, docLength);
 	universal_buffer[docLength] = '\0';
@@ -699,7 +703,7 @@ void MarkDownTextDlg::display(bool toShow){
 
 	if(toShow && currentKernal==0) 
 	{
-		int kernalType=2; // -1_auto 0_wke 1_mb 2_bw
+		int kernalType=0; // -1_auto 0_wke 1_mb 2_bw
 		TCHAR WKPath[MAX_PATH]={0};
 		TCHAR WKPath1[MAX_PATH]={0};
 		::GetModuleFileName((HINSTANCE)g_hModule, WKPath, MAX_PATH);
@@ -707,6 +711,7 @@ void MarkDownTextDlg::display(bool toShow){
 		int error_code=0;
 		if(PathFileExists(WKPath))
 		{ // ThriveEngines !
+			// BrowserWidget
 			if(!browser_deferred_creating && !currentKernal && kernalType==2||kernalType==-1)
 			{
 				lstrcpy(WKPath1, WKPath);
@@ -725,6 +730,7 @@ void MarkDownTextDlg::display(bool toShow){
 				::PathAppend(WKPath, L"miniblink_x64.dll");
 				if(PathFileExists(WKPath))
 				{
+					// mb
 					if(!currentKernal && kernalType!=0)
 					{
 						mbSetMbMainDllPath(WKPath);
@@ -760,15 +766,16 @@ void MarkDownTextDlg::display(bool toShow){
 							}
 						}
 					}
+					// wke
 					if(!currentKernal && kernalType<=1)
 					{
 						wkeSetWkeDllPath(WKPath);
 						if(wkeInitialize()) 
 						{
 							mWebView = wkeCreateWebWindow(WKE_WINDOW_TYPE_CONTROL, _hSelf , 0, 0, 640, 480); 
-
 							if (currentKernal=(intptr_t)mWebView)
 							{
+								hBrowser = wkeGetWindowHandle(mWebView);
 								//setMoveWindowArea(0, 0, 640, 30); // 设置窗口可拖动区域，用于无边框窗体
 								//wkeSetWindowTitleW(mWebView, NPP_PLUGIN_NAME);
 								wkeOnDidCreateScriptContext(mWebView, onDidCreateScriptContextCallback, this);
@@ -829,7 +836,6 @@ void LONGPTR2STR(CHAR* STR, LONG_PTR LONGPTR)
 void MarkDownTextDlg::RefreshWebview() {
 	if(currentKernal&&NPPRunning)
 	{
-		
 		LONG_PTR bid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
 		if(mWebView) {
 			wkeLoadHTML(mWebView, "<!doctype html><meta charset=\"utf-8\"> <script src=\"mdbr://main.js\"></script><body><script>window.APMD(GetDocText(''));</script></body>");
@@ -876,7 +882,7 @@ void MarkDownTextDlg::refreshDlg(bool updateList) {
 	bool AlwaysRefreshBtns=0;
 	if (isCreated() && isVisible())
 	{
-		::SendMessage( _hSelf, SELF_REFRESH, AlwaysRefreshBtns, updateList);
+		//::SendMessage( _hSelf, SELF_REFRESH, AlwaysRefreshBtns, updateList);
 		if(!AlwaysRefreshBtns&&!updateList) {
 			hasChanged=1;
 		}
