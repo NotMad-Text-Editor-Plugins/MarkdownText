@@ -17,6 +17,7 @@
 
 #include "MDTextDlg.h"
 #include "PluginDefinition.h"
+#include "time.h"
 
 void WKE_CALL_TYPE onDidCreateScriptContextCallback(wkeWebView webView, void* param, wkeWebFrameHandle frameId, void* context, int extensionGroup, int worldId)
 {
@@ -671,8 +672,8 @@ void onBrowserPrepared(bwWebView browserPtr)
 
 url_intercept_result* InterceptBrowserWidget(std::string url)
 {
-	if(url=="https://www.bing.com/") {
-		return new url_intercept_result{(CHAR*)"HAPPY", 5, 200, (CHAR*)"OK"};
+	if(url=="https://tests/home") {
+		return new url_intercept_result{(CHAR*)"Markdown Text", 14, 200, (CHAR*)"OK"};
 	}
 	if(strspn(url.data(), InternalResHead1)==13)
 	{
@@ -694,7 +695,7 @@ url_intercept_result* InterceptBrowserWidget(std::string url)
 	return nullptr;
 }
 
-bool browser_deferred_creating=0;
+clock_t browser_deferred_create_time=0;
 
 void MarkDownTextDlg::display(bool toShow){
 	DockingDlgInterface::display(toShow);
@@ -703,7 +704,7 @@ void MarkDownTextDlg::display(bool toShow){
 
 	if(toShow && currentKernal==0) 
 	{
-		int kernalType=0; // -1_auto 0_wke 1_mb 2_bw
+		int kernalType=-1; // -1_auto 0_wke 1_mb 2_bw
 		TCHAR WKPath[MAX_PATH]={0};
 		TCHAR WKPath1[MAX_PATH]={0};
 		::GetModuleFileName((HINSTANCE)g_hModule, WKPath, MAX_PATH);
@@ -712,16 +713,27 @@ void MarkDownTextDlg::display(bool toShow){
 		if(PathFileExists(WKPath))
 		{ // ThriveEngines !
 			// BrowserWidget
-			if(!browser_deferred_creating && !currentKernal && kernalType==2||kernalType==-1)
+			bool prefer_bw = kernalType==2||kernalType==-1;
+			bool browser_deferred_creating=false;
+			if(!currentKernal && prefer_bw)
 			{
-				lstrcpy(WKPath1, WKPath);
-				::PathAppend(WKPath1, L"..\\BrowserWidget\\cefclient.dll");
-				if(PathFileExists(WKPath1))
+				clock_t time = clock();
+				if(browser_deferred_create_time && time-browser_deferred_create_time<550)
 				{
-					if(bwInit(WKPath1) && bwCreateBrowser({_hSelf, "www.bing.com", onBrowserPrepared, InterceptBrowserWidget}))
+					browser_deferred_creating=1;
+				}
+				if(!browser_deferred_creating)
+				{
+					browser_deferred_create_time = time;
+					lstrcpy(WKPath1, WKPath);
+					::PathAppend(WKPath1, L"..\\BrowserWidget\\cefclient.dll");
+					if(PathFileExists(WKPath1))
 					{
-						browser_deferred_creating=1;
-						//::MessageBox(NULL, TEXT("111"), TEXT(""), MB_OK);
+						if(bwInit(WKPath1) && bwCreateBrowser({_hSelf, "https://tests/home", onBrowserPrepared, InterceptBrowserWidget}))
+						{
+							browser_deferred_creating=1;
+							//::MessageBox(NULL, TEXT("111"), TEXT(""), MB_OK);
+						}
 					}
 				}
 			}
