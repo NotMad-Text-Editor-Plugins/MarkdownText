@@ -62,9 +62,9 @@ public :
 
 	virtual void setClosed(bool toClose);
 
-	void RefreshWebview();
+	void RefreshWebview(bool fromEditor=0);
 
-	void refreshDlg(bool updateList);
+	void refreshDlg(bool updateList, bool fromEditor);
 
 	void setParent(HWND parent2set){
 		_hParent = parent2set;

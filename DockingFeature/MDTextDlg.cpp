@@ -88,7 +88,7 @@ CHAR* loadPluginAsset(const char* path, DWORD & dataLen)
 
 bool onLoadUrlBegin(wkeWebView webView, void* param, const char* url, void *job)
 {
-	if(strspn(url, InternalResHead)==8)
+	if(strncmp(url, InternalResHead, 7)==0)
 	{
 		auto path = url+7;
 		const utf8* decodeURL = wkeUtilDecodeURLEscape(path);
@@ -525,7 +525,7 @@ void MB_CALL_TYPE onRunJs(mbWebView webView, void* param, mbJsExecState es, mbJs
 
 BOOL MB_CALL_TYPE handleLoadUrlBegin(mbWebView webView, void* param, const char* url, void *job)
 {
-	if(strspn(url, InternalResHead)==8)
+	if(strncmp(url, InternalResHead, 7)==0)
 	{
 		auto path = url+7;
 		//const utf8* decodeURL = wkeUtilDecodeURLEscape(path);
@@ -675,7 +675,8 @@ url_intercept_result* InterceptBrowserWidget(std::string url)
 	if(url=="https://tests/home") {
 		return new url_intercept_result{(CHAR*)"Markdown Text", 14, 200, (CHAR*)"OK"};
 	}
-	if(strspn(url.data(), InternalResHead1)==13)
+
+	if(strncmp(url.data(), InternalResHead1, 12)==0)
 	{
 		auto path = url.data()+12;
 		if(path)
@@ -845,52 +846,82 @@ void LONGPTR2STR(CHAR* STR, LONG_PTR LONGPTR)
 	strrev(start);
 }
 
-void MarkDownTextDlg::RefreshWebview() {
+bool STRENDWITH(TCHAR* strA,CHAR* strB)
+{
+	int valen = lstrlen(strA);
+	int pc = strlen(strB);
+	int to = valen-pc;
+	int po = 0;
+	// Note: toffset might be near -1>>>1.
+	if (to < 0) {
+		return false;
+	}
+	while (--pc >= 0) {
+		if (strA[to++] != strB[po++]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+void MarkDownTextDlg::RefreshWebview(bool fromEditor) {
 	if(currentKernal&&NPPRunning)
 	{
 		LONG_PTR bid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
 		if(mWebView) {
-			wkeLoadHTML(mWebView, "<!doctype html><meta charset=\"utf-8\"> <script src=\"mdbr://main.js\"></script><body><script>window.APMD(GetDocText(''));</script></body>");
+			wkeLoadHTML(mWebView, "<!doctype html><meta charset=\"utf-8\"> <script src=\"mdbr://main.js\"></script><body><script>window.update=function(){APMD(GetDocText(''))};update();</script></body>");
 		} else if(mWebView_1) {
 			mbLoadHtmlWithBaseUrl(mWebView_1, "<!doctype html><meta charset=\"utf-8\"> <script src=\"mdbr://main.js\"></script><body><script>function onNative(msg,rsp){if(msg==0x666)window.APMD(rsp)}window.mbQuery(0x666,\"\",onNative);</script></body>", "file://");
 		} else if(mWebView_2) {
-			TCHAR url[MAX_PATH];
-			::SendMessage(nppData._nppHandle, NPPM_GETFULLCURRENTPATH, 0, (LPARAM)url);
-			for(int i=0;i<MAX_PATH;i++)
-			{
-				if(url[i]=='\\') url[i]='/';
-				else if(url[i]=='\0') break; 
-			}
-			int urlLen = WideCharToMultiByte(CP_ACP, 0, url, -1, NULL, 0, NULL, NULL); 
-			CHAR url_[MAX_PATH];
-			WideCharToMultiByte(CP_ACP, 0, url, -1, url_, urlLen, NULL, NULL);  
-			strcpy(url_+urlLen-1, ".html");
-
-			//auto page_data = new CHAR[MAX_PATH];
-
-			//MessageBoxA(NULL, url_, (""), MB_OK);
-			//std::string page_data=;
-
-			//::MessageBoxA(NULL, page_data.data(), (""), MB_OK);
-			//bwLoadStrData(mWebView_2, url_, page_data.data(), page_data.length());
-			// LIBCEF 需要拟构网址。 传文件名，只传ID吧。
-			CHAR* page_id = new CHAR[64];
-			CHAR* page_content = new CHAR[256];
-			strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/main.js\"></script><body><script>window.APMD(GetDocText1('");
+			// 
+			CHAR* page_id = new CHAR[64];  // LIBCEF 需要拟构网址。 传文件名，只传ID吧。 http://tests/MDT/{bid}/index.html
+			int st,ed;
 			strcpy(page_id, "MDT/");
-			LONGPTR2STR(page_id+strlen(page_id), bid);
-			strcpy(page_content+strlen(page_content), page_id+4);
-			strcpy(page_content+strlen(page_content), "'));</script></body>");
-			strcpy(page_id+strlen(page_id), ".html");
-			//::MessageBoxA(NULL, page_id, (""), MB_OK);
-			//::MessageBoxA(NULL,page_content, (""), MB_OK);
-			bwLoadStrData(mWebView_2, page_id, page_content, 0);
+			LONGPTR2STR(page_id+(st=strlen(page_id)), bid);
+			strcpy(page_id+(ed=strlen(page_id)), "/index.html");
+			if(fromEditor && STRENDWITH(bwGetUrl(mWebView_2), page_id))
+			{ // soft update
+				bwExecuteJavaScript(mWebView_2, "update()");
+			}
+			else
+			{
+				//todo extension check
+				//todo doc length check
+				CHAR* page_content = new CHAR[256];
+				char* CustomRoutine = "MDViewer";
+				if(CustomRoutine)
+				{
+					strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><body><script>window.update=function(){window.APMD(GetDocText1('");
+				}
+				else
+				{
+					strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/main.js\" onload=init(this)></script><body><script>window.APMD(GetDocText1('");
+				}
+
+				auto nxt_st=page_content+strlen(page_content);
+				strncpy(nxt_st, page_id+st, ed-st);
+				nxt_st+=ed-st;
+
+				if(CustomRoutine)
+				{
+					strcpy(nxt_st, "'));}</script><body><script src=\"http://mdbr/");
+					strcpy(page_content+strlen(page_content), CustomRoutine);
+					strcpy(page_content+strlen(page_content), "/main.js\" onload=init(this)></script></body>");
+				}
+				else
+				{
+					strcpy(nxt_st, "'));</script></body>");
+				}
+
+				bwLoadStrData(mWebView_2, page_id, page_content, 0);
+			}
+			delete[] page_id;
 			//bwLoadStrData(mWebView_2, url_, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/main.js\"></script><body><script>window.APMD(GetDocText1(0));</script></body>", 0);
 		}
 	}
 }
 
-void MarkDownTextDlg::refreshDlg(bool updateList) {
+void MarkDownTextDlg::refreshDlg(bool updateList, bool fromEditor) {
 	bool AlwaysRefreshBtns=0;
 	if (isCreated() && isVisible())
 	{
@@ -898,7 +929,7 @@ void MarkDownTextDlg::refreshDlg(bool updateList) {
 		if(!AlwaysRefreshBtns&&!updateList) {
 			hasChanged=1;
 		}
-		RefreshWebview();
+		RefreshWebview(fromEditor);
 	} else {
 		if(AlwaysRefreshBtns) {
 			::SendMessage( _hSelf, SELF_REFRESH, 1, 0);

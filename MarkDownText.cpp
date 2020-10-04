@@ -91,7 +91,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 {
 	int ModifyType = notifyCode->modificationType;
 	int code = notifyCode->nmhdr.code;
-	bool NeedUpdate=0;
+	int NeedUpdate=0;
 	switch (code) 
 	{
 		case NPPN_TBMODIFICATION:
@@ -165,7 +165,8 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 		break;
 		case SCN_MODIFIED:
 		{
-			if(NPPRunning)
+			if(NPPRunning && notifyCode->length>0 
+				&& notifyCode->modificationType & (SC_MOD_DELETETEXT | SC_MOD_INSERTTEXT))
 			{
 				NeedUpdate=2;
 			}
@@ -186,7 +187,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 	//processNavActions();
 	if(NeedUpdate)
 	{
-		_MDText.refreshDlg(false);
+		_MDText.refreshDlg(false, NeedUpdate==2);
 	}
 }
 
