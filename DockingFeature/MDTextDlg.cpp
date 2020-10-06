@@ -1074,12 +1074,14 @@ void MarkDownTextDlg::refreshDlg(bool updateList, bool fromEditor) {
 
 
 ToolBarButtonUnit ToolBarIconList[] = {
-	{IDM_EX_OPTIONS, -1, -1, -1, IDB_EX_TOGGLE }, 
-	{IDM_EX_DOWN, -1, -1, -1, IDB_EX_DOWN }, 
-	{IDM_EX_UP, -1, -1, -1, IDB_EX_UP }, 
-	{IDM_EX_BREFNAME, -1, -1, -1, IDB_EX_BOLDEN }, 
-	{IDM_EX_DELETE_ALL, -1, -1, -1, IDB_EX_ITALIC }, 
-	{IDM_EX_DELETE, -1, -1, -1, IDB_EX_DELETE }, 
+	{IDM_EX_OPTIONS, ICO_EX_TOGGLE, ICO_EX_TOGGLE, ICO_EX_TOGGLE, 0 }, 
+	{IDM_EX_DOWN, ICO_EX_DOWN, ICO_EX_DOWN, ICO_EX_DOWN, 0 }, 
+	{IDM_EX_UP, ICO_EX_UP, ICO_EX_UP, ICO_EX_UP, 0 }, 
+	{IDM_EX_BREFNAME, ICO_EX_BOLDEN, ICO_EX_BOLDEN, ICO_EX_BOLDEN, 0 }, 
+	{IDM_EX_DELETE_ALL, ICO_EX_ITALIC, ICO_EX_ITALIC, ICO_EX_ITALIC, 0 }, 
+	{IDM_EX_DELETE, ICO_EX_DELETE, ICO_EX_DELETE, ICO_EX_DELETE, 0 }, 
+	{IDM_EX_DELETE, ICO_EX_ZOI, ICO_EX_ZOI, ICO_EX_ZOI, 0 }, 
+	{IDM_EX_DELETE, ICO_EX_ZOO, ICO_EX_ZOO, ICO_EX_ZOO, 0 }, 
 };
 
 #define ListBoxToolBarSize sizeof(ToolBarIconList)/sizeof(ToolBarButtonUnit)
@@ -1122,7 +1124,7 @@ INT_PTR CALLBACK MarkDownTextDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 			ListBoxPanel.init( _hInst, _hSelf );
 			//ListBoxWrap.init(_hInst, ListBoxPanel.getHSelf());
 			//ListBoxPanel.SetChildWindow( &ListBoxWrap );
-			toolBar.init( _hInst, _hSelf, TB_STANDARD, ToolBarIconList, ListBoxToolBarSize );
+			toolBar.init( _hInst, _hSelf, TB_SMALL, ToolBarIconList, ListBoxToolBarSize );
 			//toolBar.init( _hInst, ListBoxPanel.getHSelf(), TB_STANDARD, ListBoxToolBarButtons, ListBoxToolBarSize );
 			toolBar.display();
 			ListBoxPanel.SetToolbar( &toolBar );

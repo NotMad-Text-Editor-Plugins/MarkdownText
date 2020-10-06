@@ -86,18 +86,15 @@ IDB_BITMAP3             BITMAP                  "cprevious16.bmp"
 
 IDB_BITMAP4             BITMAP                  "cnext16.bmp"
 
-IDB_EX_UP               BITMAP                  "..\\res\\up.bmp"
 
-IDB_EX_DOWN             BITMAP                  "..\\res\\down.bmp"
-
-IDB_EX_DELETE           BITMAP                  "..\\res\\delete.bmp"
-
-IDB_EX_ITALIC       BITMAP                  "..\\res\\italic.bmp"
-
-IDB_EX_TOGGLE          BITMAP                  "..\\res\\cog.bmp"
-
-IDB_EX_BOLDEN         BITMAP                  "..\\res\\briefname.bmp"
-
+ICO_EX_TOGGLE          ICON                  "..\\res\\cog.ico"
+ICO_EX_DOWN             ICON                  "..\\res\\down.ico"
+ICO_EX_UP               ICON                  "..\\res\\up.ico"
+ICO_EX_DELETE           ICON                  "..\\res\\delete.ico"
+ICO_EX_ITALIC       ICON                  "..\\res\\italic.ico"
+ICO_EX_BOLDEN         ICON                  "..\\res\\briefname.ico"
+ICO_EX_ZOI         ICON                  "..\\res\\zoom_in.ico"
+ICO_EX_ZOO         ICON                  "..\\res\\zoom_out.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //

@@ -586,12 +586,14 @@
 #define IDI_ICON_NEXT_ACT                124
 #define IDI_ICON_NEXT_OFF                125
 
-#define IDB_EX_UP                       126
-#define IDB_EX_DOWN                     127
-#define IDB_EX_DELETE                   131
-#define IDB_EX_ITALIC               132
-#define IDB_EX_TOGGLE                  133
-#define IDB_EX_BOLDEN                  134
+#define ICO_EX_UP                       135
+#define ICO_EX_DOWN                     136
+#define ICO_EX_DELETE                   137
+#define ICO_EX_ITALIC					138
+#define ICO_EX_TOGGLE                   139
+#define ICO_EX_BOLDEN                   140
+#define ICO_EX_ZOI                   141
+#define ICO_EX_ZOO                   142
 
 #define IDM_EX_UP                       2001
 #define IDM_EX_DOWN                     2002
