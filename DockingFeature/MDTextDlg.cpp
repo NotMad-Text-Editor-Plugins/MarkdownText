@@ -57,7 +57,6 @@ wkeWebView onCreateView(wkeWebView webWindow, void* param, wkeNavigationType nav
 	return 0;
 }
 
-const char InternalResHead[] = "mdbr://";
 const char InternalResHead1[] = "http://mdbr/";
 
 CHAR* loadPluginAsset(const char* path, DWORD & dataLen)
@@ -88,9 +87,9 @@ CHAR* loadPluginAsset(const char* path, DWORD & dataLen)
 
 bool onLoadUrlBegin(wkeWebView webView, void* param, const char* url, void *job)
 {
-	if(strncmp(url, InternalResHead, 7)==0)
+	if(strncmp(url, InternalResHead1, 12)==0)
 	{
-		auto path = url+7;
+		auto path = url+12;
 		const utf8* decodeURL = wkeUtilDecodeURLEscape(path);
 		if(decodeURL)
 		{
@@ -525,9 +524,9 @@ void MB_CALL_TYPE onRunJs(mbWebView webView, void* param, mbJsExecState es, mbJs
 
 BOOL MB_CALL_TYPE handleLoadUrlBegin(mbWebView webView, void* param, const char* url, void *job)
 {
-	if(strncmp(url, InternalResHead, 7)==0)
+	if(strncmp(url, InternalResHead1, 12)==0)
 	{
-		auto path = url+7;
+		auto path = url+12;
 		//const utf8* decodeURL = wkeUtilDecodeURLEscape(path);
 		const utf8* decodeURL = mbUtilDecodeURLEscape(path);
 		if(decodeURL)
@@ -791,7 +790,7 @@ void MarkDownTextDlg::display(bool toShow){
 
 	if(toShow && currentKernal==0) 
 	{
-		int kernalType=-1; // -1_auto 0_wke 1_mb 2_bw
+		int kernalType=0; // -1_auto 0_wke 1_mb 2_bw
 		TCHAR WKPath[MAX_PATH]={0};
 		TCHAR WKPath1[MAX_PATH]={0};
 		::GetModuleFileName((HINSTANCE)g_hModule, WKPath, MAX_PATH);
@@ -937,14 +936,56 @@ bool STRENDWITH(TCHAR* strA,CHAR* strB)
 	return true;
 }
 
+void MarkDownTextDlg::AppendPageResidue(char* nxt_st) {
+	if(CustomRoutine)
+	{
+		strcpy(nxt_st, CustomRoutine);
+		nxt_st+=strlen(CustomRoutine);
+		strcpy(nxt_st, "/");
+		nxt_st+=1;
+	}
+	strcpy(nxt_st, "main.js\" onload=init(this)></script></body>");
+}
+
 void MarkDownTextDlg::RefreshWebview(bool fromEditor) {
 	if(currentKernal&&NPPRunning)
 	{
 		LONG_PTR bid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
+		CustomRoutine = "MDViewer";
+		//CustomRoutine = 0;
 		if(mWebView) {
-			wkeLoadHTML(mWebView, "<!doctype html><meta charset=\"utf-8\"> <script src=\"mdbr://main.js\"></script><body><script>window.update=function(){APMD(GetDocText(''))};update();</script></body>");
+
+			if(fromEditor)
+			{ // soft update
+				wkeRunJS(mWebView, "update()");
+			}
+			else
+			{
+				CHAR* page_content = new CHAR[256];
+				strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script>window.update=function(){APMD(GetDocText(''))}</script><body><script src=\"http://mdbr/");
+				
+				// 加载wke
+				AppendPageResidue(page_content+131);
+
+				wkeLoadHTML(mWebView, page_content);
+			}
+			//wkeLoadHTML(mWebView, "<!doctype html><meta charset=\"utf-8\"> <script src=\"http://mdbr/main.js\"></script><body><script>window.update=function(){APMD(GetDocText(''))};update();</script></body>");
 		} else if(mWebView_1) {
-			mbLoadHtmlWithBaseUrl(mWebView_1, "<!doctype html><meta charset=\"utf-8\"> <script src=\"mdbr://main.js\"></script><body><script>function onNative(msg,rsp){if(msg==0x666)window.APMD(rsp)}window.mbQuery(0x666,\"\",onNative);</script></body>", "file://");
+			if(fromEditor)
+			{ // soft update
+				mbRunJs(mWebView_1, mbWebFrameGetMainFrame(mWebView_1), "update()", false, 0,0,0);
+			}
+			else
+			{
+				CHAR* page_content = new CHAR[256];
+				strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script>function onNative(msg,rsp){if(msg==0x666)window.APMD(rsp)};window.update=function(){window.mbQuery(0x666,\"\",onNative)}</script><body><script src=\"http://mdbr/");
+				
+				// 加载mb
+				AppendPageResidue(page_content+203);
+
+				mbLoadHtmlWithBaseUrl(mWebView_1, page_content, "file://");
+				//mbLoadHtmlWithBaseUrl(mWebView_1, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/main.js\"></script><body><script>function onNative(msg,rsp){if(msg==0x666)window.APMD(rsp)}window.mbQuery(0x666,\"\",onNative);</script></body>", "file://");
+			}
 		} else if(mWebView_2) {
 			CHAR* page_id = new CHAR[64];  // LIBCEF 需要拟构网址。 传文件名，只传ID吧。 http://tests/MDT/{bid}/index.html
 			int st,ed;
@@ -960,31 +1001,16 @@ void MarkDownTextDlg::RefreshWebview(bool fromEditor) {
 				//todo extension check
 				//todo doc length check
 				CHAR* page_content = new CHAR[256];
-				char* CustomRoutine = "MDViewer";
-				//CustomRoutine = 0;
-				if(CustomRoutine)
-				{
-					strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><body><script>window.update=function(){window.APMD(GetDocText1('");
-				}
-				else
-				{
-					strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/main.js\" onload=init(this)></script><body><script>window.APMD(GetDocText1('");
-				}
+				strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script>window.update=function(){window.APMD(GetDocText1('");
 
-				auto nxt_st=page_content+strlen(page_content);
+				auto nxt_st=page_content+95;
 				strncpy(nxt_st, page_id+st, ed-st);
 				nxt_st+=ed-st;
 
-				if(CustomRoutine)
-				{
-					strcpy(nxt_st, "'));}</script><body><script src=\"http://mdbr/");
-					strcpy(page_content+strlen(page_content), CustomRoutine);
-					strcpy(page_content+strlen(page_content), "/main.js\" onload=init(this)></script></body>");
-				}
-				else
-				{
-					strcpy(nxt_st, "'));</script></body>");
-				}
+				strcpy(nxt_st, "'));}</script><body><script src=\"http://mdbr/");
+
+				// 加载bw
+				AppendPageResidue(nxt_st+45);
 
 				bwLoadStrData(mWebView_2, page_id, page_content, 0);
 			}

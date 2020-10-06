@@ -69,11 +69,12 @@ public :
 	void setParent(HWND parent2set){
 		_hParent = parent2set;
 	};
-	wkeWebView mWebView;
-	mbWebView mWebView_1;
-	bwWebView mWebView_2;
-	intptr_t currentKernal;
-	HWND hBrowser;
+	wkeWebView mWebView=0;
+	mbWebView mWebView_1=0;
+	bwWebView mWebView_2=0;
+	intptr_t currentKernal=0;
+	HWND hBrowser=nullptr;
+	char* CustomRoutine=nullptr;
 protected :
 	virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam);
 	SelfCtrl _color,_savecolor;
@@ -84,6 +85,7 @@ private :
 	//Window ListBoxWrap;
 	ToolBar toolBar;
 	void OnToolBarCommand( UINT Cmd );
+	void AppendPageResidue(char* appendSt);
 };
 
 #endif //LNHISTORY_DLG_H
