@@ -638,6 +638,18 @@ void LONGPTR2STR(TCHAR* STR, LONG_PTR LONGPTR)
 }
 #endif
 
+void LONGPTR2STR(CHAR* STR, LONG_PTR LONGPTR)
+{
+	CHAR* start=STR;
+	while(LONGPTR)
+	{
+		*(STR++)='0'+(LONGPTR%10);
+		LONGPTR/=10;
+	}
+	*STR='\0';
+	strrev(start);
+}
+
 BJSCV* GetDocText1(LONG_PTR funcName, int argc, LONG_PTR argv, int sizeofBJSCV)
 {
 	//::MessageBoxA(NULL, ("GetDocText1"), (""), MB_OK);
@@ -660,6 +672,60 @@ BJSCV* GetDocText1(LONG_PTR funcName, int argc, LONG_PTR argv, int sizeofBJSCV)
 	return new BJSCV{typeString, 0, GetDocTex(len, bid)};
 }
 
+
+LRESULT WINAPI testWindowProc1(
+	__in HWND hWnd,
+	__in UINT msg,
+	__in WPARAM wParam,
+	__in LPARAM lParam)
+{
+	LRESULT result = 0;
+
+	switch (msg) {
+		case WM_NCDESTROY:
+			return 0;
+
+		case WM_ERASEBKGND:
+			return TRUE;
+
+		case WM_SIZE:
+		{
+			return 0;
+		}
+		case WM_KEYDOWN:
+		{
+			break;
+		}
+		case WM_KEYUP:
+		{
+			::MessageBox(NULL, TEXT("111"), TEXT(""), MB_OK);
+			break;
+		}
+		case WM_CHAR:
+		{
+			break;
+		}
+		case WM_MOUSEWHEEL:
+		{
+			break;
+		}
+		case WM_SETFOCUS:
+			return 0;
+
+		case WM_KILLFOCUS:
+			return 0;
+
+		case WM_SETCURSOR:
+			break;
+
+		case WM_IME_STARTCOMPOSITION: {
+			break;
+		}
+	}
+	return ::DefWindowProc(hWnd, msg, wParam, lParam);
+}
+
+
 void onBrowserPrepared(bwWebView browserPtr)
 {
 	bwInstallJsNativeToWidget(browserPtr, "GetDocText1", GetDocText1);
@@ -668,11 +734,31 @@ void onBrowserPrepared(bwWebView browserPtr)
 	_MDText.hBrowser = bwGetHWNDForBrowser(browserPtr);
 	::SendMessage(_MDText.getHSelf(), WM_SIZE, 0, 0);
 	_MDText.RefreshWebview();
+	//SetWindowLongPtr(_MDText.hBrowser, GWLP_WNDPROC, (LONG_PTR)testWindowProc1);
+}
+
+bool onBrowserFocused(bwWebView browserPtr)
+{
+	HWND hwnd = bwGetHWNDForBrowser(browserPtr);
+	if(hwnd==_MDText.hBrowser) {
+		::SendMessage(nppData._nppHandle, NPPM_SETDOCKFOCUS, (WPARAM)hwnd, 0);
+	}
+	return false;
+}
+
+bool onBrowserClose(bwWebView browserPtr)
+{
+	HWND hwnd = bwGetHWNDForBrowser(browserPtr);
+	if(hwnd==_MDText.hBrowser) {
+		::SendMessage(nppData._nppHandle, NPPM_CLOSEDOCK, (WPARAM)hwnd, 0);
+	}
+	return true;
 }
 
 url_intercept_result* InterceptBrowserWidget(std::string url)
 {
 	if(url=="https://tests/home") {
+		_MDText.RefreshWebview();
 		return new url_intercept_result{(CHAR*)"Markdown Text", 14, 200, (CHAR*)"OK"};
 	}
 
@@ -701,7 +787,7 @@ clock_t browser_deferred_create_time=0;
 void MarkDownTextDlg::display(bool toShow){
 	DockingDlgInterface::display(toShow);
 
-	setClosed(false);
+	setClosed(!toShow);
 
 	if(toShow && currentKernal==0) 
 	{
@@ -730,7 +816,7 @@ void MarkDownTextDlg::display(bool toShow){
 					::PathAppend(WKPath1, L"..\\BrowserWidget\\cefclient.dll");
 					if(PathFileExists(WKPath1))
 					{
-						if(bwInit(WKPath1) && bwCreateBrowser({_hSelf, "https://tests/home", onBrowserPrepared, InterceptBrowserWidget}))
+						if(bwInit(WKPath1) && bwCreateBrowser({_hSelf, "https://tests/home", onBrowserPrepared, InterceptBrowserWidget, onBrowserFocused, onBrowserClose}))
 						{
 							browser_deferred_creating=1;
 							//::MessageBox(NULL, TEXT("111"), TEXT(""), MB_OK);
@@ -827,24 +913,11 @@ void MarkDownTextDlg::display(bool toShow){
 
 void MarkDownTextDlg::setClosed(bool toClose) {
 	_isClosed = toClose;
-	::CheckMenuItem(::GetMenu(nppData._nppHandle), 
-		funcItem[menuOption]._cmdID, MF_BYCOMMAND | (toClose?MF_UNCHECKED:MF_CHECKED));
+	::SendMessage(nppData._nppHandle, NPPM_SETMENUITEMCHECK, funcItem[menuOption]._cmdID, !toClose);
 }
 
 std::string page_data="<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/main.js\"></script><body><script>window.APMD(GetDocText1(''));</script></body>";
 //std::string page_data="";
-
-void LONGPTR2STR(CHAR* STR, LONG_PTR LONGPTR)
-{
-	CHAR* start=STR;
-	while(LONGPTR)
-	{
-		*(STR++)='0'+(LONGPTR%10);
-		LONGPTR/=10;
-	}
-	*STR='\0';
-	strrev(start);
-}
 
 bool STRENDWITH(TCHAR* strA,CHAR* strB)
 {
@@ -873,22 +946,22 @@ void MarkDownTextDlg::RefreshWebview(bool fromEditor) {
 		} else if(mWebView_1) {
 			mbLoadHtmlWithBaseUrl(mWebView_1, "<!doctype html><meta charset=\"utf-8\"> <script src=\"mdbr://main.js\"></script><body><script>function onNative(msg,rsp){if(msg==0x666)window.APMD(rsp)}window.mbQuery(0x666,\"\",onNative);</script></body>", "file://");
 		} else if(mWebView_2) {
-			// 
 			CHAR* page_id = new CHAR[64];  // LIBCEF 需要拟构网址。 传文件名，只传ID吧。 http://tests/MDT/{bid}/index.html
 			int st,ed;
 			strcpy(page_id, "MDT/");
 			LONGPTR2STR(page_id+(st=strlen(page_id)), bid);
 			strcpy(page_id+(ed=strlen(page_id)), "/index.html");
-			if(fromEditor && STRENDWITH(bwGetUrl(mWebView_2), page_id))
+			//if(fromEditor && STRENDWITH(bwGetUrl(mWebView_2), page_id))
 			{ // soft update
-				bwExecuteJavaScript(mWebView_2, "update()");
+				//bwExecuteJavaScript(mWebView_2, "update()");
 			}
-			else
+			//else
 			{
 				//todo extension check
 				//todo doc length check
 				CHAR* page_content = new CHAR[256];
 				char* CustomRoutine = "MDViewer";
+				//CustomRoutine = 0;
 				if(CustomRoutine)
 				{
 					strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><body><script>window.update=function(){window.APMD(GetDocText1('");
@@ -1046,7 +1119,6 @@ bool getMenuItemNeedsKeep(int mid) {
 	switch(mid) {
 		case menuNext:
 		case menuPrevious:
-		case menuChgNext:
 		case menuChgPrevious:
 		case menuAutoRecord:
 		case menuOption:

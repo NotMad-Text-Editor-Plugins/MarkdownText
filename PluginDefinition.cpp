@@ -52,7 +52,7 @@ int IconID[nbFunc];
 // The data of Notepad++ that you can use in your plugin commands
 NppData nppData;
 HANDLE				g_hModule;
-toolbarIcons		g_TBPrevious{0,0,0x666,0,IDI_ICON_PREV,IDI_ICON_PREV_ACT,IDI_ICON_PREV_OFF,IDB_BITMAP1};
+toolbarIcons		g_TBPrevious{0,0,0x666,0,IDI_ICON_PREV,0,0,IDB_BITMAP1};
 
 TCHAR iniFilePath[MAX_PATH];
 //bool SaveRecording = false;
@@ -87,7 +87,7 @@ void commandMenuCleanUp()
 	delete funcItem[menuPrevious]._pShKey;
 	delete funcItem[menuNext]._pShKey;
 	delete funcItem[menuChgPrevious]._pShKey;
-	delete funcItem[menuChgNext]._pShKey;
+	delete funcItem[menuPreviewCurr]._pShKey;
 	delete funcItem[menuOption]._pShKey;
 	delete funcItem[menuInCurr]._pShKey;
 	delete funcItem[menuNeedMark]._pShKey;
@@ -99,13 +99,15 @@ void commandMenuCleanUp()
 //-- ASSOCIATED FUNCTIONS START------------------//
 //----------------------------------------------//
 
-void ToggleHistoryPanel()
+void PreviewCurrentFile() {
+}
+
+void ToggleMDPanel()
 {
 	_MDText.setParent( nppData._nppHandle );
-	tTbData data = {0};
-
 	if ( !_MDText.isCreated() )
 	{
+		tTbData data = {0};
 		WindowOpaqueMsg = 0;
 		_MDText.create( &data );
 		WindowOpaqueMsg = 1;
@@ -118,15 +120,14 @@ void ToggleHistoryPanel()
 			MAKEINTRESOURCE( IDI_ICON1 ), IMAGE_ICON, 14, 14,
 			LR_LOADMAP3DCOLORS | LR_LOADTRANSPARENT );
 		::SendMessage( nppData._nppHandle, NPPM_DMMREGASDCKDLG, 0, ( LPARAM )&data );
-
 		_MDText.display();
-		::SendMessage( nppData._nppHandle, NPPM_SETMENUITEMCHECK, funcItem[menuOption]._cmdID, true );
-	} else {
+	}
+	else {
 		bool NeedShowDlg = !_MDText.isVisible();
-
 		_MDText.display(NeedShowDlg);
-
-		::SendMessage( nppData._nppHandle, NPPM_SETMENUITEMCHECK, funcItem[menuOption]._cmdID, NeedShowDlg );
+	}
+	if(!_MDText.isClosed()) {
+		//_MDText.RefreshWebview();
 	}
 }
 
@@ -195,8 +196,12 @@ void commandMenuInit()
 	ShortcutKey *incurrKey = new ShortcutKey{0,1,0,VK_OEM_MINUS};
 	ShortcutKey *markKey = new ShortcutKey{1,1,0,0x4D};// VK_M
 
-	ShortcutKey *optionsKey = new ShortcutKey{1,1,1,0x4D}; // VK_M
-	setCommand(menuOption, TEXT("Preview Markdown Text"), ToggleHistoryPanel, optionsKey, false);
+	ShortcutKey *previewKey = new ShortcutKey{0,0,0,NULL}; 
+	setCommand(menuPreviewCurr, TEXT("Preview Current File"), PreviewCurrentFile, previewKey, false);
+
+	ShortcutKey *optionsKey = new ShortcutKey{1,0,1,0x4D}; // VK_M
+	setCommand(menuOption, TEXT("Markdown Text Panel"), ToggleMDPanel, optionsKey, false);
+	
 
 	setCommand(menuSeparator0, TEXT("-SEPARATOR-"),NULL, NULL, false);
 

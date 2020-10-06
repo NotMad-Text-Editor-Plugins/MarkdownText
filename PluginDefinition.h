@@ -43,7 +43,7 @@ enum menuList
 	menuPrevious = 0,
 	menuNext ,
 	menuChgPrevious ,
-	menuChgNext ,
+	menuPreviewCurr ,
 	menuOption,
 	menuSeparator0,
 

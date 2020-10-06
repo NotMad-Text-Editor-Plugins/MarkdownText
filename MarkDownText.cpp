@@ -107,7 +107,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 
 				g_TBPrevious.HRO = HRO;
 				if(legacy)g_TBPrevious.hToolbarBmp = (HBITMAP)::LoadImage(HRO, MAKEINTRESOURCE(IDB_BITMAP1), IMAGE_BITMAP, 0,0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
-				::SendMessage(nppData._nppHandle, NPPM_ADDTOOLBARICON, (WPARAM)funcItem[menuPrevious]._cmdID, (LPARAM)&g_TBPrevious);
+				::SendMessage(nppData._nppHandle, NPPM_ADDTOOLBARICON, (WPARAM)funcItem[menuOption]._cmdID, (LPARAM)&g_TBPrevious);
 
 
 			}
