@@ -116,7 +116,7 @@ void ClearAllRecords();
 
 extern MarkDownTextDlg _MDText;
 
-extern toolbarIcons		g_TBPrevious;
+extern toolbarIcons		g_TBMarkdown;
 
 extern bool pinMenu;
 

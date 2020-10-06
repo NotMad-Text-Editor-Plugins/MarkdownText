@@ -29,7 +29,6 @@
     <Image Include="DockingFeature\next16.bmp" />
     <Image Include="DockingFeature\previous16.bmp" />
     <Image Include="DockingFeature\next.ico" />
-    <Image Include="DockingFeature\prev.ico" />
     <Image Include="DockingFeature\next1.ico" />
     <Image Include="DockingFeature\prev1.ico" />
     <Image Include="DockingFeature\prev1_act.ico" />
@@ -49,5 +48,6 @@
     <Image Include="res\bin_empty.bmp" />
     <Image Include="res\cog.bmp" />
     <Image Include="res\briefname.bmp" />
+    <Image Include="DockingFeature\markdown.ico" />
   </ItemGroup>
 </Project>

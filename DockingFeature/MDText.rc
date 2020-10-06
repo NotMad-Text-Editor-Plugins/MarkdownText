@@ -149,7 +149,7 @@ IDI_ICON1               ICON                    "icon1.ico"
 
 IDI_ICON_NEXT           ICON                    "next.ico"
 
-IDI_ICON_PREV           ICON                    "prev.ico"
+IDI_ICON_MD           ICON                    "markdown.ico"
 
 IDI_ICON_NEXT1          ICON                    "next1.ico"
 

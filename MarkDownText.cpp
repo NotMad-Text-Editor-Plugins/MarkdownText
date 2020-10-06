@@ -105,9 +105,9 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 
 				legacy = version<0x666;
 
-				g_TBPrevious.HRO = HRO;
-				if(legacy)g_TBPrevious.hToolbarBmp = (HBITMAP)::LoadImage(HRO, MAKEINTRESOURCE(IDB_BITMAP1), IMAGE_BITMAP, 0,0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
-				::SendMessage(nppData._nppHandle, NPPM_ADDTOOLBARICON, (WPARAM)funcItem[menuOption]._cmdID, (LPARAM)&g_TBPrevious);
+				g_TBMarkdown.HRO = HRO;
+				if(legacy)g_TBMarkdown.hToolbarBmp = (HBITMAP)::LoadImage(HRO, MAKEINTRESOURCE(IDB_BITMAP1), IMAGE_BITMAP, 0,0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
+				::SendMessage(nppData._nppHandle, NPPM_ADDTOOLBARICON, (WPARAM)funcItem[menuOption]._cmdID, (LPARAM)&g_TBMarkdown);
 
 
 			}

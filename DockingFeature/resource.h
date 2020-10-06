@@ -574,7 +574,7 @@
 
 #define IDI_ICON5                113
 #define IDI_ICON_NEXT                114
-#define IDI_ICON_PREV                115
+#define IDI_ICON_MD                115
 #define IDI_ICON_NEXT1                116
 #define IDI_ICON_PREV1                117
 #define IDI_ICON_PREV1_ACT                118

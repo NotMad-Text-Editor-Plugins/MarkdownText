@@ -52,7 +52,7 @@ int IconID[nbFunc];
 // The data of Notepad++ that you can use in your plugin commands
 NppData nppData;
 HANDLE				g_hModule;
-toolbarIcons		g_TBPrevious{0,0,0x666,0,IDI_ICON_PREV,0,0,IDB_BITMAP1};
+toolbarIcons		g_TBMarkdown{0,0,0x666,0,IDI_ICON_MD,0,0,IDB_BITMAP1};
 
 TCHAR iniFilePath[MAX_PATH];
 //bool SaveRecording = false;

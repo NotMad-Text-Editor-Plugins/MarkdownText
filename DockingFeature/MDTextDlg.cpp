@@ -951,11 +951,11 @@ void MarkDownTextDlg::RefreshWebview(bool fromEditor) {
 			strcpy(page_id, "MDT/");
 			LONGPTR2STR(page_id+(st=strlen(page_id)), bid);
 			strcpy(page_id+(ed=strlen(page_id)), "/index.html");
-			//if(fromEditor && STRENDWITH(bwGetUrl(mWebView_2), page_id))
+			if(fromEditor && STRENDWITH(bwGetUrl(mWebView_2), page_id))
 			{ // soft update
-				//bwExecuteJavaScript(mWebView_2, "update()");
+				bwExecuteJavaScript(mWebView_2, "update()");
 			}
-			//else
+			else
 			{
 				//todo extension check
 				//todo doc length check
@@ -1015,8 +1015,8 @@ void MarkDownTextDlg::refreshDlg(bool updateList, bool fromEditor) {
 
 ToolBarButtonUnit ToolBarIconList[] = {
 	{IDM_EX_OPTIONS, -1, -1, -1, IDB_EX_OPTIONS }, 
-	{IDM_EX_UP, -1, -1, -1, IDB_EX_UP }, 
 	{IDM_EX_DOWN, -1, -1, -1, IDB_EX_DOWN }, 
+	{IDM_EX_UP, -1, -1, -1, IDB_EX_UP }, 
 	{IDM_EX_BREFNAME, -1, -1, -1, IDB_EX_BREFNAME }, 
 	{IDM_EX_DELETE_ALL, -1, -1, -1, IDB_EX_DELETE_ALL }, 
 	{IDM_EX_DELETE, -1, -1, -1, IDB_EX_DELETE }, 
@@ -1202,6 +1202,32 @@ void MarkDownTextDlg::OnToolBarCommand( UINT Cmd )
 	switch ( Cmd ) {
 		case IDM_EX_OPTIONS:
 			TrackPopup(_hSelf);
+		return;
+		case IDM_EX_DOWN:
+			if(currentKernal) {
+				if(mWebView) {
+					//if(wkeGoBack(mWebView))
+					wkeGoBack(mWebView);
+				} else if(mWebView_1){
+					mbGoBack(mWebView_1);
+				} else if(mWebView_2){
+					//if(bwCanGoBack(mWebView_2))
+					bwGoBack(mWebView_2);
+				}
+			}
+		return;
+		case IDM_EX_UP:
+			if(currentKernal) {
+				if(mWebView) {
+					//if(wkeGoForward(mWebView))
+					wkeGoForward(mWebView);
+				} else if(mWebView_1){
+					mbGoForward(mWebView_1);
+				} else if(mWebView_2){
+					//if(bwCanGoForward(mWebView_2))
+					bwGoForward(mWebView_2);
+				}
+			}
 		return;
 	}
 }

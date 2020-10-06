@@ -388,7 +388,7 @@
     <Image Include="DockingFeature\next1_off.ico" />
     <Image Include="DockingFeature\next_act.ico" />
     <Image Include="DockingFeature\next_off.ico" />
-    <Image Include="DockingFeature\prev.ico" />
+    <Image Include="DockingFeature\markdown.ico" />
     <Image Include="DockingFeature\prev1.ico" />
     <Image Include="DockingFeature\prev1_act.ico" />
     <Image Include="DockingFeature\prev1_off.ico" />
