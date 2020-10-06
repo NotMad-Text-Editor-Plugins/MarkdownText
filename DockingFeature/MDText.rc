@@ -92,11 +92,11 @@ IDB_EX_DOWN             BITMAP                  "..\\res\\down.bmp"
 
 IDB_EX_DELETE           BITMAP                  "..\\res\\delete.bmp"
 
-IDB_EX_DELETE_ALL       BITMAP                  "..\\res\\bin_empty.bmp"
+IDB_EX_ITALIC       BITMAP                  "..\\res\\italic.bmp"
 
-IDB_EX_OPTIONS          BITMAP                  "..\\res\\cog.bmp"
+IDB_EX_TOGGLE          BITMAP                  "..\\res\\cog.bmp"
 
-IDB_EX_BREFNAME         BITMAP                  "..\\res\\briefname.bmp"
+IDB_EX_BOLDEN         BITMAP                  "..\\res\\briefname.bmp"
 
 
 /////////////////////////////////////////////////////////////////////////////

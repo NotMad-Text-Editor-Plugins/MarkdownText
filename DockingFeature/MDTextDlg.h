@@ -75,6 +75,7 @@ public :
 	intptr_t currentKernal=0;
 	HWND hBrowser=nullptr;
 	char* CustomRoutine=nullptr;
+	LONG_PTR lastBid=0;
 protected :
 	virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam);
 	SelfCtrl _color,_savecolor;

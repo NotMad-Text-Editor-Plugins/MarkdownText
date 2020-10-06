@@ -82,7 +82,9 @@ extern "C" __declspec(dllexport) FuncItem * getFuncsArray(int *nbF)
 	return funcItem;
 }
 
-bool legacy;
+bool			legacy;
+TCHAR*			buffer;
+TCHAR*			last_actived = new TCHAR[MAX_PATH]{0};
 
 typedef const TBBUTTON *LPCTBBUTTON;
 static long preModifyPos = -1;//之前在的位置
@@ -187,6 +189,22 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 	//processNavActions();
 	if(NeedUpdate)
 	{
+		if(NeedUpdate==1)
+		{
+			TCHAR*  pszNewPath;
+			if(legacy) {
+				pszNewPath = buffer?buffer:(buffer=new TCHAR[MAX_PATH]);
+				::SendMessage(nppData._nppHandle, NPPM_GETFULLCURRENTPATH,0,(LPARAM)pszNewPath);
+			} else {
+				pszNewPath = (TCHAR*)::SendMessage(nppData._nppHandle,NPPM_GETRAWFULLCURRENTPATH, 0, 0);
+			}
+
+			if(lstrcmp(last_actived, pszNewPath)==0) { 
+				return;
+			} else {
+				lstrcpy(last_actived, pszNewPath);
+			}
+		}
 		_MDText.refreshDlg(false, NeedUpdate==2);
 	}
 }

@@ -589,9 +589,9 @@
 #define IDB_EX_UP                       126
 #define IDB_EX_DOWN                     127
 #define IDB_EX_DELETE                   131
-#define IDB_EX_DELETE_ALL               132
-#define IDB_EX_OPTIONS                  133
-#define IDB_EX_BREFNAME                  134
+#define IDB_EX_ITALIC               132
+#define IDB_EX_TOGGLE                  133
+#define IDB_EX_BOLDEN                  134
 
 #define IDM_EX_UP                       2001
 #define IDM_EX_DOWN                     2002

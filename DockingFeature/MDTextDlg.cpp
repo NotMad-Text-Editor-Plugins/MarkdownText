@@ -732,7 +732,7 @@ void onBrowserPrepared(bwWebView browserPtr)
 	_MDText.currentKernal = (LONG_PTR)browserPtr;
 	_MDText.hBrowser = bwGetHWNDForBrowser(browserPtr);
 	::SendMessage(_MDText.getHSelf(), WM_SIZE, 0, 0);
-	_MDText.RefreshWebview();
+	//_MDText.RefreshWebview(); 没有用
 	//SetWindowLongPtr(_MDText.hBrowser, GWLP_WNDPROC, (LONG_PTR)testWindowProc1);
 }
 
@@ -757,7 +757,7 @@ bool onBrowserClose(bwWebView browserPtr)
 url_intercept_result* InterceptBrowserWidget(std::string url)
 {
 	if(url=="https://tests/home") {
-		_MDText.RefreshWebview();
+		_MDText.RefreshWebview(false);
 		return new url_intercept_result{(CHAR*)"Markdown Text", 14, 200, (CHAR*)"OK"};
 	}
 
@@ -790,7 +790,7 @@ void MarkDownTextDlg::display(bool toShow){
 
 	if(toShow && currentKernal==0) 
 	{
-		int kernalType=0; // -1_auto 0_wke 1_mb 2_bw
+		int kernalType=2; // -1_auto 0_wke 1_mb 2_bw
 		TCHAR WKPath[MAX_PATH]={0};
 		TCHAR WKPath1[MAX_PATH]={0};
 		::GetModuleFileName((HINSTANCE)g_hModule, WKPath, MAX_PATH);
@@ -897,10 +897,11 @@ void MarkDownTextDlg::display(bool toShow){
 			}
 			if(currentKernal)
 			{
-				RefreshWebview();
 				if(mWebView) {
+					RefreshWebview();
 					wkeShowWindow(mWebView, TRUE);
 				} else if(mWebView_1){
+					RefreshWebview();
 					mbShowWindow(mWebView_1, TRUE);
 				}
 			}
@@ -947,72 +948,113 @@ void MarkDownTextDlg::AppendPageResidue(char* nxt_st) {
 	strcpy(nxt_st, "main.js\" onload=init(this)></script></body>");
 }
 
+extern TCHAR* last_actived;
+
+std::vector<char*> markdown_ext;
+
+std::vector<char*> html_ext;
+
+bool checkFileExt(vector<char*> ext) { 
+	auto len = lstrlen(last_actived);
+	TCHAR x;
+	for(char* eI:ext) {
+		auto elen = strlen(eI);
+		if(elen==1&&eI[0]=='*') return true;
+		if(len>elen) {
+			int i=elen-1;
+			while(i>=0&&((x=last_actived[len-elen+i])==eI[i]||i>0&&x==toupper(eI[i])))--i;
+			if(i<0) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+bool checkRenderMarkdown() { 
+	if(markdown_ext.size()==0) {
+		markdown_ext.push_back(".md");
+	}
+	return checkFileExt(markdown_ext);
+}
+
+bool checkRenderHtml() { 
+	if(html_ext.size()==0) {
+		html_ext.push_back(".html");
+	}
+	return checkFileExt(html_ext);
+}
+
 void MarkDownTextDlg::RefreshWebview(bool fromEditor) {
 	if(currentKernal&&NPPRunning)
 	{
 		LONG_PTR bid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
 		CustomRoutine = "MDViewer";
+		char b1=fromEditor&&lastBid==bid, b2=lastBid!=bid;
 		//CustomRoutine = 0;
 		if(mWebView) {
-
-			if(fromEditor)
-			{ // soft update
-				wkeRunJS(mWebView, "update()");
-			}
-			else
+			if(b1)
 			{
-				CHAR* page_content = new CHAR[256];
-				strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script>window.update=function(){APMD(GetDocText(''))}</script><body><script src=\"http://mdbr/");
-				
-				// 加载wke
-				AppendPageResidue(page_content+131);
-
-				wkeLoadHTML(mWebView, page_content);
+				wkeRunJS(mWebView, "update()"); // wke soft update
 			}
-			//wkeLoadHTML(mWebView, "<!doctype html><meta charset=\"utf-8\"> <script src=\"http://mdbr/main.js\"></script><body><script>window.update=function(){APMD(GetDocText(''))};update();</script></body>");
-		} else if(mWebView_1) {
-			if(fromEditor)
-			{ // soft update
-				mbRunJs(mWebView_1, mbWebFrameGetMainFrame(mWebView_1), "update()", false, 0,0,0);
-			}
-			else
+			else if(b2)
 			{
-				CHAR* page_content = new CHAR[256];
-				strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script>function onNative(msg,rsp){if(msg==0x666)window.APMD(rsp)};window.update=function(){window.mbQuery(0x666,\"\",onNative)}</script><body><script src=\"http://mdbr/");
-				
-				// 加载mb
-				AppendPageResidue(page_content+203);
-
-				mbLoadHtmlWithBaseUrl(mWebView_1, page_content, "file://");
-				//mbLoadHtmlWithBaseUrl(mWebView_1, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/main.js\"></script><body><script>function onNative(msg,rsp){if(msg==0x666)window.APMD(rsp)}window.mbQuery(0x666,\"\",onNative);</script></body>", "file://");
+				if(checkRenderMarkdown()) {
+					CHAR* page_content = new CHAR[256];
+					strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script>window.update=function(){APMD(GetDocText(''))}</script><body><script src=\"http://mdbr/");	
+					AppendPageResidue(page_content+131); // 加载wke
+					wkeLoadHTML(mWebView, page_content);
+					lastBid=bid;
+					//wkeLoadHTML(mWebView, "<!doctype html><meta charset=\"utf-8\"> <script src=\"http://mdbr/main.js\"></script><body><script>window.update=function(){APMD(GetDocText(''))};update();</script></body>");
+				}
 			}
-		} else if(mWebView_2) {
+		} 
+		else if(mWebView_1) {
+			if(b1)
+			{
+				mbRunJs(mWebView_1, mbWebFrameGetMainFrame(mWebView_1), "update()", false, 0,0,0); // mb soft update
+			}
+			else if(b2)
+			{
+				if(checkRenderMarkdown()) {
+					CHAR* page_content = new CHAR[256];
+					strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script>function onNative(msg,rsp){if(msg==0x666)window.APMD(rsp)};window.update=function(){window.mbQuery(0x666,\"\",onNative)}</script><body><script src=\"http://mdbr/");
+					AppendPageResidue(page_content+203); // 加载mb
+					mbLoadHtmlWithBaseUrl(mWebView_1, page_content, "file://");
+					lastBid=bid;
+					//mbLoadHtmlWithBaseUrl(mWebView_1, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/main.js\"></script><body><script>function onNative(msg,rsp){if(msg==0x666)window.APMD(rsp)}window.mbQuery(0x666,\"\",onNative);</script></body>", "file://");
+				}
+			}
+		} 
+		else if(mWebView_2) {
 			CHAR* page_id = new CHAR[64];  // LIBCEF 需要拟构网址。 传文件名，只传ID吧。 http://tests/MDT/{bid}/index.html
 			int st,ed;
 			strcpy(page_id, "MDT/");
 			LONGPTR2STR(page_id+(st=strlen(page_id)), bid);
 			strcpy(page_id+(ed=strlen(page_id)), "/index.html");
-			if(fromEditor && STRENDWITH(bwGetUrl(mWebView_2), page_id))
-			{ // soft update
-				bwExecuteJavaScript(mWebView_2, "update()");
-			}
-			else
+			if(b1 && STRENDWITH(bwGetUrl(mWebView_2), page_id))
 			{
-				//todo extension check
-				//todo doc length check
-				CHAR* page_content = new CHAR[256];
-				strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script>window.update=function(){window.APMD(GetDocText1('");
+				bwExecuteJavaScript(mWebView_2, "update()"); // bw soft update
+			}
+			else if(b2)
+			{
+				if(checkRenderMarkdown()) {
+					CHAR* page_content = new CHAR[256];
+					strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script>window.update=function(){window.APMD(GetDocText1('");
 
-				auto nxt_st=page_content+95;
-				strncpy(nxt_st, page_id+st, ed-st);
-				nxt_st+=ed-st;
+					auto nxt_st=page_content+95;
+					strncpy(nxt_st, page_id+st, ed-st);
+					nxt_st+=ed-st;
 
-				strcpy(nxt_st, "'));}</script><body><script src=\"http://mdbr/");
+					strcpy(nxt_st, "'));}</script><body><script src=\"http://mdbr/");
 
-				// 加载bw
-				AppendPageResidue(nxt_st+45);
+					AppendPageResidue(nxt_st+45); // 加载bw
+					bwLoadStrData(mWebView_2, page_id, page_content, 0);
+					lastBid=bid;
+				}// else if(!legacy && checkRenderHtml()){
 
-				bwLoadStrData(mWebView_2, page_id, page_content, 0);
+					//lastBid=0;
+				//}
 			}
 			delete[] page_id;
 			//bwLoadStrData(mWebView_2, url_, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/main.js\"></script><body><script>window.APMD(GetDocText1(0));</script></body>", 0);
@@ -1021,30 +1063,22 @@ void MarkDownTextDlg::RefreshWebview(bool fromEditor) {
 }
 
 void MarkDownTextDlg::refreshDlg(bool updateList, bool fromEditor) {
-	bool AlwaysRefreshBtns=0;
 	if (isCreated() && isVisible())
 	{
-		//::SendMessage( _hSelf, SELF_REFRESH, AlwaysRefreshBtns, updateList);
-		if(!AlwaysRefreshBtns&&!updateList) {
-			hasChanged=1;
-		}
 		RefreshWebview(fromEditor);
+		hasChanged=0;
 	} else {
-		if(AlwaysRefreshBtns) {
-			::SendMessage( _hSelf, SELF_REFRESH, 1, 0);
-		} else {
-			hasChanged=1;
-		}
+		hasChanged=1;
 	}
 };
 
 
 ToolBarButtonUnit ToolBarIconList[] = {
-	{IDM_EX_OPTIONS, -1, -1, -1, IDB_EX_OPTIONS }, 
+	{IDM_EX_OPTIONS, -1, -1, -1, IDB_EX_TOGGLE }, 
 	{IDM_EX_DOWN, -1, -1, -1, IDB_EX_DOWN }, 
 	{IDM_EX_UP, -1, -1, -1, IDB_EX_UP }, 
-	{IDM_EX_BREFNAME, -1, -1, -1, IDB_EX_BREFNAME }, 
-	{IDM_EX_DELETE_ALL, -1, -1, -1, IDB_EX_DELETE_ALL }, 
+	{IDM_EX_BREFNAME, -1, -1, -1, IDB_EX_BOLDEN }, 
+	{IDM_EX_DELETE_ALL, -1, -1, -1, IDB_EX_ITALIC }, 
 	{IDM_EX_DELETE, -1, -1, -1, IDB_EX_DELETE }, 
 };
 
