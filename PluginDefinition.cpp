@@ -35,8 +35,6 @@ extern bool WindowOpaqueMsg;
 
 bool pinMenu = false;
 
-HWND curScintilla=0;
-
 long MarkColor = DefaultColor;
 long SaveColor = DefaultSaveColor;
 
@@ -46,53 +44,18 @@ long SaveColor = DefaultSaveColor;
 	#define generic_itoa itoa
 #endif
 
-FuncItem funcItem[nbFunc];
-bool menuState[nbFunc];
-int IconID[nbFunc];
-// The data of Notepad++ that you can use in your plugin commands
-NppData nppData;
-HANDLE				g_hModule;
-toolbarIcons		g_TBMarkdown{0,0,0x666,0,IDI_ICON_MD,0,0,IDB_BITMAP1};
-
-TCHAR iniFilePath[MAX_PATH];
-//bool SaveRecording = false;
-
-//
-// Initialize your plugin data here
-// It will be called while plugin loading   
-void pluginInit(HANDLE hModule)
-{
-	// Initialize dialog
-	_MDText.init((HINSTANCE)hModule, NULL);
-	g_hModule = hModule;
-
-	//InitializeCriticalSection(&criCounter); 
-}
-
-// Here do the clean up, save the parameters if any
 void pluginCleanUp()
 {
-	//DeleteCriticalSection(&criCounter);
-	//if(1) return;
-	TCHAR str[500]={0};	
-	//wsprintf(str,TEXT("%d"),SaveColor);
-	//::WritePrivateProfileString(sectionName, strSaveColor, str, iniFilePath);
-
+	_MDText.saveParameters();
 }
 
-// Here do the clean up (especially for the shortcut)
+
 void commandMenuCleanUp()
 {
-	// Don't forget to deallocate your shortcut here
-	delete funcItem[menuPrevious]._pShKey;
-	delete funcItem[menuNext]._pShKey;
-	delete funcItem[menuChgPrevious]._pShKey;
-	delete funcItem[menuPreviewCurr]._pShKey;
-	delete funcItem[menuOption]._pShKey;
-	delete funcItem[menuInCurr]._pShKey;
-	delete funcItem[menuNeedMark]._pShKey;
-
-	//::WritePrivateProfileString(sectionName, strRecordContent, NULL, iniFilePath);
+	for(FuncItem fI:funcItems){
+		delete fI._pShKey;
+	}
+	funcItems.clear();
 }
 
 //----------------------------------------------//
@@ -148,10 +111,10 @@ bool setCommand(size_t index, TCHAR *cmdName, PFUNCPLUGINCMD pFunc, ShortcutKey 
 	if (!pFunc)
 		return false;
 
-	lstrcpy(funcItem[index]._itemName, cmdName);
-	funcItem[index]._pFunc = pFunc;
-	funcItem[index]._init2Check = check0nInit;
-	funcItem[index]._pShKey = sk;
+	lstrcpy(funcItems[index]._itemName, cmdName);
+	funcItems[index]._pFunc = pFunc;
+	funcItems[index]._init2Check = check0nInit;
+	funcItems[index]._pShKey = sk;
 
 	return true;
 }
@@ -161,20 +124,7 @@ void commandMenuInit()
 	// Initialization of your plugin commands
 	// Firstly we get the parameters from your plugin config file (if any)
 	// get path of plugin configuration
-	::SendMessage(nppData._nppHandle, NPPM_GETPLUGINSCONFIGDIR, MAX_PATH, (LPARAM)iniFilePath);
-
-	// if config path doesn't exist, we create it
-	if (PathFileExists(iniFilePath) == FALSE)
-	{
-		::CreateDirectory(iniFilePath, NULL);
-	}
-
-	// make your plugin config file full file path name
-	PathAppend(iniFilePath, configFileName);
-
-	// get the parameter value from plugin config
-	MarkColor = ::GetPrivateProfileInt(sectionName, strMarkColor, DefaultColor, iniFilePath);
-	SaveColor = ::GetPrivateProfileInt(sectionName, strSaveColor, DefaultSaveColor, iniFilePath);
+	_MDText.readParameters();
 	//--------------------------------------------//
 	//-- STEP 3. CUSTOMIZE YOUR PLUGIN COMMANDS --//
 	//--------------------------------------------//
@@ -195,6 +145,8 @@ void commandMenuInit()
 	ShortcutKey *ClearRecordsKey = new ShortcutKey{1,1,1,VK_F9};
 	ShortcutKey *incurrKey = new ShortcutKey{0,1,0,VK_OEM_MINUS};
 	ShortcutKey *markKey = new ShortcutKey{1,1,0,0x4D};// VK_M
+
+	funcItems.resize(nbFunc);
 
 	ShortcutKey *previewKey = new ShortcutKey{0,0,0,NULL}; 
 	setCommand(menuPreviewCurr, TEXT("Preview Current File"), PreviewCurrentFile, previewKey, false);

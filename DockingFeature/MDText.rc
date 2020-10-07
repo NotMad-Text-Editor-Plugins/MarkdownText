@@ -90,11 +90,12 @@ IDB_BITMAP4             BITMAP                  "cnext16.bmp"
 ICO_EX_TOGGLE          ICON                  "..\\res\\cog.ico"
 ICO_EX_DOWN             ICON                  "..\\res\\down.ico"
 ICO_EX_UP               ICON                  "..\\res\\up.ico"
-ICO_EX_DELETE           ICON                  "..\\res\\delete.ico"
+ICO_EX_DELTA           ICON                  "..\\res\\delta.ico"
 ICO_EX_ITALIC       ICON                  "..\\res\\italic.ico"
 ICO_EX_BOLDEN         ICON                  "..\\res\\briefname.ico"
 ICO_EX_ZOI         ICON                  "..\\res\\zoom_in.ico"
 ICO_EX_ZOO         ICON                  "..\\res\\zoom_out.ico"
+ICO_EX_Refresh         ICON                  "..\\res\\refresh.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //

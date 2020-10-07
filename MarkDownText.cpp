@@ -29,10 +29,6 @@
 ////////////////SELF DATA BEGIN///////////
 TCHAR currFile[MAX_PATH]={0};
 static int currBufferID=-1;
-extern FuncItem funcItem[nbFunc];
-extern NppData nppData;
-
-extern HANDLE				g_hModule;
 
 //////////  SELF FUNCTION END ////////
 BOOL APIENTRY DllMain( HANDLE hModule, 
@@ -43,7 +39,10 @@ BOOL APIENTRY DllMain( HANDLE hModule,
     {
       case DLL_PROCESS_ATTACH:
 	  {
-		  pluginInit(hModule);
+		  GetModuleFileName((HMODULE)hModule, g_ModulePath, MAX_PATH);
+		  PathRemoveFileSpec(g_ModulePath);
+		  _MDText.init((HINSTANCE)hModule, NULL);
+		  g_hModule = hModule;
 		  break;
 	  }
 
@@ -79,12 +78,8 @@ extern "C" __declspec(dllexport) const TCHAR * getName()
 extern "C" __declspec(dllexport) FuncItem * getFuncsArray(int *nbF)
 {
 	*nbF = nbFunc;
-	return funcItem;
+	return funcItems.data();
 }
-
-bool			legacy;
-TCHAR*			buffer;
-TCHAR*			last_actived = new TCHAR[MAX_PATH]{0};
 
 typedef const TBBUTTON *LPCTBBUTTON;
 static long preModifyPos = -1;//之前在的位置
@@ -109,7 +104,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 
 				g_TBMarkdown.HRO = HRO;
 				if(legacy)g_TBMarkdown.hToolbarBmp = (HBITMAP)::LoadImage(HRO, MAKEINTRESOURCE(IDB_BITMAP1), IMAGE_BITMAP, 0,0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
-				::SendMessage(nppData._nppHandle, NPPM_ADDTOOLBARICON, (WPARAM)funcItem[menuOption]._cmdID, (LPARAM)&g_TBMarkdown);
+				::SendMessage(nppData._nppHandle, NPPM_ADDTOOLBARICON, (WPARAM)funcItems[menuOption]._cmdID, (LPARAM)&g_TBMarkdown);
 
 
 			}
@@ -193,7 +188,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 		{
 			TCHAR*  pszNewPath;
 			if(legacy) {
-				pszNewPath = buffer?buffer:(buffer=new TCHAR[MAX_PATH]);
+				pszNewPath = path_buffer;
 				::SendMessage(nppData._nppHandle, NPPM_GETFULLCURRENTPATH,0,(LPARAM)pszNewPath);
 			} else {
 				pszNewPath = (TCHAR*)::SendMessage(nppData._nppHandle,NPPM_GETRAWFULLCURRENTPATH, 0, 0);

@@ -586,24 +586,30 @@
 #define IDI_ICON_NEXT_ACT                124
 #define IDI_ICON_NEXT_OFF                125
 
-#define ICO_EX_UP                       135
-#define ICO_EX_DOWN                     136
-#define ICO_EX_DELETE                   137
-#define ICO_EX_ITALIC					138
-#define ICO_EX_TOGGLE                   139
-#define ICO_EX_BOLDEN                   140
-#define ICO_EX_ZOI                   141
-#define ICO_EX_ZOO                   142
+#define ICO_EX_UP                   135
+#define ICO_EX_DOWN                 136
+#define ICO_EX_DELTA                137
+#define ICO_EX_ITALIC				138
+#define ICO_EX_TOGGLE               139
+#define ICO_EX_BOLDEN               140
+#define ICO_EX_ZOI                  141
+#define ICO_EX_ZOO                  142
+#define ICO_EX_Refresh              143
 
-#define IDM_EX_UP                       2001
-#define IDM_EX_DOWN                     2002
+#define IDM_EX_TOGGLE               2001
+#define IDM_EX_DOWN                 2002
+#define IDM_EX_UP                   2003
+#define IDM_EX_REFRESH              2004
+#define IDM_EX_DELTA                2005
+#define IDM_EX_ZOI                  2006
+#define IDM_EX_ZOO                  2007
+#define IDM_EX_BOLDEN               2008
+#define IDM_EX_ITALIC               2009
+
 #define IDM_EX_PASTE                    2003
 #define IDM_EX_PASTE_ALL                2004
 #define IDM_EX_COPY_TO_CLIPBOARD        2005
-#define IDM_EX_DELETE                   2006
-#define IDM_EX_DELETE_ALL               2007
-#define IDM_EX_OPTIONS                  2008
-#define IDM_EX_BREFNAME                 2009
+
 
 #define VK_F2                           0x71
 #define VK_F3                           0x72

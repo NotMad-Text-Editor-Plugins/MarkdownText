@@ -37,16 +37,11 @@ const TCHAR sectionName[] = TEXT("Setting");
 const TCHAR strMarkColor[] = TEXT("MarkColor");
 const TCHAR strSaveColor[] = TEXT("SaveColor");
 const TCHAR configFileName[] = TEXT("MarkDownText.ini");
-extern TCHAR iniFilePath[MAX_PATH];
-
 
 extern bool legacy ;
 
 extern HWND curScintilla;
 //extern CRITICAL_SECTION criCounter;
-extern FuncItem funcItem[nbFunc];
-extern int IconID[nbFunc];
-extern NppData nppData;
 
 extern void ClearLocationList();
 
@@ -62,30 +57,38 @@ public :
 
 	virtual void setClosed(bool toClose);
 
-	void RefreshWebview(bool fromEditor=0);
+	void RefreshWebview(bool fromEditor=false);
 
 	void refreshDlg(bool updateList, bool fromEditor);
 
 	void setParent(HWND parent2set){
 		_hParent = parent2set;
 	};
+	void saveParameters();
+	void readParameters();
+	void switchEngineByIndex(int id);
+
 	wkeWebView mWebView=0;
 	mbWebView mWebView_1=0;
 	bwWebView mWebView_2=0;
-	intptr_t currentKernal=0;
+	intptr_t currentkernel=0;
 	HWND hBrowser=nullptr;
-	char* CustomRoutine=nullptr;
+	char CustomRoutine[MAX_PATH_HALF]={0};
 	LONG_PTR lastBid=0;
+	ToolBar toolBar;
 protected :
 	virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam);
 	SelfCtrl _color,_savecolor;
-private :
+public :
+	int kernelType=1; // -1_auto 0_wke 1_mb 2_bw
+	int currentkernelType=0; // 0_wke 1_mb 2_bw
 	int skFlags=0;
 	bool hasChanged;
 	ToolbarPanel ListBoxPanel;
 	//Window ListBoxWrap;
-	ToolBar toolBar;
-	void OnToolBarCommand( UINT Cmd );
+	int getToolbarCommand(POINT &pointer);
+	void OnToolBarRequestToolTip( LPNMHDR nmhdr );
+	void OnToolBarCommand( UINT Cmd, char source=0, POINT* pt=nullptr);
 	void AppendPageResidue(char* appendSt);
 };
 

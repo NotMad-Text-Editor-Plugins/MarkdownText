@@ -22,6 +22,8 @@
 // All difinitions of plugin interface
 //
 #include "PluginInterface.h"
+#include <vector>
+#include "resource.h"
 
 class MarkDownTextDlg;
 
@@ -123,4 +125,20 @@ extern bool pinMenu;
 extern HANDLE  g_hModule;
 
 __declspec(selectany) bool NPPRunning = false;
+
+__declspec(selectany) TCHAR			g_ModulePath[MAX_PATH]{0};
+__declspec(selectany) TCHAR			g_IniFilePath[MAX_PATH]{0};
+__declspec(selectany) TCHAR			path_buffer[MAX_PATH]{0};
+__declspec(selectany) TCHAR			last_actived[MAX_PATH]{0};
+
+__declspec(selectany)  std::vector<FuncItem> funcItems;
+__declspec(selectany)  NppData nppData;
+__declspec(selectany)  HANDLE				g_hModule;
+__declspec(selectany)  toolbarIcons		g_TBMarkdown{0,0,0x666,0,IDI_ICON_MD,0,0,IDB_BITMAP1};
+
+__declspec(selectany) bool			legacy;
+__declspec(selectany) HWND curScintilla=0;
+
+#define MAX_PATH_HALF 128
+#define MDCRST 8
 #endif //PLUGINDEFINITION_H
