@@ -42,30 +42,19 @@ const TCHAR NPP_PLUGIN_NAME[] = TEXT("Markdown Text");
 //
 enum menuList
 {
-	menuPrevious = 0,
-	menuNext ,
-	menuChgPrevious ,
-	menuPreviewCurr ,
+	menuPreviewCurr = 0,
 	menuOption,
+	menuAutoUpdate,
+
 	menuSeparator0,
 
-	menuAutoRecord,
-	menuManualRecord,
-	menuClearRecords,
-
-	menuAlwaysRefresh,
-	menuInCurr,
-	menuNeedMark,
-
-	menuSeparator1,
-
-	menuSkipClosed,
-	menuClearOnClose,
-	menuPause,
+	menuBolden ,
+	menuItalic ,
+	menuUnderLine,
 
 	menuSeparator2,
-	menuPinMenu,
-	menuAbout,
+	menuPause,
+	menuSettings,
 
 	menuCount,
 };

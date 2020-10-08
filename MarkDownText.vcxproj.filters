@@ -10,6 +10,7 @@
     <ClCompile Include="..\CPPCommon\ToolbarPanel.cpp" />
     <ClCompile Include="..\..\PowerEditor\src\WinControls\ImageListSet\ImageListSet.cpp" />
     <ClCompile Include="..\..\PowerEditor\src\WinControls\ToolBar\ToolBar.cpp" />
+    <ClCompile Include="CheckFailure.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DockingFeature\MDTextDlg.h" />
@@ -18,6 +19,8 @@
     <ClInclude Include="menuCmdID.h" />
     <ClInclude Include="PluginDefinition.h" />
     <ClInclude Include="..\CPPCommon\ToolbarPanel.h" />
+    <ClInclude Include="CheckFailure.h" />
+    <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DockingFeature\MDText.rc" />
@@ -49,5 +52,8 @@
     <Image Include="res\cog.bmp" />
     <Image Include="res\briefname.bmp" />
     <Image Include="DockingFeature\markdown.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

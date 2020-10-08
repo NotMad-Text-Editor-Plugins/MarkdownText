@@ -148,11 +148,11 @@ void commandMenuInit()
 
 	funcItems.resize(nbFunc);
 
-	ShortcutKey *previewKey = new ShortcutKey{0,0,0,NULL}; 
-	setCommand(menuPreviewCurr, TEXT("Preview Current File"), PreviewCurrentFile, previewKey, false);
+	ShortcutKey* shortKey = new ShortcutKey{0,0,0,NULL};
+	funcItems[menuPreviewCurr]={TEXT("Preview Current File"), PreviewCurrentFile, menuPreviewCurr, false, shortKey};
 
-	ShortcutKey *optionsKey = new ShortcutKey{1,0,1,0x4D}; // VK_M
-	setCommand(menuOption, TEXT("Markdown Text Panel"), ToggleMDPanel, optionsKey, false);
+	shortKey = new ShortcutKey{1,0,1,0x4D}; // VK_M
+	funcItems[menuOption]={TEXT("Markdown Text Panel"), ToggleMDPanel, menuOption, false, shortKey};
 	
 
 	setCommand(menuSeparator0, TEXT("-SEPARATOR-"),NULL, NULL, false);

@@ -106,7 +106,12 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 				if(legacy)g_TBMarkdown.hToolbarBmp = (HBITMAP)::LoadImage(HRO, MAKEINTRESOURCE(IDB_BITMAP1), IMAGE_BITMAP, 0,0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
 				::SendMessage(nppData._nppHandle, NPPM_ADDTOOLBARICON, (WPARAM)funcItems[menuOption]._cmdID, (LPARAM)&g_TBMarkdown);
 
-
+				TCHAR mStr[16]={0};
+				GetMenuString(GetMenu(nppData._nppHandle), 0, mStr, 16, MF_BYPOSITION);
+				if(mStr[0]==L'文')
+				{
+					ZH_CN=1;
+				}
 			}
 		break;
 		case NPPN_SHUTDOWN:

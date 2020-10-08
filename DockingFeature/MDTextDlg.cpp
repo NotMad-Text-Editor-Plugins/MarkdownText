@@ -60,6 +60,7 @@ wkeWebView onCreateView(wkeWebView webWindow, void* param, wkeNavigationType nav
 }
 
 const char InternalResHead1[] = "http://mdbr/";
+const char InternalTESTSResHead1[] = "http://tests/MDT/";
 
 CHAR* loadPluginAsset(const char* path, DWORD & dataLen)
 {
@@ -460,6 +461,41 @@ BOOL regWndClass(LPCTSTR lpcsClassName, DWORD dwStyle)
 	return TRUE;
 }
 
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	switch (message)
+	{
+	case WM_SIZE:
+		break;
+	case WM_DESTROY:
+		break;
+	default:
+		return DefWindowProc(hWnd, message, wParam, lParam);
+		break;
+	}
+
+	return 0;
+}
+
+BOOL regWndClassWin(LPCTSTR lpcsClassName, DWORD dwStyle)
+{
+	WNDCLASS wndclass = { 0 };
+
+	wndclass.style = dwStyle;
+	wndclass.lpfnWndProc = WndProc;
+	wndclass.cbClsExtra = 200;
+	wndclass.cbWndExtra = 200;
+	wndclass.hInstance = ::GetModuleHandle(NULL);
+	wndclass.hIcon = NULL;
+	//wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wndclass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+	wndclass.lpszMenuName = NULL;
+	wndclass.lpszClassName = lpcsClassName;
+
+	::RegisterClass(&wndclass);
+	return TRUE;
+}
+
 BOOL unregWndClass(LPCTSTR lpcsClassName)
 {
 	::UnregisterClass(lpcsClassName, ::GetModuleHandle(NULL));
@@ -626,29 +662,35 @@ void STR2LONGPTR(TCHAR* STR, LONG_PTR & LONGPTR)
 }
 
 #ifdef  UNICODE
-void LONGPTR2STR(TCHAR* STR, LONG_PTR LONGPTR)
+int LONGPTR2STR(TCHAR* STR, LONG_PTR LONGPTR)
 {
 	TCHAR* start=STR;
+	int cc=0;
 	while(LONGPTR)
 	{
 		*(STR++)='0'+(LONGPTR%10);
 		LONGPTR/=10;
+		cc++;
 	}
 	*STR='\0';
 	wcsrev(start);
+	return cc;
 }
 #endif
 
-void LONGPTR2STR(CHAR* STR, LONG_PTR LONGPTR)
+int LONGPTR2STR(CHAR* STR, LONG_PTR LONGPTR)
 {
 	CHAR* start=STR;
+	int cc=0;
 	while(LONGPTR)
 	{
 		*(STR++)='0'+(LONGPTR%10);
 		LONGPTR/=10;
+		cc++;
 	}
 	*STR='\0';
 	strrev(start);
+	return cc;
 }
 
 BJSCV* GetDocText1(LONG_PTR funcName, int argc, LONG_PTR argv, int sizeofBJSCV)
@@ -792,6 +834,33 @@ void UrlDecode(char* dest, const char* str)
 	*ddd='\0';
 }  
 
+void UrlDecode(char* dest, const TCHAR* str)  
+{  
+	size_t length = lstrlen(str);
+	char* ddd=dest;
+	for (size_t i = 0; i < length && ddd-dest+1<MAX_PATH_HALF; i++)  
+	{  
+		if (str[i] == '+') {
+			*ddd++ = ' ';  
+		}
+		else if (str[i] == '%')  
+		{  
+			assert(i + 2 < length);  
+			unsigned char high = FromHex(str[++i]);  
+			unsigned char low = FromHex(str[++i]);  
+			*ddd++ = high*16 + low;  
+		}
+		else if (str[i] == '?')  
+		{  
+			break;
+		}
+		else {
+			*ddd++ = str[i];  
+		}
+	}
+	*ddd='\0';
+}  
+
 url_intercept_result* InterceptBrowserWidget(std::string url)
 {
 	if(url=="https://tests/home") {
@@ -826,6 +895,25 @@ url_intercept_result* InterceptBrowserWidget(std::string url)
 clock_t browser_deferred_create_time=0;
 char wke_mb=0;
 
+
+// Global variables
+
+// The main window class name.
+static TCHAR szWindowClass[] = _T("DesktopApp");
+
+// The string that appears in the application's title bar.
+static TCHAR szTitle[] = _T("WebView sample");
+
+HINSTANCE hInst;
+
+// Forward declarations of functions included in this code module:
+LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+
+// Pointer to WebViewController
+// Pointer to WebView window
+
+
+using namespace Microsoft::WRL;
 void MarkDownTextDlg::display(bool toShow){
 	DockingDlgInterface::display(toShow);
 
@@ -840,32 +928,221 @@ void MarkDownTextDlg::display(bool toShow){
 		int error_code=0;
 		if(PathFileExists(WKPath))
 		{ // ThriveEngines !
-			// BrowserWidget
-			bool prefer_bw = kernelType==2||kernelType==-1;
 			bool browser_deferred_creating=false;
-			if(!currentkernel && prefer_bw)
+			if(browser_deferred_create_time)
 			{
-				currentkernelType=2;
 				clock_t time = clock();
-				if(browser_deferred_create_time && time-browser_deferred_create_time<550)
+				if(time-browser_deferred_create_time<550)
+					browser_deferred_creating=1;
+				else
+					browser_deferred_create_time=0;
+			}
+			// Webview2
+			if(!browser_deferred_creating && !currentkernel && kernelType==3)
+			{
+				currentkernelType=3;
+				regWndClassWin(L"WINWND", CS_HREDRAW | CS_VREDRAW);
+				HWND hWnd = ::CreateWindowEx(0 , L"WINWND" , NULL
+					, WS_CHILD , 0 , 0 , 840 , 680 , _hSelf , NULL , ::GetModuleHandle(NULL), NULL);
+				hBrowser=hWnd;
+				ShowWindow(hWnd, 1);
+				//UpdateWindow(hWnd);
+				auto options = Microsoft::WRL::Make<CoreWebView2EnvironmentOptions>();
+				HRESULT hr = CreateCoreWebView2EnvironmentWithOptions(0,0,0,
+					Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>([this](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
+					m_webViewEnvironment=env;
+					env->CreateCoreWebView2Controller(hBrowser, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>([this](HRESULT result, ICoreWebView2Controller* controller) -> HRESULT {
+						if (controller) {
+							webviewController = controller;
+							webviewController->get_CoreWebView2(&mWebView_3);
+						}
+						ICoreWebView2Settings* Settings;
+						mWebView_3->get_Settings(&Settings);
+						Settings->put_IsScriptEnabled(TRUE);
+						Settings->put_AreDefaultScriptDialogsEnabled(TRUE);
+						Settings->put_IsWebMessageEnabled(TRUE);
+
+						currentkernel = (LONG_PTR)mWebView_3.get();
+
+						SendMessage(_hSelf, WM_SIZE, 0, 0);
+
+						static EventRegistrationToken pageEventRegistrationToken = {};
+						mWebView_3->AddWebResourceRequestedFilter(L"*", COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL);
+						CHECK_FAILURE(mWebView_3->add_WebResourceRequested(
+							Callback<ICoreWebView2WebResourceRequestedEventHandler>([this](
+									ICoreWebView2* sender,
+									ICoreWebView2WebResourceRequestedEventArgs* args) {
+							COREWEBVIEW2_WEB_RESOURCE_CONTEXT resourceContext;
+							CHECK_FAILURE(args->get_ResourceContext(&resourceContext));
+							// Ensure that the type is image
+							wil::com_ptr<ICoreWebView2WebResourceRequest> req;
+							args->get_Request(&req);
+							wil::unique_cotaskmem_string navigationTargetUri;
+							req->get_Uri(&navigationTargetUri);
+							TCHAR* uriTarget=(TCHAR*)navigationTargetUri.get();
+
+							if(wcsncmp(uriTarget, TEXT("http://tests/MDT/"), 17)==0)
+							{ // constuct page here
+							  //::MessageBox(NULL, TEXT("来了"), TEXT(""), MB_OK);
+								auto end=uriTarget+wcslen(uriTarget);
+								uriTarget+=17;
+								auto PageId=uriTarget;
+								for(;uriTarget<end;uriTarget++)
+								{
+									if(*uriTarget=='/') 
+									{
+										*uriTarget++='\0';
+										break;
+									}
+								}
+								LONG_PTR bid=0;
+								STR2LONGPTR(PageId, bid);
+								if(bid)
+								{
+									if (resourceContext == COREWEBVIEW2_WEB_RESOURCE_CONTEXT_DOCUMENT)
+									{
+										CHAR* page_content = new CHAR[1024];
+										//post message
+										//strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script>var w=window,wv=w.chrome.webview;wv.addEventListener(\'message\', event => APMD(event.data));w.update=function(){wv.postMessage('");
+										//auto nxt_st=page_content+strlen(page_content);
+										//nxt_st+=LONGPTR2STR(nxt_st, bid);
+										//strcpy(nxt_st, "');}</script><body><script src=\"http://mdbr/");
+
+										//xhr http
+										strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script>var w=window;w.update=function(){var R=new XMLHttpRequest();R.open('POST','");
+										auto nxt_st=page_content+strlen(page_content);
+										nxt_st+=LONGPTR2STR(nxt_st, bid);
+										strcpy(nxt_st, ".text',true);R.onreadystatechange=function(){APMD(R.responseText)};R.send()}</script><body><script src=\"http://mdbr/");
+										
+										nxt_st+=strlen(nxt_st);
+										AppendPageResidue(nxt_st); // 加载WV2
+
+										wil::com_ptr<ICoreWebView2WebResourceResponse> response;
+										wil::com_ptr<IStream> stream = SHCreateMemStream((const BYTE*)page_content, strlen(page_content));
+
+										CHECK_FAILURE(m_webViewEnvironment->CreateWebResourceResponse(stream.get(), 200, L"OK", L"charset=utf-8", &response));
+
+										wil::com_ptr<ICoreWebView2HttpResponseHeaders> headers;
+										CHECK_FAILURE(response->get_Headers(&headers));
+										headers->AppendHeader(L"Content-Type", L"text/html; charset=utf-8");
+
+										CHECK_FAILURE(args->put_Response(response.get()));
+									}
+									else
+									{
+										size_t docLength=0;
+										auto str = GetDocTex(docLength, bid);
+										if(docLength)
+										{
+											wil::com_ptr<ICoreWebView2WebResourceResponse> response;
+											wil::com_ptr<IStream> stream = SHCreateMemStream((const BYTE*)str, docLength);
+											CHECK_FAILURE(m_webViewEnvironment->CreateWebResourceResponse(stream.get(), 200, L"OK", L"charset=utf-8", &response));
+											wil::com_ptr<ICoreWebView2HttpResponseHeaders> headers;
+											CHECK_FAILURE(response->get_Headers(&headers));
+											headers->AppendHeader(L"Content-Type", L"text/*; charset=utf-8");
+											CHECK_FAILURE(args->put_Response(response.get()));
+										}
+									}
+								}
+								return S_OK;
+							}
+							else if(wcsncmp(uriTarget, TEXT("http://mdbr/"), 12)==0)
+							{
+								auto path = uriTarget+12;
+								if(path)
+								{
+									if(wcsstr(path, L"..")) // security check
+									{
+										return E_INVALIDARG;
+									}
+									else
+									{
+										char decodedUrl[MAX_PATH_HALF];
+										UrlDecode(decodedUrl, path);
+
+										DWORD dataLen;
+										auto buffer = loadPluginAsset(decodedUrl, dataLen);
+
+										if(buffer)
+										{
+											wil::com_ptr<ICoreWebView2WebResourceResponse> response;
+											wil::com_ptr<IStream> stream = SHCreateMemStream((const BYTE*)buffer, dataLen);
+											CHECK_FAILURE(m_webViewEnvironment->CreateWebResourceResponse(stream.get(), 200, L"OK", L"charset=utf-8", &response));
+											wil::com_ptr<ICoreWebView2HttpResponseHeaders> headers;
+											CHECK_FAILURE(response->get_Headers(&headers));
+											headers->AppendHeader(L"Content-Type", L"*/*; charset=utf-8");
+											CHECK_FAILURE(args->put_Response(response.get()));
+										}
+									}
+								}
+							}
+							return E_INVALIDARG;
+						}).Get(), &pageEventRegistrationToken));
+
+						EventRegistrationToken token;
+						if(0)
+						mWebView_3->add_WebMessageReceived(Callback<ICoreWebView2WebMessageReceivedEventHandler>(
+							[](ICoreWebView2* webview, ICoreWebView2WebMessageReceivedEventArgs * args) -> HRESULT {
+							PWSTR message;
+							args->TryGetWebMessageAsString(&message);
+							LONG_PTR bid=0;
+							STR2LONGPTR(message, bid);
+							if(bid)
+							{
+								// very slow !
+								//::MessageBox(NULL, TEXT("收到！"), TEXT("收到！"), MB_OK);
+								size_t docLength=0;
+								auto str = GetDocTex(docLength, bid);
+								if(docLength)
+								{
+									TCHAR* buffer = new TCHAR[docLength];
+									MultiByteToWideChar(CP_ACP, 0, str, -1, buffer, docLength);
+									webview->PostWebMessageAsString(buffer);
+									delete[] buffer;
+									//webview->PostWebMessageAsString(L"# hello");
+								}
+							}
+							CoTaskMemFree(message);
+							return S_OK;
+						}).Get(), &token);
+
+						if(0)
+						mWebView_3->AddScriptToExecuteOnDocumentCreated(
+							L"window.chrome.webview.addEventListener(\'message\', event => alert(event.data));" \
+							L"window.chrome.webview.postMessage(window.document.URL);",
+							nullptr);
+						//mWebView_3->Navigate(L"https://www.bing.com/");
+						//mWebView_3->Navigate(L"http://tests/MDT/1.html");
+
+						RefreshWebview();
+						return S_OK;
+					}).Get());
+					return S_OK;
+				}).Get());
+				if (SUCCEEDED(hr))
 				{
 					browser_deferred_creating=1;
+					browser_deferred_create_time = clock();
 				}
-				if(!browser_deferred_creating)
+			}
+			// BrowserWidget
+			bool prefer_bw = kernelType==2||kernelType==-1;
+			if(!browser_deferred_creating && !currentkernel && prefer_bw)
+			{
+				currentkernelType=2;
+				lstrcpy(WKPath1, WKPath);
+				::PathAppend(WKPath1, L"..\\BrowserWidget\\cefclient.dll");
+				if(PathFileExists(WKPath1))
 				{
-					browser_deferred_create_time = time;
-					lstrcpy(WKPath1, WKPath);
-					::PathAppend(WKPath1, L"..\\BrowserWidget\\cefclient.dll");
-					if(PathFileExists(WKPath1))
+					if(bwInit(WKPath1) && bwCreateBrowser({_hSelf, "https://tests/home", onBrowserPrepared, InterceptBrowserWidget, onBrowserFocused, onBrowserClose}))
 					{
-						if(bwInit(WKPath1) && bwCreateBrowser({_hSelf, "https://tests/home", onBrowserPrepared, InterceptBrowserWidget, onBrowserFocused, onBrowserClose}))
-						{
-							browser_deferred_creating=1;
-							//::MessageBox(NULL, TEXT("111"), TEXT(""), MB_OK);
-						}
+						browser_deferred_create_time = clock();
+						browser_deferred_creating=1;
+						//::MessageBox(NULL, TEXT("111"), TEXT(""), MB_OK);
 					}
 				}
 			}
+			// mb and wke
 			if(!browser_deferred_creating)
 			{
 				::PathAppend(WKPath, L"miniblink_x64.dll");
@@ -970,6 +1247,24 @@ bool STRENDWITH(TCHAR* strA,CHAR* strB)
 {
 	int valen = lstrlen(strA);
 	int pc = strlen(strB);
+	int to = valen-pc;
+	int po = 0;
+	// Note: toffset might be near -1>>>1.
+	if (to < 0) {
+		return false;
+	}
+	while (--pc >= 0) {
+		if (strA[to++] != strB[po++]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+bool STRENDWITH(TCHAR* strA,TCHAR* strB)
+{
+	int valen = lstrlen(strA);
+	int pc = lstrlen(strB);
 	int to = valen-pc;
 	int po = 0;
 	// Note: toffset might be near -1>>>1.
@@ -1106,6 +1401,31 @@ void MarkDownTextDlg::RefreshWebview(bool fromEditor) {
 			delete[] page_id;
 			//bwLoadStrData(mWebView_2, url_, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/main.js\"></script><body><script>window.APMD(GetDocText1(0));</script></body>", 0);
 		}
+		else if(mWebView_3)
+		{
+			TCHAR* page_id = new TCHAR[64], * new_st;  // Webview2 需要虚拟网址。 传文件名，只传ID吧。 http://tests/MDT/{bid}/index.html
+			lstrcpy(page_id, TEXT("http://tests/MDT/"));
+			new_st=page_id+17;
+			new_st+=LONGPTR2STR(new_st, bid);
+			lstrcpy(new_st, TEXT("/index.html"));
+
+			wil::unique_cotaskmem_string uri;
+			mWebView_3->get_Source(&uri);
+			if(b1 && STRENDWITH(uri.get(), page_id))
+			{
+				mWebView_3->ExecuteScript(L"update()", 0); // WV2 soft update
+			}
+			else if(b2)
+			{
+				if(checkRenderMarkdown()) {
+					mWebView_3->Navigate(page_id);
+					lastBid=bid;
+				}// else if(!legacy && checkRenderHtml()){
+
+				 //lastBid=0;
+				 //}
+			}
+		}
 	}
 }
 
@@ -1142,9 +1462,21 @@ LPTSTR ListBoxToolBarToolTip[] = {
 	TEXT("Refresh"),
 	TEXT("Alter Engine"),
 	TEXT("Zoom In"),
-	TEXT("Zoom Out")
+	TEXT("Zoom Out"),
 	TEXT("Bold"),
 	TEXT("Italic"),
+};
+
+LPTSTR ListBoxToolBarToolTip_HAN[] = {
+	TEXT("选项"),
+	TEXT("后退"),
+	TEXT("前进"),
+	TEXT("刷新"),
+	TEXT("切换引擎"),
+	TEXT("放大"),
+	TEXT("缩小"),
+	TEXT("粗体"),
+	TEXT("斜体"),
 };
 
 void MarkDownTextDlg::OnToolBarRequestToolTip( LPNMHDR nmhdr )
@@ -1160,11 +1492,12 @@ void MarkDownTextDlg::OnToolBarRequestToolTip( LPNMHDR nmhdr )
 	int resId = (int)lpttt->hdr.idFrom;
 	int ToolTipIndex = resId - PrivateToolBarIconList[0]._cmdID;
 
+	auto tooltips=ZH_CN?ListBoxToolBarToolTip_HAN:ListBoxToolBarToolTip;
 	TCHAR ToolTipText[MAX_PATH];
-	int len = NLGetText( (HINSTANCE)g_hModule, nppData._nppHandle, ListBoxToolBarToolTip[ToolTipIndex], ToolTipText, sizeof(ToolTipText) );
+	int len = NLGetText( (HINSTANCE)g_hModule, nppData._nppHandle, tooltips[ToolTipIndex], ToolTipText, sizeof(ToolTipText) );
 	if ( len == 0 )
 	{
-		lpttt->lpszText = ListBoxToolBarToolTip[ToolTipIndex];
+		lpttt->lpszText = tooltips[ToolTipIndex];
 	}
 	else
 	{
@@ -1260,15 +1593,18 @@ INT_PTR CALLBACK MarkDownTextDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 			//rc.bottom-=100;
 			if(currentkernel)
 			{
+				if(hBrowser)
+				{
+					if (webviewController) {
+						webviewController->put_Bounds(rc);
+					}
+					::MoveWindow(hBrowser, rc.left, rc.top+toolbarHeight, rc.right, rc.bottom-toolbarHeight,1);
+				}
 				//if(mWebView) {
 				//	wkeMoveWindow(mWebView,rc.left, rc.top+toolbarHeight, rc.right, rc.bottom-toolbarHeight);
 				//	//::MoveWindow(wkeGetWindowHandle(mWebView), rc.left, rc.top, rc.right, rc.bottom,TRUE);
 				//} else if(mWebView_1 && hBrowser) {
 				//}
-				if(hBrowser)
-				{
-					::MoveWindow(hBrowser, rc.left, rc.top+toolbarHeight, rc.right, rc.bottom-toolbarHeight,1);
-				}
 			}
 
 			rc.bottom=toolbarHeight;
@@ -1320,17 +1656,11 @@ INT_PTR CALLBACK MarkDownTextDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 
 bool getMenuItemNeedsKeep(int mid) {
 	switch(mid) {
-		case menuNext:
-		case menuPrevious:
-		case menuChgPrevious:
-		case menuAutoRecord:
-		case menuOption:
-		case menuInCurr:
-		case menuNeedMark:
-		case menuSkipClosed:
-		case menuClearOnClose:
-		case menuPinMenu:
+		case menuBolden:
 		case menuPause:
+		case menuItalic:
+		case menuUnderLine:
+		case menuOption:
 		return true;
 	}
 	return false;
@@ -1338,7 +1668,7 @@ bool getMenuItemNeedsKeep(int mid) {
 
 bool getMenuItemChecked(int mid) {
 	switch(mid) {
-		case menuAutoRecord:
+		case menuUnderLine:
 			return false;
 	}
 	return false;
@@ -1447,7 +1777,7 @@ void MarkDownTextDlg::readParameters()
 	{
 		PathAppend(g_IniFilePath, configFileName);
 		int kernel = ::GetPrivateProfileInt(sectionName, TEXT("BrowserKernel"), -1, g_IniFilePath);
-		if(kernel>=0&&kernel<=2)
+		if(kernel>=0&&kernel<=3)
 		{
 			kernelType=kernel;
 		}
@@ -1493,7 +1823,7 @@ void MarkDownTextDlg::switchEngineByIndex(int id)
 		{ // The miniblink kernels are not well designed in this aspect. It requires restarting of the editor.
 			requestedInvalidSwitch=id+1;
 			if(::MessageBox(nppData._nppHandle, TEXT("Restart is required to switch between wke and mb\r\n\r\nContinue?")
-				, TEXT("Restart required！"), MB_YESNO|MB_DEFBUTTON2)==IDYES)
+				, TEXT("Need Restart！"), MB_YESNO|MB_DEFBUTTON2)==IDYES)
 			{
 				//before restart, save parameters in advance.
 				saveParameters();
@@ -1528,12 +1858,14 @@ void MarkDownTextDlg::switchEngineByIndex(int id)
 				bwDestroyWebview(mWebView_2);
 				mWebView_2=0;
 			}
+			if(mWebView_3)
+			{
+				webviewController->Close();
+			}
 			currentkernel=0;
 		}
-		//if(IsWindow(hBrowser))
+		if(IsWindow(hBrowser))
 		{
-			//ShowWindow(GetParent(hBrowser), SW_HIDE);
-			ShowWindow(hBrowser, SW_HIDE);
 			CloseWindow(hBrowser);
 			DestroyWindow(hBrowser);
 		}
@@ -1544,7 +1876,7 @@ void MarkDownTextDlg::switchEngineByIndex(int id)
 		kernelType=id;
 		lastBid=0;
 		display(1);
-		for(int i=0;i<=3;i++)
+		for(int i=0;i<=4;i++)
 			CheckMenuItem(hMenuEngines, i+1, MF_BYPOSITION|(currentkernelType==i?MF_CHECKED:MF_UNCHECKED));
 		SendMessage(_hSelf, WM_SIZE, 0, 0);
 	}
@@ -1637,6 +1969,8 @@ void ResetZoom(){
 		mbSetZoomFactor(_MDText.mWebView_1, 1);
 	} else if(_MDText.mWebView_2){
 		bwSetZoomLevel(_MDText.mWebView_2, 0);
+	} else if(_MDText.mWebView_3){
+		_MDText.webviewController->put_ZoomFactor(1);
 	}
 }
 
@@ -1644,6 +1978,11 @@ void ResetZoom(){
 void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 { 
 	switch ( CMDID ) {
+		case IDM_EX_BOLDEN:
+		{
+
+		}
+		return;
 		case IDM_EX_TOGGLE:
 		{
 			HMENU hMenuPlugin = (HMENU)::SendMessage(nppData._nppHandle, NPPM_GETPLUGINMENU, 0 , (LPARAM)g_hModule);
@@ -1669,6 +2008,9 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 				} else if(mWebView_2){
 					//if(bwCanGoBack(mWebView_2))
 					bwGoBack(mWebView_2);
+				} else if(mWebView_3){
+					//if(mWebView_3->CanGoBack())
+					mWebView_3->GoBack();
 				}
 			}
 		return;
@@ -1682,6 +2024,9 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 				} else if(mWebView_2){
 					//if(bwCanGoForward(mWebView_2))
 					bwGoForward(mWebView_2);
+				} else if(mWebView_2){
+					//if(mWebView_3->CanGoForward())
+					mWebView_3->GoForward();
 				}
 			}
 		return;
@@ -1709,6 +2054,10 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 					mbSetZoomFactor(mWebView_1, zoom);
 				} else if(mWebView_2){
 					bwZoomLevelDelta(mWebView_2, -1);
+				} else if(mWebView_3){
+					double zoom;
+					webviewController->get_ZoomFactor(&zoom);
+					webviewController->put_ZoomFactor(zoom-0.15);
 				}
 				return;
 			}
@@ -1726,6 +2075,10 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 					mbSetZoomFactor(mWebView_1, zoom);
 				} else if(mWebView_2){
 					bwZoomLevelDelta(mWebView_2, 1);
+				} else if(mWebView_3){
+					double zoom;
+					webviewController->get_ZoomFactor(&zoom);
+					webviewController->put_ZoomFactor(zoom+0.15);
 				}
 			}
 			else if(source==1)
@@ -1733,7 +2086,8 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 				if(ZOOMER.size()==0)
 				{
 					ZOOMER.resize(1);
-					ZOOMER.at(0)={TEXT("Reset"), ResetZoom, 161, false, 0};
+					ZOOMER.at(0)={TEXT(""), ResetZoom, 161, false, 0};
+					lstrcpy(ZOOMER.at(0)._itemName, ZH_CN?TEXT("重置"):TEXT("Reset"));
 				}
 				if(hMenuZoom==0)
 				{
@@ -1748,13 +2102,15 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 			if(EngineSwicther.size()==0)
 			{
 				EngineSwicther.resize(MDCRST);
-				EngineSwicther.at(0)={TEXT("切换浏览器内核："), happy, 61, false, 0};
+				EngineSwicther.at(0)={TEXT(""), happy, 61, false, 0};
+				lstrcpy(EngineSwicther.at(0)._itemName, ZH_CN?TEXT("切换浏览器内核："):TEXT("Switch Browser Kernel :"));
 				EngineSwicther.at(1)={TEXT("Miniblink-wke"), engineToWke, 62, false, 0};
 				EngineSwicther.at(2)={TEXT("Miniblink-mb"), engineToMb, 63, false, 0};
 				EngineSwicther.at(3)={TEXT("Chromium-Embeded ( Recommended )"), engineToChromium, 64, false, 0};
-				EngineSwicther.at(4)={TEXT("Webview2 ( Soon Available )"), happy, 65, false, 0};
+				EngineSwicther.at(4)={TEXT("Webview2"), engineToWebview2, 65, false, 0};
 				EngineSwicther.at(5)={TEXT(""), 0, 0, false, 0};
-				EngineSwicther.at(6)={TEXT("切换渲染引擎："), (PFUNCPLUGINCMD)SwitchEngineMarkdown, 66, false, 0};
+				EngineSwicther.at(6)={TEXT(""), (PFUNCPLUGINCMD)SwitchEngineMarkdown, 66, false, 0};
+				lstrcpy(EngineSwicther.at(6)._itemName, ZH_CN?TEXT("切换渲染引擎："):TEXT("Switch Markdown Engine :"));
 				EngineSwicther.at(7)={TEXT("md.html"), (PFUNCPLUGINCMD)SwitchEngineMarkdown, 67, false, 0};
 			}
 			if(hMenuEngines==0)

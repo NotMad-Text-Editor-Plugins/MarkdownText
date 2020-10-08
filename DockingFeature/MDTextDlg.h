@@ -29,6 +29,10 @@
 #include <mb.h>
 #include <BrowserUI.h>
 
+#include "stdafx.h"
+#include "CheckFailure.h"
+#include <shlwapi.h>
+
 #define SELF_REFRESH WM_USER+9
 
 using namespace std;
@@ -71,6 +75,9 @@ public :
 	wkeWebView mWebView=0;
 	mbWebView mWebView_1=0;
 	bwWebView mWebView_2=0;
+	wil::com_ptr<ICoreWebView2> mWebView_3;
+	wil::com_ptr<ICoreWebView2Environment> m_webViewEnvironment;
+	wil::com_ptr<ICoreWebView2Controller> webviewController;
 	intptr_t currentkernel=0;
 	HWND hBrowser=nullptr;
 	char CustomRoutine[MAX_PATH_HALF]={0};
@@ -80,8 +87,8 @@ protected :
 	virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam);
 	SelfCtrl _color,_savecolor;
 public :
-	int kernelType=1; // -1_auto 0_wke 1_mb 2_bw
-	int currentkernelType=0; // 0_wke 1_mb 2_bw
+	int kernelType=-1; // -1_auto 0_wke 1_mb 2_bw 3_WV2
+	int currentkernelType=0; // 0_wke 1_mb 2_bw 3_WV2
 	int skFlags=0;
 	bool hasChanged;
 	ToolbarPanel ListBoxPanel;
