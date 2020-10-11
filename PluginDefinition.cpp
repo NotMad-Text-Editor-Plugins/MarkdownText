@@ -25,6 +25,7 @@
 #include <time.h>
 #include <shlwapi.h>
 #include "MDTextDlg.h"
+#include "Scintilla.h"
 
 
 MarkDownTextDlg _MDText;
@@ -119,6 +120,74 @@ bool setCommand(size_t index, TCHAR *cmdName, PFUNCPLUGINCMD pFunc, ShortcutKey 
 	return true;
 }
 
+void BoldenText()
+{
+	int padLen=2;
+	char* padStart="**";
+	char* padEnd="**";
+	int currentEdit=0;
+	SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&currentEdit);
+	auto currentSci = currentEdit?nppData._scintillaSecondHandle:nppData._scintillaMainHandle;
+
+	unsigned p1_ = SendMessage(currentSci, SCI_GETSELECTIONSTART, 0, 0);
+	unsigned p2_ = SendMessage(currentSci, SCI_GETSELECTIONEND, 0, 0);
+	bool hasSel=p2_>p1_;
+	if(!hasSel && !legacy)
+	{
+		SendMessage(nppData._nppHandle, NPPM_SELCARET, 0, 0);
+		p1_ = SendMessage(currentSci, SCI_GETSELECTIONSTART, 0, 0);
+		p2_ = SendMessage(currentSci, SCI_GETSELECTIONEND, 0, 0);
+		hasSel=p2_>p1_;
+	}
+	if(hasSel)
+	{
+		unsigned sellen = SendMessage(currentSci, SCI_GETSELTEXT, 0, 0)-1;
+		unsigned textLen = SendMessage(currentSci, SCI_GETTEXTLENGTH, 0, 0);
+		unsigned idealSTL = sellen;
+
+		int p1 = p1_-padLen;
+		unsigned p2 = p2_+padLen;
+		unsigned bufferLen=sellen+padLen*2+2;
+		char *txUCS2 = new char[bufferLen];
+		if(txUCS2)
+		{
+			memset(txUCS2, 0, bufferLen);
+			auto writeAddr=txUCS2;
+			if(p1<0) 
+			{
+				writeAddr-=p1;
+				idealSTL+=p1;
+				p1=0;
+			}
+			if(p2>=textLen) 
+			{
+				idealSTL+=textLen-1-p2;
+				p2=textLen-1;
+			}
+			//size_t len = SendMessage(currentSci, SCI_GETSELTEXT, 0, (LPARAM)(txUCS2+padLen))-1;
+			Sci_TextRange tr{0};
+			tr.chrg.cpMin = p1;
+			tr.chrg.cpMax = p2;
+			tr.lpstrText = writeAddr;
+
+			size_t len = SendMessage(currentSci, SCI_GETTEXTRANGE, 0, (LPARAM)&tr)-1;
+
+			if(len<=sellen+padLen*2)
+			{
+				memcpy(txUCS2, padStart, padLen);
+				len=padLen+sellen;
+				memcpy(txUCS2+len, padEnd, padLen);
+
+				len+=padLen;
+				SendMessage(currentSci, SCI_SETTARGETSTART, p1_, 0);
+				SendMessage(currentSci, SCI_SETTARGETEND, p2_, 0);
+				SendMessage(currentSci, SCI_REPLACETARGET, len, (LPARAM)txUCS2);
+
+			}
+		}
+	}
+}
+
 void commandMenuInit()
 {
 	// Initialization of your plugin commands
@@ -153,8 +222,28 @@ void commandMenuInit()
 
 	shortKey = new ShortcutKey{1,0,1,0x4D}; // VK_M
 	funcItems[menuOption]={TEXT("Markdown Text Panel"), ToggleMDPanel, menuOption, false, shortKey};
-	
 
 	setCommand(menuSeparator0, TEXT("-SEPARATOR-"),NULL, NULL, false);
+
+	shortKey = new ShortcutKey{0,0,0,NULL};
+	funcItems[menuBolden]={TEXT("Bolden"), BoldenText, menuBolden, false, shortKey};
+
+	shortKey = new ShortcutKey{0,0,0,NULL};
+	funcItems[menuItalic]={TEXT("Italic"), ToggleMDPanel, menuItalic, false, shortKey};
+
+	shortKey = new ShortcutKey{0,0,0,NULL};
+	funcItems[menuUnderLine]={TEXT("Underline"), ToggleMDPanel, menuUnderLine, false, shortKey};
+	
+
+	setCommand(menuSeparator2, TEXT("-SEPARATOR-"),NULL, NULL, false);
+
+	shortKey = new ShortcutKey{0,0,0,NULL};
+	funcItems[menuPause]={TEXT("Pause Update"), ToggleMDPanel, menuPause, false, shortKey};
+
+	shortKey = new ShortcutKey{0,0,0,NULL};
+	funcItems[menuSettings]={TEXT("Settings…"), ToggleMDPanel, menuSettings, false, shortKey};
+
+	// pause update
+	// pause update
 
 }

@@ -44,7 +44,6 @@ enum menuList
 {
 	menuPreviewCurr = 0,
 	menuOption,
-	menuAutoUpdate,
 
 	menuSeparator0,
 

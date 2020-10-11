@@ -861,16 +861,19 @@ void UrlDecode(char* dest, const TCHAR* str)
 	*ddd='\0';
 }  
 
-url_intercept_result* InterceptBrowserWidget(std::string url)
+url_intercept_result* InterceptBrowserWidget(const std::string & url)
 {
-	if(url=="https://tests/home") {
+	auto data = url.data();
+	//if(url=="https://tests/home") 
+	if(strncmp(data, "https://tests/home", 18)==0)
+	{
 		_MDText.RefreshWebview(false);
 		return new url_intercept_result{(CHAR*)"Markdown Text", 14, 200, (CHAR*)"OK"};
 	}
 
-	if(strncmp(url.data(), InternalResHead1, 12)==0)
+	if(strncmp(data, InternalResHead1, 12)==0)
 	{
-		auto path = url.data()+12;
+		auto path = data+12;
 		if(path)
 		{
 			if(strstr(path, "..")) // security check
