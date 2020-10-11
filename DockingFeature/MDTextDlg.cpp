@@ -20,6 +20,7 @@
 #include "PluginDefinition.h"
 #include "time.h"
 #include "../../NativeLang/src/NativeLang_def.h"
+#include <ProfileStd.h>
 
 void WKE_CALL_TYPE onDidCreateScriptContextCallback(wkeWebView webView, void* param, wkeWebFrameHandle frameId, void* context, int extensionGroup, int worldId)
 {
@@ -696,6 +697,12 @@ int LONGPTR2STR(CHAR* STR, LONG_PTR LONGPTR)
 BJSCV* GetDocText1(LONG_PTR funcName, int argc, LONG_PTR argv, int sizeofBJSCV)
 {
 	//::MessageBoxA(NULL, ("GetDocText1"), (""), MB_OK);
+	if(argc<0)
+	{
+		if(argv==sizeofBJSCV==0)
+			delete (BJSCV*)funcName;
+		return 0;
+	}
 	LONG_PTR bid=0;
 	int structSize=0;
 	if(argc==1)
@@ -861,19 +868,23 @@ void UrlDecode(char* dest, const TCHAR* str)
 	*ddd='\0';
 }  
 
-url_intercept_result* InterceptBrowserWidget(const std::string & url)
+url_intercept_result* InterceptBrowserWidget(const char* url, const url_intercept_result* ret)
 {
-	auto data = url.data();
-	//if(url=="https://tests/home") 
-	if(strncmp(data, "https://tests/home", 18)==0)
+	if(!url)
+	{
+		if(ret)
+			delete ret;
+		return 0;
+	}
+	if(strncmp(url, "https://tests/home", 18)==0)
 	{
 		_MDText.RefreshWebview(false);
 		return new url_intercept_result{(CHAR*)"Markdown Text", 14, 200, (CHAR*)"OK"};
 	}
 
-	if(strncmp(data, InternalResHead1, 12)==0)
+	if(strncmp(url, InternalResHead1, 12)==0)
 	{
-		auto path = data+12;
+		auto path = url+12;
 		if(path)
 		{
 			if(strstr(path, "..")) // security check
@@ -1133,11 +1144,16 @@ void MarkDownTextDlg::display(bool toShow){
 			if(!browser_deferred_creating && !currentkernel && prefer_bw)
 			{
 				currentkernelType=2;
-				lstrcpy(WKPath1, WKPath);
-				::PathAppend(WKPath1, L"..\\BrowserWidget\\cefclient.dll");
-				if(PathFileExists(WKPath1))
+				auto libPath = LibPath;
+				if(!libPath)
 				{
-					if(bwInit(WKPath1) && bwCreateBrowser({_hSelf, "https://tests/home", onBrowserPrepared, InterceptBrowserWidget, onBrowserFocused, onBrowserClose}))
+					lstrcpy(WKPath1, WKPath);
+					::PathAppend(WKPath1, L"..\\BrowserWidget\\cefclient.dll");
+					libPath = WKPath1;
+				}
+				if(PathFileExists(libPath))
+				{
+					if(bwInit(libPath) && bwCreateBrowser({_hSelf, "https://tests/home", onBrowserPrepared, InterceptBrowserWidget, onBrowserFocused, onBrowserClose}))
 					{
 						browser_deferred_create_time = clock();
 						browser_deferred_creating=1;
@@ -1758,42 +1774,40 @@ bool MDEngineScanned;
 
 void MarkDownTextDlg::saveParameters()
 {
-	TCHAR str[32]={0};	
-	wsprintf(str,TEXT("%d"), kernelType);
-	if(requestedInvalidSwitch>0)
-	{
-		wsprintf(str,TEXT("%d"), requestedInvalidSwitch-1);
-	}
-	::WritePrivateProfileString(sectionName, TEXT("BrowserKernel"), str, g_IniFilePath);
-	path_buffer[0]='\0';
-	if(CustomRoutine[0])
-	{
-		MultiByteToWideChar(CP_ACP, 0, CustomRoutine, -1, path_buffer, MAX_PATH_HALF);
-	}
-	::WritePrivateProfileString(sectionName, TEXT("MarkdownEngine"), path_buffer, g_IniFilePath);
+	int core=requestedInvalidSwitch>0?requestedInvalidSwitch-1:kernelType;
+	PutProfInt("BrowserKernel", core);
+	PutProfString("MarkdownEngine", CustomRoutine);
+	saveProf(g_ModulePath, configFileName);
 }
 
 void MarkDownTextDlg::readParameters()
 {
-	::SendMessage(nppData._nppHandle, NPPM_GETPLUGINSCONFIGDIR, MAX_PATH, (LPARAM)g_IniFilePath);
-	if (PathFileExists(g_IniFilePath))
+	loadProf(g_ModulePath, configFileName);
+	kernelType=GetProfInt("BrowserKernel", -1);
+	if(kernelType<0||kernelType>3)
 	{
-		PathAppend(g_IniFilePath, configFileName);
-		int kernel = ::GetPrivateProfileInt(sectionName, TEXT("BrowserKernel"), -1, g_IniFilePath);
-		if(kernel>=0&&kernel<=3)
+		kernelType=-1;
+	}
+	std::string* val;
+	if(val=GetProfString("MarkdownEngine"))
+	{
+		strcpy(CustomRoutine, val->data());
+	}
+	if(val=GetProfString("Libcef"))
+	{
+		auto path=val->data();
+		if(PathFileExistsA(path))
 		{
-			kernelType=kernel;
-		}
-		auto st=path_buffer;
-		lstrcpy(st, g_ModulePath);
-		st+=lstrlen(st);
-		lstrcpy(st, TEXT("//"));
-		st+=lstrlen(st);
-		if(::GetPrivateProfileString(sectionName, TEXT("MarkdownEngine"), TEXT(""), st, MAX_PATH_HALF, g_IniFilePath)) 
-		{
-			if(PathFileExists(path_buffer))
+			TCHAR* libPath = new TCHAR[MAX_PATH];
+			MultiByteToWideChar(CP_ACP, 0, path, -1, libPath, MAX_PATH);
+			PathAppend(libPath, TEXT("cefclient.dll"));
+			if(PathFileExists(libPath))
 			{
-				WideCharToMultiByte(CP_ACP, 0, st, -1, CustomRoutine, MAX_PATH, NULL, NULL);
+				LibPath=libPath;
+			}
+			else
+			{
+				delete[] libPath;
 			}
 		}
 	}

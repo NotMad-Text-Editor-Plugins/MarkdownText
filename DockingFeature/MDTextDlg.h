@@ -81,6 +81,7 @@ public :
 	intptr_t currentkernel=0;
 	HWND hBrowser=nullptr;
 	char CustomRoutine[MAX_PATH_HALF]={0};
+	TCHAR* LibPath=nullptr;
 	LONG_PTR lastBid=0;
 	ToolBar toolBar;
 protected :

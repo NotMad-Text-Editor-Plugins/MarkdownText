@@ -363,6 +363,7 @@
     <ClCompile Include="..\..\PowerEditor\src\WinControls\StaticDialog\StaticDialog.cpp" />
     <ClCompile Include="..\..\PowerEditor\src\WinControls\ToolBar\ToolBar.cpp" />
     <ClCompile Include="..\CPPCommon\common_patch.cpp" />
+    <ClCompile Include="..\CPPCommon\ProfileStd.cpp" />
     <ClCompile Include="..\CPPCommon\ToolbarPanel.cpp" />
     <ClCompile Include="CheckFailure.cpp" />
     <ClCompile Include="DockingFeature\MDTextDlg.cpp" />
@@ -371,6 +372,7 @@
     <ClCompile Include="PluginDefinition.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\CPPCommon\ProfileStd.h" />
     <ClInclude Include="..\CPPCommon\ToolbarPanel.h" />
     <ClInclude Include="CheckFailure.h" />
     <ClInclude Include="DockingFeature\MDTextDlg.h" />

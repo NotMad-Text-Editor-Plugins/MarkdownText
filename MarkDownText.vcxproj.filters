@@ -11,6 +11,7 @@
     <ClCompile Include="..\..\PowerEditor\src\WinControls\ImageListSet\ImageListSet.cpp" />
     <ClCompile Include="..\..\PowerEditor\src\WinControls\ToolBar\ToolBar.cpp" />
     <ClCompile Include="CheckFailure.cpp" />
+    <ClCompile Include="..\CPPCommon\ProfileStd.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DockingFeature\MDTextDlg.h" />
@@ -21,6 +22,7 @@
     <ClInclude Include="..\CPPCommon\ToolbarPanel.h" />
     <ClInclude Include="CheckFailure.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="..\CPPCommon\ProfileStd.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DockingFeature\MDText.rc" />

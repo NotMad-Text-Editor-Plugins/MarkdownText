@@ -115,7 +115,6 @@ extern HANDLE  g_hModule;
 __declspec(selectany) bool NPPRunning = false;
 
 __declspec(selectany) TCHAR			g_ModulePath[MAX_PATH]{0};
-__declspec(selectany) TCHAR			g_IniFilePath[MAX_PATH]{0};
 __declspec(selectany) TCHAR			path_buffer[MAX_PATH]{0};
 __declspec(selectany) TCHAR			last_actived[MAX_PATH]{0};
 
