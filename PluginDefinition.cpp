@@ -120,12 +120,11 @@ bool setCommand(size_t index, TCHAR *cmdName, PFUNCPLUGINCMD pFunc, ShortcutKey 
 	return true;
 }
 
-void BoldenText()
+void WrapTextWith(char* padStart, char* padEnd)
 {
-	int padLen=2;
-	char* padStart="**";
-	char* padEnd="**";
 	int currentEdit=0;
+	int padLenSt=strlen(padStart);
+	int padLenEd=strlen(padEnd);
 	SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&currentEdit);
 	auto currentSci = currentEdit?nppData._scintillaSecondHandle:nppData._scintillaMainHandle;
 
@@ -145,9 +144,9 @@ void BoldenText()
 		unsigned textLen = SendMessage(currentSci, SCI_GETTEXTLENGTH, 0, 0);
 		unsigned idealSTL = sellen;
 
-		int p1 = p1_-padLen;
-		unsigned p2 = p2_+padLen;
-		unsigned bufferLen=sellen+padLen*2+2;
+		int p1 = p1_-padLenSt;
+		unsigned p2 = p2_+padLenEd;
+		unsigned bufferLen=sellen+padLenSt+padLenEd+2;
 		char *txUCS2 = new char[bufferLen];
 		if(txUCS2)
 		{
@@ -172,20 +171,56 @@ void BoldenText()
 
 			size_t len = SendMessage(currentSci, SCI_GETTEXTRANGE, 0, (LPARAM)&tr)-1;
 
-			if(len<=sellen+padLen*2)
-			{
-				memcpy(txUCS2, padStart, padLen);
-				len=padLen+sellen;
-				memcpy(txUCS2+len, padEnd, padLen);
+			if(len<=sellen+padLenSt+padLenEd)
+			{ 
+				len=padLenSt+sellen;
+				if(strncmp(txUCS2, padStart, padLenSt)==0&&strncmp(txUCS2+len, padEnd, padLenEd)==0)
+				{ // 取消加粗
+					txUCS2[len]='\0';
+					txUCS2+=padLenSt;
+					SendMessage(currentSci, SCI_SETTARGETSTART, p1, 0);
+					SendMessage(currentSci, SCI_SETTARGETEND, p2, 0);
+					SendMessage(currentSci, SCI_REPLACETARGET, sellen, (LPARAM)txUCS2);
+					SendMessage(currentSci, SCI_SETSEL, p1, p1+sellen);
+				}
+				else
+				{ // 加粗
+					memcpy(txUCS2, padStart, padLenSt);
+					memcpy(txUCS2+len, padEnd, padLenEd);
 
-				len+=padLen;
-				SendMessage(currentSci, SCI_SETTARGETSTART, p1_, 0);
-				SendMessage(currentSci, SCI_SETTARGETEND, p2_, 0);
-				SendMessage(currentSci, SCI_REPLACETARGET, len, (LPARAM)txUCS2);
-
+					len+=padLenEd;
+					SendMessage(currentSci, SCI_SETTARGETSTART, p1_, 0);
+					SendMessage(currentSci, SCI_SETTARGETEND, p2_, 0);
+					SendMessage(currentSci, SCI_REPLACETARGET, len, (LPARAM)txUCS2);
+					SendMessage(currentSci, SCI_SETSEL, p1_+padLenSt, p1_+padLenSt+sellen);
+				}
+				
 			}
 		}
 	}
+}
+
+void BoldenText()
+{
+	WrapTextWith("**", "**");
+}
+
+void TiltText()
+{
+	WrapTextWith("*", "*");
+}
+
+void UnderlineText()
+{
+	WrapTextWith("<u>", "</u>");
+}
+
+void PauseUpdate()
+{
+}
+
+void Settings()
+{
 }
 
 void commandMenuInit()
@@ -229,19 +264,19 @@ void commandMenuInit()
 	funcItems[menuBolden]={TEXT("Bolden"), BoldenText, menuBolden, false, shortKey};
 
 	shortKey = new ShortcutKey{0,0,0,NULL};
-	funcItems[menuItalic]={TEXT("Italic"), ToggleMDPanel, menuItalic, false, shortKey};
+	funcItems[menuItalic]={TEXT("Italic"), TiltText, menuItalic, false, shortKey};
 
 	shortKey = new ShortcutKey{0,0,0,NULL};
-	funcItems[menuUnderLine]={TEXT("Underline"), ToggleMDPanel, menuUnderLine, false, shortKey};
+	funcItems[menuUnderLine]={TEXT("Underline"), UnderlineText, menuUnderLine, false, shortKey};
 	
 
 	setCommand(menuSeparator2, TEXT("-SEPARATOR-"),NULL, NULL, false);
 
 	shortKey = new ShortcutKey{0,0,0,NULL};
-	funcItems[menuPause]={TEXT("Pause Update"), ToggleMDPanel, menuPause, false, shortKey};
+	funcItems[menuPause]={TEXT("Pause Update"), PauseUpdate, menuPause, false, shortKey};
 
 	shortKey = new ShortcutKey{0,0,0,NULL};
-	funcItems[menuSettings]={TEXT("Settings…"), ToggleMDPanel, menuSettings, false, shortKey};
+	funcItems[menuSettings]={TEXT("Settings…"), Settings, menuSettings, false, shortKey};
 
 	// pause update
 	// pause update
