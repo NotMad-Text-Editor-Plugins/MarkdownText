@@ -53,6 +53,7 @@ enum menuList
 
 	menuSeparator2,
 	menuPause,
+	menuSync,
 	menuSettings,
 
 	menuCount,
@@ -117,6 +118,7 @@ __declspec(selectany) bool NPPRunning = false;
 __declspec(selectany) TCHAR			g_ModulePath[MAX_PATH]{0};
 __declspec(selectany) TCHAR			path_buffer[MAX_PATH]{0};
 __declspec(selectany) TCHAR			last_actived[MAX_PATH]{0};
+__declspec(selectany) TCHAR			last_updated[MAX_PATH]{0};
 
 __declspec(selectany)  std::vector<FuncItem> funcItems;
 __declspec(selectany)  NppData nppData;
@@ -124,7 +126,20 @@ __declspec(selectany)  HANDLE				g_hModule;
 __declspec(selectany)  toolbarIcons		g_TBMarkdown{0,0,0x666,0,IDI_ICON_MD,0,0,IDB_BITMAP1};
 
 __declspec(selectany) bool			legacy;
+__declspec(selectany) bool			bForcePreview=false;
+__declspec(selectany) int			UISettings=0;
 __declspec(selectany) HWND curScintilla=0;
+
+__declspec(selectany) FuncItem* funcMenu;
+__declspec(selectany) FuncItem* funcSync;
+__declspec(selectany) FuncItem* funcUpdate;
+
+extern int ToggleUIBool(int pos, bool reverse);
+extern bool GetUIBool(int pos);
+extern bool GetUIBoolReverse(int pos);
+
+extern void GlobalOnPvMnChecked(HMENU hMenu, int idx);
+extern void CheckMenu(FuncItem* funcItem, bool val);
 
 #define MAX_PATH_HALF 128
 #define MDCRST 8

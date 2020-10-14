@@ -64,6 +64,14 @@ void commandMenuCleanUp()
 //----------------------------------------------//
 
 void PreviewCurrentFile() {
+	LONG_PTR bid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
+	if(_MDText.lastBid!=bid)
+	{
+		bForcePreview=true;
+		_MDText.display(true);
+		_MDText.RefreshWebview();
+		bForcePreview=false;
+	}
 }
 
 void ToggleMDPanel()
@@ -217,10 +225,25 @@ void UnderlineText()
 
 void PauseUpdate()
 {
+	CheckMenu(funcUpdate, ToggleUIBool(3, false));
+	if(!GetUIBool(3))
+	{
+		SCNotification note{};
+		note.nmhdr.code=SCN_MODIFIED;
+		note.length=1;
+		note.modificationType = SC_MOD_DELETETEXT;
+		beNotified(&note);
+	}
+}
+
+void SyncScroll()
+{
+	GlobalOnPvMnChecked(0, 260);
 }
 
 void Settings()
 {
+	::SendMessage(nppData._nppHandle, NPPM_SETSTATUSBAR, STATUSBAR_DOC_TYPE, (LPARAM)TEXT("Not implemented yet……"));
 }
 
 void commandMenuInit()
@@ -252,31 +275,39 @@ void commandMenuInit()
 
 	funcItems.resize(nbFunc);
 
+	int i=0;
+
 	ShortcutKey* shortKey = new ShortcutKey{0,0,0,NULL};
-	funcItems[menuPreviewCurr]={TEXT("Preview Current File"), PreviewCurrentFile, menuPreviewCurr, false, shortKey};
+	funcItems[i++]={TEXT("View Current File"), PreviewCurrentFile, menuPreviewCurr, false, shortKey};
 
 	shortKey = new ShortcutKey{1,0,1,0x4D}; // VK_M
-	funcItems[menuOption]={TEXT("Markdown Text Panel"), ToggleMDPanel, menuOption, false, shortKey};
+	funcMenu=&funcItems[i];
+	funcItems[i++]={TEXT("Markdown Text Panel"), ToggleMDPanel, menuOption, false, shortKey};
 
-	setCommand(menuSeparator0, TEXT("-SEPARATOR-"),NULL, NULL, false);
-
-	shortKey = new ShortcutKey{0,0,0,NULL};
-	funcItems[menuBolden]={TEXT("Bolden"), BoldenText, menuBolden, false, shortKey};
+	setCommand(i++, TEXT("-SEPARATOR-"),NULL, NULL, false);
 
 	shortKey = new ShortcutKey{0,0,0,NULL};
-	funcItems[menuItalic]={TEXT("Italic"), TiltText, menuItalic, false, shortKey};
+	funcItems[i++]={TEXT("Bolden"), BoldenText, menuBolden, false, shortKey};
 
 	shortKey = new ShortcutKey{0,0,0,NULL};
-	funcItems[menuUnderLine]={TEXT("Underline"), UnderlineText, menuUnderLine, false, shortKey};
+	funcItems[i++]={TEXT("Italic"), TiltText, menuItalic, false, shortKey};
+
+	shortKey = new ShortcutKey{0,0,0,NULL};
+	funcItems[i++]={TEXT("Underline"), UnderlineText, menuUnderLine, false, shortKey};
 	
 
-	setCommand(menuSeparator2, TEXT("-SEPARATOR-"),NULL, NULL, false);
+	setCommand(i++, TEXT("-SEPARATOR-"),NULL, NULL, false);
 
 	shortKey = new ShortcutKey{0,0,0,NULL};
-	funcItems[menuPause]={TEXT("Pause Update"), PauseUpdate, menuPause, false, shortKey};
+	funcUpdate=&funcItems[i];
+	funcItems[i++]={TEXT("Pause Update"), PauseUpdate, menuPause, GetUIBool(3), shortKey};
+
+	shortKey = new ShortcutKey{0,0,0,NULL}; //
+	funcSync=&funcItems[i];
+	funcItems[i++]={TEXT("Sync Scroll"), SyncScroll, menuSync, GetUIBoolReverse(0), shortKey};
 
 	shortKey = new ShortcutKey{0,0,0,NULL};
-	funcItems[menuSettings]={TEXT("Settings…"), Settings, menuSettings, false, shortKey};
+	funcItems[i++]={TEXT("Options…"), Settings, menuSettings, false, shortKey};
 
 	// pause update
 	// pause update

@@ -96,6 +96,8 @@ ICO_EX_BOLDEN         ICON                  "..\\res\\briefname.ico"
 ICO_EX_ZOI         ICON                  "..\\res\\zoom_in.ico"
 ICO_EX_ZOO         ICON                  "..\\res\\zoom_out.ico"
 ICO_EX_Refresh         ICON                  "..\\res\\refresh.ico"
+ICO_EX_DEV         ICON                  "..\\res\\dev.ico"
+ICO_EX_LOCATE         ICON                  "..\\res\\loc.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //

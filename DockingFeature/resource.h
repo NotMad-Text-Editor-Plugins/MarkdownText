@@ -595,6 +595,8 @@
 #define ICO_EX_ZOI                  141
 #define ICO_EX_ZOO                  142
 #define ICO_EX_Refresh              143
+#define ICO_EX_DEV					144
+#define ICO_EX_LOCATE				145
 
 #define IDM_EX_TOGGLE               2001
 #define IDM_EX_DOWN                 2002
@@ -605,6 +607,8 @@
 #define IDM_EX_ZOO                  2007
 #define IDM_EX_BOLDEN               2008
 #define IDM_EX_ITALIC               2009
+#define IDM_EX_DEV					2010
+#define IDM_EX_LOCATE				2011
 
 #define IDM_EX_PASTE                    2003
 #define IDM_EX_PASTE_ALL                2004

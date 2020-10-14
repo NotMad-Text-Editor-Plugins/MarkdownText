@@ -174,8 +174,22 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 			}
 		}
 		break;
+		case SCN_PAINTED:
+		{
+			if(NPPRunning)
+			{
+				//::MessageBox(NULL, TEXT("SCN_PAINTED"), TEXT(""), MB_OK);
+				LONG_PTR bid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
+				if(_MDText.lastBid==bid)
+				{
+					_MDText.syncWebToline();
+				}
+			}
+		}
+		break;
 		case SCN_UPDATEUI:
 		{
+
 		}
 		break;
 		case SCN_SAVEPOINTREACHED:
@@ -205,7 +219,18 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 				lstrcpy(last_actived, pszNewPath);
 			}
 		}
-		_MDText.refreshDlg(false, NeedUpdate==2);
+		else
+		{
+			_MDText.lastSyncLn=-1;
+		}
+		bool doUpdate=!GetUIBool(3);
+		if(!doUpdate && NeedUpdate==2&&GetUIBoolReverse(4))
+		{
+			LONG_PTR bid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
+			doUpdate = _MDText.lastBid==bid;
+		}
+		if(doUpdate)
+			_MDText.refreshDlg(false, NeedUpdate==2);
 	}
 }
 

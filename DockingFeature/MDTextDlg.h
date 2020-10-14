@@ -98,6 +98,8 @@ public :
 	void OnToolBarRequestToolTip( LPNMHDR nmhdr );
 	void OnToolBarCommand( UINT Cmd, char source=0, POINT* pt=nullptr);
 	void AppendPageResidue(char* appendSt);
+	void syncWebToline(bool force=false);
+	int lastSyncLn=0;
 };
 
 #endif //LNHISTORY_DLG_H
