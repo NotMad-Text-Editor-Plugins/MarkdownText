@@ -11,7 +11,7 @@ Top Features
 
 Entry : MarkDownTextDlg::display( where brower widgets are created )、MarkDownTextDlg::refreshWebview( where virtual pages are loaded )
 
-Embeded Markdown Engines
+Markdown Engines
 
 - [md.html](https://github.com/MakeNowJust/md.html)
 - [MDViewer](https://github.com/volca/markdown-preview)

@@ -22,6 +22,8 @@
 #include "../../NativeLang/src/NativeLang_def.h"
 #include <ProfileStd.h>
 
+bool RequestedSwitch=false;
+
 // toggle the UI configuration boolean. |pos| flag position. |reverse| if set, then default to true.
 int ToggleUIBool(int pos, bool reverse)
 {
@@ -1032,7 +1034,7 @@ url_intercept_result* InterceptBrowserWidget(const char* url, const url_intercep
 
 			if(buffer)
 			{
-				return new url_intercept_result{buffer, dataLen, 200, (CHAR*)"OK"};
+				return new url_intercept_result{buffer, dataLen, 200, (CHAR*)"OK", "", true};
 			}
 		}
 	}
@@ -1088,12 +1090,6 @@ void MarkDownTextDlg::display(bool toShow){
 			if(!browser_deferred_creating && !currentkernel && kernelType==3)
 			{
 				currentkernelType=3;
-				regWndClassWin(L"WINWND", CS_HREDRAW | CS_VREDRAW);
-				HWND hWnd = ::CreateWindowEx(0 , L"WINWND" , NULL
-					, WS_CHILD , 0 , 0 , 840 , 680 , _hSelf , NULL , ::GetModuleHandle(NULL), NULL);
-				hBrowser=hWnd;
-				ShowWindow(hWnd, 1);
-				//UpdateWindow(hWnd);
 				auto options = Microsoft::WRL::Make<CoreWebView2EnvironmentOptions>();
 				HRESULT hr = CreateCoreWebView2EnvironmentWithOptions(0,0,0,
 					Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>([this](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
@@ -1103,6 +1099,13 @@ void MarkDownTextDlg::display(bool toShow){
 							webviewController = controller;
 							webviewController->get_CoreWebView2(&mWebView_3);
 						}
+
+						regWndClassWin(L"WINWND", CS_HREDRAW | CS_VREDRAW);
+						HWND hWnd = ::CreateWindowEx(0 , L"WINWND" , NULL
+							, WS_CHILD , 0 , 0 , 840 , 680 , _hSelf , NULL , ::GetModuleHandle(NULL), NULL);
+						hBrowser=hWnd;
+						ShowWindow(hWnd, 1);
+
 						ICoreWebView2Settings* Settings;
 						mWebView_3->get_Settings(&Settings);
 						Settings->put_IsScriptEnabled(TRUE);
@@ -1290,6 +1293,10 @@ void MarkDownTextDlg::display(bool toShow){
 					browser_deferred_creating=1;
 					browser_deferred_create_time = clock();
 				}
+				else if (RequestedSwitch && hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
+				{
+					::MessageBox(NULL, L"Edge beta not found. ", TEXT(""), MB_OK);
+				}
 			}
 			// BrowserWidget
 			bool prefer_bw = kernelType==2||kernelType==-1;
@@ -1311,6 +1318,10 @@ void MarkDownTextDlg::display(bool toShow){
 						browser_deferred_creating=1;
 						//::MessageBox(NULL, TEXT("111"), TEXT(""), MB_OK);
 					}
+				}
+				else if(RequestedSwitch)
+				{
+					::MessageBox(NULL, L"cefclient.dll not found. ", TEXT(""), MB_OK);
 				}
 			}
 			// mb and wke
@@ -1390,6 +1401,10 @@ void MarkDownTextDlg::display(bool toShow){
 						}
 					}
 				}
+				else if(RequestedSwitch)
+				{
+					::MessageBox(NULL, L"miniblink_x64.dll not found. ", TEXT(""), MB_OK);
+				}
 			}
 			if(currentkernel)
 			{
@@ -1412,9 +1427,6 @@ void MarkDownTextDlg::setClosed(bool toClose) {
 	::SendMessage(nppData._nppHandle, NPPM_SETMENUITEMCHECK, funcMenu->_cmdID, !toClose);
 }
 
-std::string page_data="<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/main.js\"></script><body><script>window.APMD(GetDocText1(''));</script></body>";
-//std::string page_data="";
-
 bool STRENDWITH(TCHAR* strA,CHAR* strB)
 {
 	int valen = lstrlen(strA);
@@ -1427,6 +1439,42 @@ bool STRENDWITH(TCHAR* strA,CHAR* strB)
 	}
 	while (--pc >= 0) {
 		if (strA[to++] != strB[po++]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+bool STRSTARTWITH(TCHAR* strA,CHAR* strB)
+{
+	int valen = lstrlen(strA);
+	int pc = strlen(strB);
+	int to = valen-pc;
+	int po = 0;
+	// Note: toffset might be near -1>>>1.
+	if (to < 0) {
+		return false;
+	}
+	while (--pc >= 0) {
+		if (strA[po] != strB[po++]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+bool STRSTARTWITH(TCHAR* strA,TCHAR* strB)
+{
+	int valen = lstrlen(strA);
+	int pc = lstrlen(strB);
+	int to = valen-pc;
+	int po = 0;
+	// Note: toffset might be near -1>>>1.
+	if (to < 0) {
+		return false;
+	}
+	while (--pc >= 0) {
+		if (strA[po] != strB[po++]) {
 			return false;
 		}
 	}
@@ -1490,6 +1538,7 @@ bool checkRenderMarkdown() {
 		markdown_ext.push_back(".md");
 		markdown_ext.push_back(".md.html");
 		markdown_ext.push_back(".svg");
+		markdown_ext.push_back(".markdown");
 	}
 	return checkFileExt(markdown_ext);
 }
@@ -1547,10 +1596,10 @@ void MarkDownTextDlg::RefreshWebview(bool fromEditor) {
 		else if(mWebView_2) {
 			CHAR* page_id = new CHAR[64];  // LIBCEF 需要拟构网址。 传文件名，只传ID吧。 http://tests/MDT/{bid}/index.html
 			int st,ed;
-			strcpy(page_id, "MDT/");
+			strcpy(page_id, "http://tests/MDT/");
 			LONGPTR2STR(page_id+(st=strlen(page_id)), bid);
 			strcpy(page_id+(ed=strlen(page_id)), "/index.html");
-			if(b1 && STRENDWITH(bwGetUrl(mWebView_2), page_id))
+			if(b1 && STRSTARTWITH(bwGetUrl(mWebView_2), page_id))
 			{
 				bwExecuteJavaScript(mWebView_2, "update()"); // bw soft update
 			}
@@ -1567,7 +1616,7 @@ void MarkDownTextDlg::RefreshWebview(bool fromEditor) {
 					strcpy(nxt_st, "'));}</script><body><script src=\"http://mdbr/");
 
 					AppendPageResidue(nxt_st+45); // 加载bw
-					bwLoadStrData(mWebView_2, page_id, page_content, 0);
+					bwLoadStrData(mWebView_2, page_id+13, page_content, 0);
 					lastBid=bid;
 					lstrcpy(last_updated, last_actived);
 				}// else if(!legacy && checkRenderHtml()){
@@ -1588,7 +1637,7 @@ void MarkDownTextDlg::RefreshWebview(bool fromEditor) {
 
 			wil::unique_cotaskmem_string uri;
 			mWebView_3->get_Source(&uri);
-			if(b1 && STRENDWITH(uri.get(), page_id))
+			if(b1 && STRSTARTWITH(uri.get(), page_id))
 			{
 				mWebView_3->ExecuteScript(L"update()", 0); // WV2 soft update
 			}
@@ -2031,6 +2080,7 @@ void MarkDownTextDlg::switchEngineByIndex(int id)
 		if(requestedInvalidSwitch)
 			requestedInvalidSwitch=0;
 		//todo check kernel exists
+		RequestedSwitch=true;
 		if(currentkernel)
 		{
 			if(mWebView)
@@ -2069,6 +2119,7 @@ void MarkDownTextDlg::switchEngineByIndex(int id)
 		for(int i=0;i<=4;i++)
 			CheckMenuItem(hMenuEngines, i+1, MF_BYPOSITION|(currentkernelType==i?MF_CHECKED:MF_UNCHECKED));
 		SendMessage(_hSelf, WM_SIZE, 0, 0);
+		RequestedSwitch=false;
 	}
 }
 
@@ -2169,7 +2220,6 @@ void GlobalOnPvMnChecked(HMENU hMenu, int idx) {
 			} else if(_MDText.mWebView_2){
 				bwExecuteJavaScript(_MDText.mWebView_2, "doScintillo(1)");
 			} else if(_MDText.mWebView_3){
-				//if(mWebView_3->CanGoBack())
 				_MDText.mWebView_3->ExecuteScript(L"doScintillo(1)", 0);
 			}
 		break;
@@ -2267,17 +2317,19 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 		return;
 		case IDM_EX_DOWN:
 			if(currentkernel) {
-				if(mWebView) {
-					//if(wkeGoBack(mWebView))
-					wkeGoBack(mWebView);
-				} else if(mWebView_1){
-					mbGoBack(mWebView_1);
-				} else if(mWebView_2){
-					//if(bwCanGoBack(mWebView_2))
-					bwGoBack(mWebView_2);
-				} else if(mWebView_3){
-					//if(mWebView_3->CanGoBack())
-					mWebView_3->GoBack();
+				if(source==0){
+					if(mWebView) {
+						//if(wkeGoBack(mWebView))
+						wkeGoBack(mWebView);
+					} else if(mWebView_1){
+						mbGoBack(mWebView_1);
+					} else if(mWebView_2){
+						//if(bwCanGoBack(mWebView_2))
+						bwGoBack(mWebView_2);
+					} else if(mWebView_3){
+						//if(mWebView_3->CanGoBack())
+						mWebView_3->GoBack();
+					}
 				}
 			}
 		return;
