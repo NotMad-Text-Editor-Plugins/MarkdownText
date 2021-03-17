@@ -78,26 +78,26 @@ END
 // Bitmap
 //
 
-IDB_BITMAP1             BITMAP                  "previous16.bmp"
+IDB_BITMAP1             BITMAP                  "res\\previous16.bmp"
 
-IDB_BITMAP2             BITMAP                  "next16.bmp"
+IDB_BITMAP2             BITMAP                  "res\\next16.bmp"
 
-IDB_BITMAP3             BITMAP                  "cprevious16.bmp"
+IDB_BITMAP3             BITMAP                  "res\\cprevious16.bmp"
 
-IDB_BITMAP4             BITMAP                  "cnext16.bmp"
+IDB_BITMAP4             BITMAP                  "res\\cnext16.bmp"
 
 
-ICO_EX_TOGGLE          ICON                  "..\\res\\cog.ico"
-ICO_EX_DOWN             ICON                  "..\\res\\down.ico"
-ICO_EX_UP               ICON                  "..\\res\\up.ico"
-ICO_EX_DELTA           ICON                  "..\\res\\delta.ico"
-ICO_EX_ITALIC       ICON                  "..\\res\\italic.ico"
-ICO_EX_BOLDEN         ICON                  "..\\res\\briefname.ico"
-ICO_EX_ZOI         ICON                  "..\\res\\zoom_in.ico"
-ICO_EX_ZOO         ICON                  "..\\res\\zoom_out.ico"
-ICO_EX_Refresh         ICON                  "..\\res\\refresh.ico"
-ICO_EX_DEV         ICON                  "..\\res\\dev.ico"
-ICO_EX_LOCATE         ICON                  "..\\res\\loc.ico"
+ICO_EX_TOGGLE           ICON                  "res\\cog.ico"
+ICO_EX_DOWN             ICON                  "res\\down.ico"
+ICO_EX_UP               ICON                  "res\\up.ico"
+ICO_EX_DELTA            ICON                  "res\\delta.ico"
+ICO_EX_ITALIC           ICON                  "res\\italic.ico"
+ICO_EX_BOLDEN           ICON                  "res\\briefname.ico"
+ICO_EX_ZOI              ICON                  "res\\zoom_in.ico"
+ICO_EX_ZOO              ICON                  "res\\zoom_out.ico"
+ICO_EX_Refresh          ICON                  "res\\refresh.ico"
+ICO_EX_DEV              ICON                  "res\\dev.ico"
+ICO_EX_LOCATE           ICON                  "res\\loc.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -145,31 +145,31 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_ICON1               ICON                    "icon1.ico"
+IDI_ICON1               ICON                    "res\\icon1.ico"
 
-IDI_ICON_NEXT           ICON                    "next.ico"
+IDI_ICON_NEXT           ICON                    "res\\next.ico"
 
-IDI_ICON_MD           ICON                    "markdown.ico"
+IDI_ICON_MD             ICON                    "res\\markdown.ico"
 
-IDI_ICON_NEXT1          ICON                    "next1.ico"
+IDI_ICON_NEXT1          ICON                    "res\\next1.ico"
 
-IDI_ICON_PREV1          ICON                    "prev1.ico"
+IDI_ICON_PREV1          ICON                    "res\\prev1.ico"
 
-IDI_ICON_PREV1_ACT      ICON                    "prev1_act.ico"
+IDI_ICON_PREV1_ACT      ICON                    "res\\prev1_act.ico"
 
-IDI_ICON_PREV1_OFF      ICON                    "prev1_off.ico"
+IDI_ICON_PREV1_OFF      ICON                    "res\\prev1_off.ico"
 
-IDI_ICON_PREV_ACT       ICON                    "prev_act.ico"
+IDI_ICON_PREV_ACT       ICON                    "res\\prev_act.ico"
 
-IDI_ICON_PREV_OFF       ICON                    "prev_off.ico"
+IDI_ICON_PREV_OFF       ICON                    "res\\prev_off.ico"
 
-IDI_ICON_NEXT1_ACT      ICON                    "next1_act.ico"
+IDI_ICON_NEXT1_ACT      ICON                    "res\\next1_act.ico"
 
-IDI_ICON_NEXT1_OFF      ICON                    "next1_off.ico"
+IDI_ICON_NEXT1_OFF      ICON                    "res\\next1_off.ico"
 
-IDI_ICON_NEXT_ACT       ICON                    "next_act.ico"
+IDI_ICON_NEXT_ACT       ICON                    "res\\next_act.ico"
 
-IDI_ICON_NEXT_OFF       ICON                    "next_off.ico"
+IDI_ICON_NEXT_OFF       ICON                    "res\\next_off.ico"
 
 
 /////////////////////////////////////////////////////////////////////////////

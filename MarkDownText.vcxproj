@@ -208,7 +208,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ANSI Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>.\DockingFeature;.\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(BW);$(MINIBL);.\src;.\src\ArticlePresenters;.\src\DialogFeatures;.\PanelFeature;.\;$(PowerEditor)/../plugins/CPPCommon;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MarkDownText_EXPORTS;PluginToolbar;TIXMLA_USE_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -249,7 +249,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ANSI Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>.\DockingFeature;.\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(BW);$(MINIBL);.\src;.\src\ArticlePresenters;.\src\DialogFeatures;.\PanelFeature;.\;$(PowerEditor)/../plugins/CPPCommon;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;PluginToolbar;TIXMLA_USE_STL;MarkDownText_EXPORTS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS=1;_STRALIGN_USE_SECURE_CRT=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>
@@ -292,7 +292,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Realeas|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(BW);$(MINIBL);.\DockingFeature;.\;$(PowerEditor)/../plugins/CPPCommon;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(BW);$(MINIBL);.\src;.\src\ArticlePresenters;.\src\DialogFeatures;.\PanelFeature;.\;$(PowerEditor)/../plugins/CPPCommon;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WIN64=1;TBPIsWrapper=0;PluginToolbar;TIXMLA_USE_STL;NDEBUG;_WINDOWS;_USRDLL;MarkDownText_EXPORTS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -339,7 +339,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|x64'">
     <ClCompile>
       <Optimization>Full</Optimization>
-      <AdditionalIncludeDirectories>$(BW);$(MINIBL);.\src;.\src\ArticlePresenters;.\DockingFeature;.\;$(PowerEditor)/../plugins/CPPCommon;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(BW);$(MINIBL);.\src;.\src\ArticlePresenters;.\src\DialogFeatures;.\PanelFeature;.\;$(PowerEditor)/../plugins/CPPCommon;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;PluginToolbar;TIXMLA_USE_STL;_USRDLL;MarkDownText_EXPORTS;PluginToolbar;TIXMLA_USE_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -365,68 +365,75 @@
     <ClCompile Include="..\CPPCommon\common_patch.cpp" />
     <ClCompile Include="..\CPPCommon\ProfileStd.cpp" />
     <ClCompile Include="..\CPPCommon\ToolbarPanel.cpp" />
-    <ClCompile Include="DockingFeature\MDTextDlg.cpp" />
-    <ClCompile Include="DockingFeature\SelfCtrl.cpp" />
-    <ClCompile Include="DockingFeature\SU.cpp" />
-    <ClCompile Include="MarkDownText.cpp" />
-    <ClCompile Include="PluginDefinition.cpp" />
     <ClCompile Include="src\ArticlePresenters\APresenter.cpp" />
     <ClCompile Include="src\ArticlePresenters\APresenterBWidget.cpp" />
     <ClCompile Include="src\ArticlePresenters\APresenterMiniWke.cpp" />
     <ClCompile Include="src\ArticlePresenters\APresenterMiniblink.cpp" />
     <ClCompile Include="src\ArticlePresenters\APresenterWebView2.cpp" />
     <ClCompile Include="src\ArticlePresenters\CheckFailure.cpp" />
+    <ClCompile Include="src\DialogFeatures\MDTextDlg.cpp" />
+    <ClCompile Include="src\DialogFeatures\SelfCtrl.cpp" />
+    <ClCompile Include="src\MarkdownText.cpp" />
+    <ClCompile Include="src\PluginDefinition.cpp" />
+    <ClCompile Include="src\SU.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\PowerEditor\src\WinControls\ToolBar\ToolBar.h" />
     <ClInclude Include="..\CPPCommon\ProfileStd.h" />
     <ClInclude Include="..\CPPCommon\ToolbarPanel.h" />
-    <ClInclude Include="DockingFeature\MDTextDlg.h" />
-    <ClInclude Include="DockingFeature\resource.h" />
-    <ClInclude Include="DockingFeature\SelfCtrl.h" />
-    <ClInclude Include="DockingFeature\SU.h" />
-    <ClInclude Include="menuCmdID.h" />
-    <ClInclude Include="PluginDefinition.h" />
     <ClInclude Include="src\ArticlePresenters\APresenter.h" />
     <ClInclude Include="src\ArticlePresenters\APresenterBWidget.h" />
     <ClInclude Include="src\ArticlePresenters\APresenterMiniblink.h" />
     <ClInclude Include="src\ArticlePresenters\APresenterWebView2.h" />
     <ClInclude Include="src\ArticlePresenters\ArticlePresenter.h" />
     <ClInclude Include="src\ArticlePresenters\CheckFailure.h" />
-    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="src\DialogFeatures\afxres.h" />
+    <ClInclude Include="src\DialogFeatures\Docking.h" />
+    <ClInclude Include="src\DialogFeatures\dockingResource.h" />
+    <ClInclude Include="src\DialogFeatures\MDTextDlg.h" />
+    <ClInclude Include="src\DialogFeatures\resource.h" />
+    <ClInclude Include="src\DialogFeatures\SelfCtrl.h" />
+    <ClInclude Include="src\menuCmdID.h" />
+    <ClInclude Include="src\PluginDefinition.h" />
+    <ClInclude Include="src\stdafx.h" />
+    <ClInclude Include="src\SU.h" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="DockingFeature\cnext16.bmp" />
-    <Image Include="DockingFeature\cprevious16.bmp" />
-    <Image Include="DockingFeature\icon1.ico" />
-    <Image Include="DockingFeature\next.ico" />
-    <Image Include="DockingFeature\next1.ico" />
-    <Image Include="DockingFeature\next16.bmp" />
-    <Image Include="DockingFeature\next1_act.ico" />
-    <Image Include="DockingFeature\next1_off.ico" />
-    <Image Include="DockingFeature\next_act.ico" />
-    <Image Include="DockingFeature\next_off.ico" />
-    <Image Include="DockingFeature\markdown.ico" />
-    <Image Include="DockingFeature\prev1.ico" />
-    <Image Include="DockingFeature\prev1_act.ico" />
-    <Image Include="DockingFeature\prev1_off.ico" />
-    <Image Include="DockingFeature\previous16.bmp" />
-    <Image Include="DockingFeature\prev_act.ico" />
-    <Image Include="DockingFeature\prev_off.ico" />
-    <Image Include="res\bin_empty.bmp" />
-    <Image Include="res\brick_go.bmp" />
-    <Image Include="res\briefname.bmp" />
-    <Image Include="res\cog.bmp" />
-    <Image Include="res\delete.bmp" />
-    <Image Include="res\down.bmp" />
-    <Image Include="res\page_white_stack.bmp" />
-    <Image Include="res\paste.bmp" />
-    <Image Include="res\up.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="DockingFeature\MDText.rc" />
+    <Image Include="res\briefname.ico" />
+    <Image Include="res\cnext16.bmp" />
+    <Image Include="res\cog.ico" />
+    <Image Include="res\cprevious16.bmp" />
+    <Image Include="res\delta.ico" />
+    <Image Include="res\dev.ico" />
+    <Image Include="res\down.ico" />
+    <Image Include="res\icon1.ico" />
+    <Image Include="res\italic.ico" />
+    <Image Include="res\loc.ico" />
+    <Image Include="res\markdown-toolbar-icons.ico" />
+    <Image Include="res\markdown.ico" />
+    <Image Include="res\next.ico" />
+    <Image Include="res\next1.ico" />
+    <Image Include="res\next16.bmp" />
+    <Image Include="res\next1_act.ico" />
+    <Image Include="res\next1_off.ico" />
+    <Image Include="res\next_act.ico" />
+    <Image Include="res\next_off.ico" />
+    <Image Include="res\prev1.ico" />
+    <Image Include="res\prev1_act.ico" />
+    <Image Include="res\prev1_off.ico" />
+    <Image Include="res\previous16.bmp" />
+    <Image Include="res\prev_act.ico" />
+    <Image Include="res\prev_off.ico" />
+    <Image Include="res\refresh.ico" />
+    <Image Include="res\up.ico" />
+    <Image Include="res\zoom_in.ico" />
+    <Image Include="res\zoom_out.ico" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="src\DialogFeatures\MDText.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
