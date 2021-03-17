@@ -111,6 +111,9 @@
     <ClInclude Include="..\..\PowerEditor\src\WinControls\ToolBar\ToolBar.h">
       <Filter>Source\PluginFeatures</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\PowerEditor\src\MISC\PluginsManager\PluginInterface.h">
+      <Filter>Source\PluginFeatures</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\icon1.ico">

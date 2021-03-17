@@ -378,6 +378,7 @@
     <ClCompile Include="src\SU.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\PowerEditor\src\MISC\PluginsManager\PluginInterface.h" />
     <ClInclude Include="..\..\PowerEditor\src\WinControls\ToolBar\ToolBar.h" />
     <ClInclude Include="..\CPPCommon\ProfileStd.h" />
     <ClInclude Include="..\CPPCommon\ToolbarPanel.h" />

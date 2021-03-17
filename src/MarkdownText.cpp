@@ -1,19 +1,4 @@
-//this file is part of notepad++
-//Copyright (C) 2011 AustinYoung<pattazl@gmail.com>
-//
-//This program is free software; you can redistribute it and/or
-//modify it under the terms of the GNU General Public License
-//as published by the Free Software Foundation; either
-//version 2 of the License, or (at your option) any later version.
-//
-//This program is distributed in the hope that it will be useful,
-//but WITHOUT ANY WARRANTY; without even the implied warranty of
-//MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//GNU General Public License for more details.
-//
-//You should have received a copy of the GNU General Public License
-//along with this program; if not, write to the Free Software
-//Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+//this file defines the plugin interface of MDText
 #include "PluginDefinition.h"
 #include <shlwapi.h>
 #include <tchar.h>
@@ -24,13 +9,11 @@
 #include <map>  
 #include "Scintilla.h"
 
-#define UseThread 0
-
-////////////////SELF DATA BEGIN///////////
 TCHAR currFile[MAX_PATH]={0};
-static int currBufferID=-1;
 
-//////////  SELF FUNCTION END ////////
+typedef const TBBUTTON *LPCTBBUTTON;
+
+// export entry point
 BOOL APIENTRY DllMain( HANDLE hModule, 
                        DWORD  reasonForCall, 
                        LPVOID lpReserved )
@@ -60,30 +43,28 @@ BOOL APIENTRY DllMain( HANDLE hModule,
     return TRUE;
 }
 
-
+// receive the info struct from main application
 extern "C" __declspec(dllexport) void setInfo(NppData notpadPlusData)
 {
 	nppData = notpadPlusData;
-
 	_MDText.init((HINSTANCE)_MDText.getHinst(), nppData._nppHandle);
-
 	commandMenuInit();
 }
 
+// export plugin name
 extern "C" __declspec(dllexport) const TCHAR * getName()
 {
 	return NPP_PLUGIN_NAME;
 }
 
+// export functions
 extern "C" __declspec(dllexport) FuncItem * getFuncsArray(int *nbF)
 {
 	*nbF = nbFunc;
 	return funcItems.data();
 }
 
-typedef const TBBUTTON *LPCTBBUTTON;
-static long preModifyPos = -1;//之前在的位置
-static long preModifyLineAdd = -1;//之前添加的行数
+// export the listener
 extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 {
 	int ModifyType = notifyCode->modificationType;
@@ -235,22 +216,17 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 	}
 }
 
-
-// Here you can process the Npp Messages 
-// I will make the messages accessible little by little, according to the need of plugin development.
-// Please let me know if you need to access to some messages :
-// http://sourceforge.net/forum/forum.php?forum_id=482781
-//
-
+// 
 extern "C" __declspec(dllexport) LRESULT messageProc(UINT Message, WPARAM wParam, LPARAM lParam)
 {
 	// only support WM_SIZE and  WM_MOVE
 	return TRUE;
 }
 
+// Unicode
 #ifdef UNICODE
 extern "C" __declspec(dllexport) BOOL isUnicode()
 {
     return TRUE;
 }
-#endif //UNICODE
+#endif
