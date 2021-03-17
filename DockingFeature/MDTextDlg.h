@@ -33,6 +33,8 @@
 #include "CheckFailure.h"
 #include <shlwapi.h>
 
+class ArticalPresenter;
+
 #define SELF_REFRESH WM_USER+9
 
 using namespace std;
@@ -61,7 +63,8 @@ public :
 
 	virtual void setClosed(bool toClose);
 
-	void RefreshWebview(bool fromEditor=false);
+	// Refresh the webview. |source| 0=switch docs;1=edit texts;2=switch engines;
+	void RefreshWebview(int source=0);
 
 	void refreshDlg(bool updateList, bool fromEditor);
 
@@ -70,17 +73,28 @@ public :
 	};
 	void saveParameters();
 	void readParameters();
+	void destoryWebViews(bool exit=false);
 	void switchEngineByIndex(int id);
 
+	ArticalPresenter* mWebView0;
+
+	// miniblink-wke
 	wkeWebView mWebView=0;
+	// miniblink-mb
 	mbWebView mWebView_1=0;
+	// Libcef
 	bwWebView mWebView_2=0;
 	wil::com_ptr<ICoreWebView2> mWebView_3;
 	wil::com_ptr<ICoreWebView2Environment> m_webViewEnvironment;
 	wil::com_ptr<ICoreWebView2Controller> webviewController;
 	intptr_t currentkernel=0;
 	HWND hBrowser=nullptr;
+	// 0=MD; 1=HTML; 2=ASCII
+	int CustomRoutineIdx=-1;
 	char CustomRoutine[MAX_PATH_HALF]={0};
+	char MDRoutine[MAX_PATH_HALF]={0};
+	char HTMLRoutine[MAX_PATH_HALF]={0};
+	char ADRoutine[MAX_PATH_HALF]={0};
 	TCHAR* LibPath=nullptr;
 	LONG_PTR lastBid=0;
 	ToolBar toolBar;

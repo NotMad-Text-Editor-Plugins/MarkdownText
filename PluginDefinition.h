@@ -142,5 +142,5 @@ extern void GlobalOnPvMnChecked(HMENU hMenu, int idx);
 extern void CheckMenu(FuncItem* funcItem, bool val);
 
 #define MAX_PATH_HALF 128
-#define MDCRST 8
+#define MDCRST 9
 #endif //PLUGINDEFINITION_H

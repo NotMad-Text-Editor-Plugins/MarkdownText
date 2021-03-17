@@ -118,6 +118,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 		{
 			commandMenuCleanUp();
 			NPPRunning=0;
+			_MDText.destoryWebViews(true);
 			//bIsPaused=1;
 			//AllCloseFlag=1;
 		}
