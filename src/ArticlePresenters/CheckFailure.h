@@ -1,8 +1,22 @@
 // Copyright (C) Microsoft Corporation. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+#pragma once
+#ifndef CHECKFAILURE_H
+#define CHECKFAILURE_H
 
 #include "stdafx.h"
+
+
+#include <wrl.h>
+#include <wil/com.h>
+
+// include WebView2 header
+#include "WebView2.h"
+#include "WebView2EnvironmentOptions.h"
+// include WebView2 header
+
+using namespace Microsoft::WRL;
 
 #include <string>
 
@@ -28,3 +42,5 @@ void CheckFailure(HRESULT hr, const std::wstring& message = L"Error");
 #define CHECK_FAILURE_FILE_LINE(file, line) ([](HRESULT hr){ CheckFailure(hr, L"Failure at " CHECK_FAILURE_STRINGIFY(file) L"(" CHECK_FAILURE_STRINGIFY(line) L")"); })
 #define CHECK_FAILURE CHECK_FAILURE_FILE_LINE(__FILE__, __LINE__)
 #define CHECK_FAILURE_BOOL(value) CHECK_FAILURE((value) ? S_OK : E_UNEXPECTED)
+
+#endif

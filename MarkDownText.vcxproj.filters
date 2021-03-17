@@ -10,8 +10,26 @@
     <ClCompile Include="..\CPPCommon\ToolbarPanel.cpp" />
     <ClCompile Include="..\..\PowerEditor\src\WinControls\ImageListSet\ImageListSet.cpp" />
     <ClCompile Include="..\..\PowerEditor\src\WinControls\ToolBar\ToolBar.cpp" />
-    <ClCompile Include="CheckFailure.cpp" />
     <ClCompile Include="..\CPPCommon\ProfileStd.cpp" />
+    <ClCompile Include="DockingFeature\SU.cpp" />
+    <ClCompile Include="src\ArticlePresenters\APresenterWebView2.cpp">
+      <Filter>Source\ArticlePresenters</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ArticlePresenters\APresenter.cpp">
+      <Filter>Source\ArticlePresenters</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ArticlePresenters\APresenterBWidget.cpp">
+      <Filter>Source\ArticlePresenters</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ArticlePresenters\APresenterMiniWke.cpp">
+      <Filter>Source\ArticlePresenters</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ArticlePresenters\APresenterMiniblink.cpp">
+      <Filter>Source\ArticlePresenters</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ArticlePresenters\CheckFailure.cpp">
+      <Filter>Source\ArticlePresenters</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DockingFeature\MDTextDlg.h" />
@@ -20,9 +38,27 @@
     <ClInclude Include="menuCmdID.h" />
     <ClInclude Include="PluginDefinition.h" />
     <ClInclude Include="..\CPPCommon\ToolbarPanel.h" />
-    <ClInclude Include="CheckFailure.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="..\CPPCommon\ProfileStd.h" />
+    <ClInclude Include="DockingFeature\SU.h" />
+    <ClInclude Include="src\ArticlePresenters\APresenterMiniblink.h">
+      <Filter>Source\ArticlePresenters</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ArticlePresenters\APresenterWebView2.h">
+      <Filter>Source\ArticlePresenters</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ArticlePresenters\ArticlePresenter.h">
+      <Filter>Source\ArticlePresenters</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ArticlePresenters\APresenter.h">
+      <Filter>Source\ArticlePresenters</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ArticlePresenters\APresenterBWidget.h">
+      <Filter>Source\ArticlePresenters</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ArticlePresenters\CheckFailure.h">
+      <Filter>Source\ArticlePresenters</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DockingFeature\MDText.rc" />
@@ -57,5 +93,13 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source">
+      <UniqueIdentifier>{70547a0e-51df-4e1d-9d9b-39220ba483db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\ArticlePresenters">
+      <UniqueIdentifier>{554a2a7e-fdb2-49c4-bd89-a1c04aa38a00}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

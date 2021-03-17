@@ -1,19 +1,17 @@
-//this file is part of notepad++
-//Copyright (C) 2011 AustinYoung<pattazl@gmail.com>
-//
-//This program is free software; you can redistribute it and/or
-//modify it under the terms of the GNU General Public License
-//as published by the Free Software Foundation; either
-//version 2 of the License, or (at your option) any later version.
-//
-//This program is distributed in the hope that it will be useful,
-//but WITHOUT ANY WARRANTY; without even the implied warranty of
-//MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//GNU General Public License for more details.
-//
-//You should have received a copy of the GNU General Public License
-//along with this program; if not, write to the Free Software
-//Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+/*
+* Copyright 2020 Encapsulate miniblink, libcef and webview2 in one c++ file.
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*      http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 #pragma once
 #ifndef LNHISTORY_DLG_H
 #define LNHISTORY_DLG_H
@@ -25,15 +23,14 @@
 #include <deque>
 #include "menuCmdID.h"
 #include "ToolbarPanel.h"
-#include <wke.h>
-#include <mb.h>
-#include <BrowserUI.h>
 
 #include "stdafx.h"
 #include "CheckFailure.h"
 #include <shlwapi.h>
 
-class ArticalPresenter;
+#include "APresenter.h"
+
+class ArticlePresenter;
 
 #define SELF_REFRESH WM_USER+9
 
@@ -61,6 +58,8 @@ public :
 
     virtual void display(bool toShow = true); 
 
+	HINSTANCE getModule(){ return (HINSTANCE)g_hModule; }
+
 	virtual void setClosed(bool toClose);
 
 	// Refresh the webview. |source| 0=switch docs;1=edit texts;2=switch engines;
@@ -76,19 +75,9 @@ public :
 	void destoryWebViews(bool exit=false);
 	void switchEngineByIndex(int id);
 
-	ArticalPresenter* mWebView0;
-
-	// miniblink-wke
-	wkeWebView mWebView=0;
-	// miniblink-mb
-	mbWebView mWebView_1=0;
-	// Libcef
-	bwWebView mWebView_2=0;
-	wil::com_ptr<ICoreWebView2> mWebView_3;
-	wil::com_ptr<ICoreWebView2Environment> m_webViewEnvironment;
-	wil::com_ptr<ICoreWebView2Controller> webviewController;
-	intptr_t currentkernel=0;
+	ArticlePresenter* mWebView0;
 	HWND hBrowser=nullptr;
+
 	// 0=MD; 1=HTML; 2=ASCII
 	int CustomRoutineIdx=-1;
 	char CustomRoutine[MAX_PATH_HALF]={0};
@@ -98,10 +87,27 @@ public :
 	TCHAR* LibPath=nullptr;
 	LONG_PTR lastBid=0;
 	ToolBar toolBar;
+
+	bool RequestedSwitch=false;
+	clock_t browser_deferred_create_time=0;
+
+	void doScintillaScroll(int ln);
+
+	CHAR* loadSourceAsset(uptr_t bid, const char* pathA, DWORD & dataLen);
+
+	CHAR* loadPluginAsset(const char* path, DWORD & dataLen);
+
+	CHAR* GetDocTex(size_t & docLength, LONG_PTR bid, bool * shouldDelete);
+
+	bool checkRenderMarkdown();
+
+	bool checkRenderHtml();
+
 protected :
 	virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam);
 	SelfCtrl _color,_savecolor;
 public :
+	APresenter presenter;
 	int kernelType=-1; // -1_auto 0_wke 1_mb 2_bw 3_WV2
 	int currentkernelType=0; // 0_wke 1_mb 2_bw 3_WV2
 	int skFlags=0;

@@ -339,7 +339,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|x64'">
     <ClCompile>
       <Optimization>Full</Optimization>
-      <AdditionalIncludeDirectories>$(BW);$(MINIBL);.\DockingFeature;.\;$(PowerEditor)/../plugins/CPPCommon;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(BW);$(MINIBL);.\src;.\src\ArticlePresenters;.\DockingFeature;.\;$(PowerEditor)/../plugins/CPPCommon;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;PluginToolbar;TIXMLA_USE_STL;_USRDLL;MarkDownText_EXPORTS;PluginToolbar;TIXMLA_USE_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -365,21 +365,33 @@
     <ClCompile Include="..\CPPCommon\common_patch.cpp" />
     <ClCompile Include="..\CPPCommon\ProfileStd.cpp" />
     <ClCompile Include="..\CPPCommon\ToolbarPanel.cpp" />
-    <ClCompile Include="CheckFailure.cpp" />
     <ClCompile Include="DockingFeature\MDTextDlg.cpp" />
     <ClCompile Include="DockingFeature\SelfCtrl.cpp" />
+    <ClCompile Include="DockingFeature\SU.cpp" />
     <ClCompile Include="MarkDownText.cpp" />
     <ClCompile Include="PluginDefinition.cpp" />
+    <ClCompile Include="src\ArticlePresenters\APresenter.cpp" />
+    <ClCompile Include="src\ArticlePresenters\APresenterBWidget.cpp" />
+    <ClCompile Include="src\ArticlePresenters\APresenterMiniWke.cpp" />
+    <ClCompile Include="src\ArticlePresenters\APresenterMiniblink.cpp" />
+    <ClCompile Include="src\ArticlePresenters\APresenterWebView2.cpp" />
+    <ClCompile Include="src\ArticlePresenters\CheckFailure.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\CPPCommon\ProfileStd.h" />
     <ClInclude Include="..\CPPCommon\ToolbarPanel.h" />
-    <ClInclude Include="CheckFailure.h" />
     <ClInclude Include="DockingFeature\MDTextDlg.h" />
     <ClInclude Include="DockingFeature\resource.h" />
     <ClInclude Include="DockingFeature\SelfCtrl.h" />
+    <ClInclude Include="DockingFeature\SU.h" />
     <ClInclude Include="menuCmdID.h" />
     <ClInclude Include="PluginDefinition.h" />
+    <ClInclude Include="src\ArticlePresenters\APresenter.h" />
+    <ClInclude Include="src\ArticlePresenters\APresenterBWidget.h" />
+    <ClInclude Include="src\ArticlePresenters\APresenterMiniblink.h" />
+    <ClInclude Include="src\ArticlePresenters\APresenterWebView2.h" />
+    <ClInclude Include="src\ArticlePresenters\ArticlePresenter.h" />
+    <ClInclude Include="src\ArticlePresenters\CheckFailure.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>

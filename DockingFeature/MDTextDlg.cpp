@@ -21,10 +21,8 @@
 #include "time.h"
 #include "../../NativeLang/src/NativeLang_def.h"
 #include <ProfileStd.h>
-
-using namespace Microsoft::WRL;
-
-bool RequestedSwitch=false;
+#include "ArticlePresenter.h"
+#include "SU.h"
 
 // toggle the UI configuration boolean. |pos| flag position. |reverse| if set, then default to true.
 int ToggleUIBool(int pos, bool reverse)
@@ -53,56 +51,15 @@ bool GetUIBoolReverse(int pos)
 	return !(UISettings&mask);
 }
 
-void doScintillaScroll(int ln)
+void MarkDownTextDlg::doScintillaScroll(int ln)
 {
 	int curScintilla;
 	SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&curScintilla);
 	auto currrentSc = curScintilla?nppData._scintillaSecondHandle:nppData._scintillaMainHandle;
-	SendMessage(currrentSc, SCI_SETFIRSTVISIBLELINE, _MDText.lastSyncLn=ln, 0);
+	SendMessage(currrentSc, SCI_SETFIRSTVISIBLELINE, lastSyncLn=ln, 0);
 }
 
-void WKE_CALL_TYPE onDidCreateScriptContextCallback(wkeWebView webView, void* param, wkeWebFrameHandle frameId, void* context, int extensionGroup, int worldId)
-{
-
-}
-
-// 回调：点击了关闭、返回 true 将销毁窗口，返回 false 什么都不做。
-bool handleWindowClosing(wkeWebView webWindow, void* param)
-{
-	return true;
-}
-
-// 回调：窗口已销毁
-void handleWindowDestroy(wkeWebView webWindow, void* param)
-{
-}
-
-// 回调：文档加载成功
-void handleDocumentReady(wkeWebView webWindow, void* param)
-{
-	wkeShowWindow(webWindow, true);
-}
-
-// 回调：页面标题改变
-void handleTitleChanged(wkeWebView webWindow, void* param, const wkeString title)
-{
-	wkeSetWindowTitleW(webWindow, wkeGetStringW(title));
-}
-
-// 回调：创建新的页面，比如说调用了 window.open 或者点击了 <a target="_blank" .../>
-wkeWebView onCreateView(wkeWebView webWindow, void* param, wkeNavigationType navType, const wkeString url, const wkeWindowFeatures* features)
-{
-	//wkeWebView newWindow = wkeCreateWebWindow(WKE_WINDOW_TYPE_POPUP, NULL, features->x, features->y, features->width, features->height);
-	//wkeShowWindow(newWindow, true);
-	//return newWindow;
-	wkeLoadURL(webWindow, (CHAR*)url);
-	return 0;
-}
-
-const char InternalResHead1[] = "http://mdbr/";
-const char InternalTESTSResHead1[] = "http://tests/MDT/";
-
-CHAR* loadSourceAsset(uptr_t bid, const char* pathA, DWORD & dataLen)
+CHAR* MarkDownTextDlg::loadSourceAsset(uptr_t bid, const char* pathA, DWORD & dataLen)
 {
 	TCHAR path[MAX_PATH];
 	MultiByteToWideChar (CP_ACP, 0, pathA, strlen (pathA) + 1, path, 256) ;
@@ -136,7 +93,7 @@ CHAR* loadSourceAsset(uptr_t bid, const char* pathA, DWORD & dataLen)
 	return NULL;
 }
 
-CHAR* loadPluginAsset(const char* path, DWORD & dataLen)
+CHAR* MarkDownTextDlg::loadPluginAsset(const char* path, DWORD & dataLen)
 {
 	CHAR ResPath[MAX_PATH];
 #if 1 // debug resource path
@@ -164,36 +121,6 @@ CHAR* loadPluginAsset(const char* path, DWORD & dataLen)
 		::CloseHandle(hFile);
 	}
 	return NULL;
-}
-
-bool onLoadUrlBegin(wkeWebView webView, void* param, const char* url, void *job)
-{
-	if(strncmp(url, InternalResHead1, 12)==0)
-	{
-		auto path = url+12;
-		const utf8* decodeURL = wkeUtilDecodeURLEscape(path);
-		if(decodeURL)
-		{
-			if(strstr(decodeURL, "..")) // security check
-			{
-				return false;
-			}
-			DWORD dataLen;
-			auto buffer = loadPluginAsset(path, dataLen);
-			if(buffer)
-			{
-				wkeNetSetData(job, buffer, dataLen);
-				return true;
-			}
-		}
-	}
-	return false;
-}
-
-void onLoadUrlEnd(wkeWebView webView, void* param, const char *url, void *job, void* buf, int len)
-{
-	//wkeRunJS();
-	return;
 }
 
 UINT ScintillaGetText(HWND hWnd, char *text, INT start, INT end)
@@ -231,7 +158,7 @@ LONG_PTR nextPowerOfTwo(size_t v)
 	return v;
 }
 
-CHAR* GetDocTex(size_t & docLength, LONG_PTR bid, bool * shouldDelete)
+CHAR* MarkDownTextDlg::GetDocTex(size_t & docLength, LONG_PTR bid, bool * shouldDelete)
 {
 	int curScintilla;
 	SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&curScintilla);
@@ -241,7 +168,7 @@ CHAR* GetDocTex(size_t & docLength, LONG_PTR bid, bool * shouldDelete)
 		*shouldDelete = false;
 	}
 
-	if(!_MDText.mWebView_1 && bid && false) //  && !legacy
+	if(currentkernelType!=MINILINK_TYPE && bid && false) //  && !legacy
 	{
 		// fast-read the original memory data
 		LONG_PTR DOCUMENTPTR = SendMessage(nppData._nppHandle, NPPM_GETDOCUMENTPTR, bid, bid);
@@ -261,7 +188,7 @@ CHAR* GetDocTex(size_t & docLength, LONG_PTR bid, bool * shouldDelete)
 	
 	docLength = SendMessage(currrentSc, SCI_GETTEXTLENGTH, 0, 0);
 	if(!docLength) {
-		if(_MDText.mWebView_1) {
+		if(currentkernelType==MINILINK_TYPE) {
 			return new CHAR[4]{' ', '0'};
 		} else {
 			return " ";
@@ -292,735 +219,6 @@ CHAR* GetDocTex(size_t & docLength, LONG_PTR bid, bool * shouldDelete)
 	return buffer;
 }
 
-//synchronous callback
-jsValue WKE_CALL_TYPE GetDocText(jsExecState es, void* param)
-{
-	//if (0 == jsArgCount(es))
-	//	return jsUndefined();
-	//jsValue arg0 = jsArg(es, 0);
-	//if (!jsIsString(arg0))
-	//	return jsUndefined();
-	//
-	//std::string path;
-	//path = jsToTempString(es, arg0);
-	//if ("runEchars" == path) {
-	//	createECharsTest();
-	//} else if ("wkeBrowser" == path) {
-	//	wkeBrowserMain(nullptr, nullptr, nullptr, TRUE);
-	//}
-	//
-	//path += "\n";
-	//OutputDebugStringA(path.c_str());
-
-	size_t len;
-	auto ret=jsString(es, GetDocTex(len, 0, 0));
-	//::MessageBox(NULL, TEXT("111"), TEXT(""), MB_OK);
-	return ret;
-	//return jsString(es, "# Hello `md.html` World!");
-}
-
-jsValue WKE_CALL_TYPE ScintillaScroll1(jsExecState es, void* param)
-{
-	TCHAR buffer[256]={0};
-	wsprintf(buffer,TEXT("position=%s"), 0);
-	::SendMessage(nppData._nppHandle, NPPM_SETSTATUSBAR, STATUSBAR_DOC_TYPE, (LPARAM)buffer);
-
-	if(GetUIBoolReverse(0) && GetUIBoolReverse(2) || jsArgCount(es)>1)
-	{
-		if(jsArgCount(es)<=2)
-		{
-			jsValue arg0 = jsArg(es, 0);
-			if (!jsIsNumber(arg0))
-				return jsUndefined();
-			LONG_PTR bid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
-			if(_MDText.lastBid==bid)
-			{
-				int val=jsToInt(es, arg0);
-				doScintillaScroll(val);
-			}
-		}
-	}
-	return 0;
-}
-
-LRESULT WINAPI testWindowProc(
-	__in HWND hWnd,
-	__in UINT msg,
-	__in WPARAM wParam,
-	__in LPARAM lParam)
-{
-	LRESULT result = 0;
-	mbWebView view = (mbWebView)::GetProp(hWnd, L"mb");
-	if (!view)
-		return ::DefWindowProc(hWnd, msg, wParam, lParam);
-
-	switch (msg) {
-	case WM_NCDESTROY:
-		if (::GetProp(hWnd, L"subView")) {
-			RemoveProp(hWnd, L"subView");
-		}
-
-		mbDestroyWebView(view);
-		return 0;
-
-	case WM_ERASEBKGND:
-		return TRUE;
-
-	case WM_PAINT:
-	{
-		if (WS_EX_LAYERED == (WS_EX_LAYERED & GetWindowLong(hWnd, GWL_EXSTYLE)))
-			break;
-		//mbRepaintIfNeeded(view);
-
-		PAINTSTRUCT ps = { 0 };
-		HDC hdc = ::BeginPaint(hWnd, &ps);
-
-		RECT rcClip = ps.rcPaint;
-
-		RECT rcClient;
-		::GetClientRect(hWnd, &rcClient);
-
-		RECT rcInvalid = rcClient;
-		if (rcClip.right != rcClip.left && rcClip.bottom != rcClip.top)
-			::IntersectRect(&rcInvalid, &rcClip, &rcClient);
-
-		int srcX = rcInvalid.left - rcClient.left;
-		int srcY = rcInvalid.top - rcClient.top;
-		int destX = rcInvalid.left;
-		int destY = rcInvalid.top;
-		int width = rcInvalid.right - rcInvalid.left;
-		int height = rcInvalid.bottom - rcInvalid.top;
-
-		if (0 != width && 0 != height) {
-			HDC hMbDC = mbGetLockedViewDC(view);
-			::BitBlt(hdc, destX, destY, width, height, hMbDC, srcX, srcY, SRCCOPY);
-			mbUnlockViewDC(view);
-		}
-
-		::EndPaint(hWnd, &ps);
-		return 1;
-		break;
-	}
-	case WM_SIZE:
-	{
-		RECT rc = { 0 };
-		::GetClientRect(hWnd, &rc);
-		int width = rc.right - rc.left;
-		int height = rc.bottom - rc.top;
-
-		::mbResize(view, width, height);
-		// mbRepaintIfNeeded(view);
-		::mbWake(view);
-
-		return 0;
-	}
-	case WM_KEYDOWN:
-	{
-		unsigned int virtualKeyCode = wParam;
-		unsigned int flags = 0;
-		if (HIWORD(lParam) & KF_REPEAT)
-			flags |= MB_REPEAT;
-		if (HIWORD(lParam) & KF_EXTENDED)
-			flags |= MB_EXTENDED;
-
-		if (mbFireKeyDownEvent(view, virtualKeyCode, flags, false))
-			return 0;
-		break;
-	}
-	case WM_KEYUP:
-	{
-		unsigned int virtualKeyCode = wParam;
-		unsigned int flags = 0;
-		if (HIWORD(lParam) & KF_REPEAT)
-			flags |= MB_REPEAT;
-		if (HIWORD(lParam) & KF_EXTENDED)
-			flags |= MB_EXTENDED;
-
-		if (mbFireKeyUpEvent(view, virtualKeyCode, flags, false))
-			return 0;
-		break;
-	}
-	case WM_CHAR:
-	{
-		unsigned int charCode = wParam;
-		unsigned int flags = 0;
-		if (HIWORD(lParam) & KF_REPEAT)
-			flags |= MB_REPEAT;
-		if (HIWORD(lParam) & KF_EXTENDED)
-			flags |= MB_EXTENDED;
-
-		if (mbFireKeyPressEvent(view, charCode, flags, false))
-			return 0;
-		break;
-	}
-	case WM_LBUTTONDOWN:
-	case WM_MBUTTONDOWN:
-	case WM_RBUTTONDOWN:
-	case WM_LBUTTONDBLCLK:
-	case WM_MBUTTONDBLCLK:
-	case WM_RBUTTONDBLCLK:
-	case WM_LBUTTONUP:
-	case WM_MBUTTONUP:
-	case WM_RBUTTONUP:
-	case WM_MOUSEMOVE:
-	{
-		if (msg == WM_LBUTTONDOWN || msg == WM_MBUTTONDOWN || msg == WM_RBUTTONDOWN) {
-			if (::GetFocus() != hWnd)
-				::SetFocus(hWnd);
-			::SetCapture(hWnd);
-		} else if (msg == WM_LBUTTONUP || msg == WM_MBUTTONUP || msg == WM_RBUTTONUP) {
-			ReleaseCapture();
-		}
-
-		int x = LOWORD(lParam);
-		int y = HIWORD(lParam);
-
-		unsigned int flags = 0;
-
-		if (wParam & MK_CONTROL)
-			flags |= MB_CONTROL;
-		if (wParam & MK_SHIFT)
-			flags |= MB_SHIFT;
-
-		if (wParam & MK_LBUTTON)
-			flags |= MB_LBUTTON;
-		if (wParam & MK_MBUTTON)
-			flags |= MB_MBUTTON;
-		if (wParam & MK_RBUTTON)
-			flags |= MB_RBUTTON;
-
-		if (mbFireMouseEvent(view, msg, x, y, flags))
-			return 0;
-		break;
-	}
-	case WM_CONTEXTMENU:
-	{
-		POINT pt;
-		pt.x = LOWORD(lParam);
-		pt.y = HIWORD(lParam);
-
-		if (pt.x != -1 && pt.y != -1)
-			ScreenToClient(hWnd, &pt);
-
-		unsigned int flags = 0;
-
-		if (wParam & MK_CONTROL)
-			flags |= MB_CONTROL;
-		if (wParam & MK_SHIFT)
-			flags |= MB_SHIFT;
-
-		if (wParam & MK_LBUTTON)
-			flags |= MB_LBUTTON;
-		if (wParam & MK_MBUTTON)
-			flags |= MB_MBUTTON;
-		if (wParam & MK_RBUTTON)
-			flags |= MB_RBUTTON;
-
-		//if (mbFireContextMenuEvent(view, pt.x, pt.y, flags))
-		//	return 0;
-
-
-		break;
-	}
-	case WM_MOUSEWHEEL:
-	{
-		POINT pt;
-		pt.x = LOWORD(lParam);
-		pt.y = HIWORD(lParam);
-		::ScreenToClient(hWnd, &pt);
-
-		int delta = GET_WHEEL_DELTA_WPARAM(wParam);
-
-		unsigned int flags = 0;
-
-		if (wParam & MK_CONTROL)
-			flags |= MB_CONTROL;
-		if (wParam & MK_SHIFT)
-			flags |= MB_SHIFT;
-
-		if (wParam & MK_LBUTTON)
-			flags |= MB_LBUTTON;
-		if (wParam & MK_MBUTTON)
-			flags |= MB_MBUTTON;
-		if (wParam & MK_RBUTTON)
-			flags |= MB_RBUTTON;
-
-		if (mbFireMouseWheelEvent(view, pt.x, pt.y, delta, flags))
-			return 0;
-		break;
-	}
-	case WM_SETFOCUS:
-		mbSetFocus(view);
-		return 0;
-
-	case WM_KILLFOCUS:
-		mbKillFocus(view);
-		return 0;
-
-	case WM_SETCURSOR:
-		if (mbFireWindowsMessage(view, hWnd, WM_SETCURSOR, 0, 0, &result))
-			return result;
-		break;
-
-	case WM_IME_STARTCOMPOSITION: {
-		if (mbFireWindowsMessage(view, hWnd, WM_IME_STARTCOMPOSITION, 0, 0, &result))
-			return result;
-		break;
-	}
-	}
-	return ::DefWindowProc(hWnd, msg, wParam, lParam);
-}
-
-BOOL regWndClass(LPCTSTR lpcsClassName, DWORD dwStyle)
-{
-	WNDCLASS wndclass = { 0 };
-
-	wndclass.style = dwStyle;
-	wndclass.lpfnWndProc = testWindowProc;
-	wndclass.cbClsExtra = 200;
-	wndclass.cbWndExtra = 200;
-	wndclass.hInstance = ::GetModuleHandle(NULL);
-	wndclass.hIcon = NULL;
-	//wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wndclass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-	wndclass.lpszMenuName = NULL;
-	wndclass.lpszClassName = lpcsClassName;
-
-	::RegisterClass(&wndclass);
-	return TRUE;
-}
-
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	switch (message)
-	{
-	case WM_SIZE:
-		break;
-	case WM_DESTROY:
-		break;
-	default:
-		return DefWindowProc(hWnd, message, wParam, lParam);
-		break;
-	}
-
-	return 0;
-}
-
-BOOL regWndClassWin(LPCTSTR lpcsClassName, DWORD dwStyle)
-{
-	WNDCLASS wndclass = { 0 };
-
-	wndclass.style = dwStyle;
-	wndclass.lpfnWndProc = WndProc;
-	wndclass.cbClsExtra = 200;
-	wndclass.cbWndExtra = 200;
-	wndclass.hInstance = ::GetModuleHandle(NULL);
-	wndclass.hIcon = NULL;
-	//wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wndclass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-	wndclass.lpszMenuName = NULL;
-	wndclass.lpszClassName = lpcsClassName;
-
-	::RegisterClass(&wndclass);
-	return TRUE;
-}
-
-BOOL unregWndClass(LPCTSTR lpcsClassName)
-{
-	::UnregisterClass(lpcsClassName, ::GetModuleHandle(NULL));
-	return TRUE;
-}
-
-void MB_CALL_TYPE handlePaintUpdatedCallback(mbWebView webView, void* param, const HDC hdc, int x, int y, int cx, int cy)
-{
-	HWND hWnd = (HWND)param;
-	BOOL callOk = FALSE;
-	if (WS_EX_LAYERED == (WS_EX_LAYERED & GetWindowLong(hWnd, GWL_EXSTYLE))) {
-		RECT rectDest;
-		::GetWindowRect(hWnd, &rectDest);
-
-		SIZE sizeDest = { rectDest.right - rectDest.left, rectDest.bottom - rectDest.top };
-		POINT pointDest = { 0, 0 }; // { rectDest.left, rectDest.top };
-		POINT pointSource = { 0, 0 };
-
-		BITMAP bmp = { 0 };
-		HBITMAP hBmp = (HBITMAP)::GetCurrentObject(hdc, OBJ_BITMAP);
-		::GetObject(hBmp, sizeof(BITMAP), (LPSTR)&bmp);
-
-		sizeDest.cx = bmp.bmWidth;
-		sizeDest.cy = bmp.bmHeight;
-
-		HDC hdcScreen = GetDC(hWnd);
-
-		BLENDFUNCTION blend = { 0 };
-		blend.BlendOp = AC_SRC_OVER;
-		blend.SourceConstantAlpha = 255;
-		blend.AlphaFormat = AC_SRC_ALPHA;
-		callOk = ::UpdateLayeredWindow(hWnd, hdcScreen, nullptr, &sizeDest, hdc, &pointSource, RGB(0xFF, 0xFF, 0xFF), &blend, ULW_ALPHA);
-		if (!callOk) {
-			HDC hdcMemory = ::CreateCompatibleDC(hdcScreen);
-			HBITMAP hbmpMemory = ::CreateCompatibleBitmap(hdcScreen, sizeDest.cx, sizeDest.cy);
-			HBITMAP hbmpOld = (HBITMAP)::SelectObject(hdcMemory, hbmpMemory);
-
-			::BitBlt(hdcMemory, 0, 0, sizeDest.cx, sizeDest.cy, hdc, 0, 0, SRCCOPY | CAPTUREBLT);
-
-			::BitBlt(hdc, 0, 0, sizeDest.cx, sizeDest.cy, hdcMemory, 0, 0, SRCCOPY | CAPTUREBLT); //!
-
-			callOk = ::UpdateLayeredWindow(hWnd, hdcScreen, nullptr, &sizeDest, hdcMemory, &pointSource, RGB(0xFF, 0xFF, 0xFF), &blend, ULW_ALPHA);
-
-			::SelectObject(hdcMemory, (HGDIOBJ)hbmpOld);
-			::DeleteObject((HGDIOBJ)hbmpMemory);
-			::DeleteDC(hdcMemory);
-		}
-
-		::ReleaseDC(hWnd, hdcScreen);
-	} else {
-		RECT rc = { x, y, x + cx, y + cy };
-		::InvalidateRect(hWnd, &rc, FALSE);
-	}
-}
-
-void MB_CALL_TYPE onRunJs(mbWebView webView, void* param, mbJsExecState es, mbJsValue v)
-{
-	const utf8* str = mbJsToString(es, v);
-
-	OutputDebugStringA("onRunJs:");
-	OutputDebugStringA(str);
-	OutputDebugStringA("\n");
-}
-
-BOOL MB_CALL_TYPE handleLoadUrlBegin(mbWebView webView, void* param, const char* url, void *job)
-{
-	if(strncmp(url, InternalResHead1, 12)==0)
-	{
-		auto path = url+12;
-		//const utf8* decodeURL = wkeUtilDecodeURLEscape(path);
-		const utf8* decodeURL = mbUtilDecodeURLEscape(path);
-		if(decodeURL)
-		{
-			if(strncmp(decodeURL, "doc/", 4)==0)
-			{
-				decodeURL += 4;
-				if(strncmp(decodeURL, "index.html", 5)==0)
-				{
-					size_t len;
-					auto res=GetDocTex(len, 0, 0);
-					mbNetSetData(job, res, len);
-					//delete[] res;
-					return true;
-				}
-				else {
-					DWORD dataLen;
-					auto buffer = loadSourceAsset(0, decodeURL, dataLen);
-					if(buffer)
-					{
-						mbNetSetData(job, buffer, dataLen);
-						//delete[] buffer;
-						return true;
-					}
-				}
-				return false;
-			}
-			if(strstr(decodeURL, "..")) // security check
-			{
-				return false;
-			}
-			DWORD dataLen;
-			auto buffer = loadPluginAsset(path, dataLen);
-			if(buffer)
-			{
-				mbNetSetData(job, buffer, dataLen);
-				return true;
-			}
-		}
-	}
-	return false;
-}
-
-void MB_CALL_TYPE handleDocumentReady(mbWebView webView, void* param, mbWebFrameHandle frameId)
-{
-	OutputDebugStringA("HandleDocumentReady\n");
-	mbShowWindow(webView, TRUE);
-	mbRunJs(webView, mbWebFrameGetMainFrame(webView), "return window.onNativeRunjs('I am runjs');", TRUE, onRunJs, nullptr, nullptr);
-}
-
-
-void MB_CALL_TYPE handleLoadingFinish(mbWebView webView, void* param, mbWebFrameHandle frameId, const utf8* url, mbLoadingResult result, const utf8* failedReason)
-{
-	//if(result == MB_LOADING_SUCCEEDED)
-	//::mbNetGetFavicon(webView, HandleFaviconReceived, param);
-	OutputDebugStringA("handleLoadingFinish \n");
-}
-
-#define kClassWindow L"TestMbWindow"
-
-mbWebView MB_CALL_TYPE handleCreateView(mbWebView webView, void* param, mbNavigationType navigationType, const utf8* url, const mbWindowFeatures* windowFeatures)
-{
-	if(1) {
-		mbLoadURL(webView, url);
-		return 0;
-	}
-	mbWebView view = mbCreateWebView();
-	HWND hWnd = ::CreateWindowEx(WS_EX_APPWINDOW, kClassWindow, NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE, windowFeatures->x, windowFeatures->y, windowFeatures->width, windowFeatures->height, NULL, NULL, ::GetModuleHandle(NULL), NULL);
-	::SetProp(hWnd, L"mb", (HANDLE)view);
-	::SetProp(hWnd, L"subView", (HANDLE)TRUE);
-	::mbSetHandle(view, hWnd);
-	::mbOnPaintUpdated(view, handlePaintUpdatedCallback, hWnd);
-	::mbOnLoadingFinish(view, handleLoadingFinish, (void*)view);
-	::mbOnCreateView(view, handleCreateView, (void*)view);
-	::mbSetNavigationToNewWindowEnable(view, true);
-	::mbSetCspCheckEnable(view, false);
-
-
-	RECT rc = { 0 };
-	::GetClientRect(hWnd, &rc);
-	::mbResize(view, rc.right, rc.bottom);
-
-	//mbShowWindow(view, TRUE);
-	return view;
-}
-
-void MB_CALL_TYPE onJsQuery(mbWebView webView, void* param, mbJsExecState es, int64_t queryId, int customMsg, const utf8* request)
-{
-	if(customMsg==0x666)
-	{
-		size_t len;
-		auto res=GetDocTex(len, 0, 0);
-		mbResponseQuery(webView, queryId, customMsg, res);
-		delete[] res;
-	}
-	if(customMsg==0x996)
-	{
-		//::SendMessage(nppData._nppHandle, NPPM_SETSTATUSBAR, STATUSBAR_DOC_TYPE, (LPARAM)L"0x996");
-		if(strncmp(request, "scinllo", 7)==0)
-		{
-			auto number = request+7;
-			bool force;
-			if(force=number[0]==L'_')
-				number++;
-			if(GetUIBoolReverse(0) && GetUIBoolReverse(2) || force)
-			{
-				doScintillaScroll(atoi(number));
-			}
-		}
-	}
-}
-
-
-int strncmp_casei(const string & stra , const string & strb, int n)
-{
-	int aLen = stra.length();
-	int bLen = strb.length();
-	if(n&&n<=aLen&&n<=bLen) {
-		aLen=bLen=n;
-	}
-	int iRes = 0 , iPos = 0;
-	for (iPos = 0; iPos < aLen && iPos < bLen; ++iPos)
-	{
-		iRes = toupper(stra[iPos]) - toupper(strb[iPos]);
-		if (!iRes)return iRes;
-	}
-	if (iPos == aLen && iPos == bLen)return 0;
-	if (iPos < aLen) return 1;
-	if (iPos < bLen) return -1;
-}
-
-int STR2LONGPTR(TCHAR* STR, LONG_PTR & LONGPTR)
-{
-	int len = lstrlen(STR);
-	bool intOpened=false;
-	int i=0;
-	for(;i<len;i++) {
-		int intVal = STR[i]-'0';
-		int valval = intVal>=0&&intVal<=9||STR[i]=='-';
-		if(!intOpened)
-		{
-			intOpened=valval;
-		}
-		else if(!valval)
-		{
-			break;
-		}
-		if(intOpened)
-		{
-			LONGPTR = LONGPTR*10+intVal;
-		}
-	}
-	return i;
-}
-
-int STR2LONGPTRA(CHAR* STR, LONG_PTR & LONGPTR)
-{
-	int len = strlen(STR);
-	bool intOpened=false;
-	int i=0;
-	for(;i<len;i++) {
-		int intVal = STR[i]-'0';
-		int valval = intVal>=0&&intVal<=9||STR[i]=='-';
-		if(!intOpened)
-		{
-			intOpened=valval;
-		}
-		else if(!valval)
-		{
-			break;
-		}
-		if(intOpened)
-		{
-			LONGPTR = LONGPTR*10+intVal;
-		}
-	}
-	return i;
-}
-
-#ifdef  UNICODE
-int LONGPTR2STR(TCHAR* STR, LONG_PTR LONGPTR)
-{
-	TCHAR* start=STR;
-	int cc=0;
-	while(LONGPTR)
-	{
-		*(STR++)='0'+(LONGPTR%10);
-		LONGPTR/=10;
-		cc++;
-	}
-	*STR='\0';
-	wcsrev(start);
-	return cc;
-}
-#endif
-
-int LONGPTR2STR(CHAR* STR, LONG_PTR LONGPTR)
-{
-	CHAR* start=STR;
-	int cc=0;
-	while(LONGPTR)
-	{
-		*(STR++)='0'+(LONGPTR%10);
-		LONGPTR/=10;
-		cc++;
-	}
-	*STR='\0';
-	strrev(start);
-	return cc;
-}
-
-BJSCV* GetDocText1(LONG_PTR funcName, int argc, LONG_PTR argv, int sizeofBJSCV)
-{
-	//::MessageBoxA(NULL, ("GetDocText1"), (""), MB_OK);
-	if(argc<0)
-	{
-		auto str = (BJSCV*)funcName;
-		if(str->delete_internal&&str->charVal)
-		{
-			delete[] str->charVal;
-			//HeapFree(GetProcessHeap(), 0, str->charVal);
-			str->charVal = nullptr;
-		}
-		if(argv==sizeofBJSCV==0)
-			delete (BJSCV*)funcName;
-		return 0;
-	}
-	LONG_PTR bid=0;
-	int structSize=0;
-	if(argc==1)
-	{
-		char* args = bwParseCefV8Args(argv, structSize);
-		if(structSize)
-		{
-			BJSCV* val = (BJSCV*)(args+0*structSize);
-			if(val->value_type==typeString)
-			{
-				STR2LONGPTR((TCHAR*)val->charVal, bid);
-			}
-			// testJs('Hah')
-		}
-	}
-	size_t len;
-	bool del;
-	auto ret = new BJSCV{typeString, 0, GetDocTex(len, bid, &del)};
-	ret->delete_internal = del;
-	return ret;
-}
-
-
-LRESULT WINAPI testWindowProc1(
-	__in HWND hWnd,
-	__in UINT msg,
-	__in WPARAM wParam,
-	__in LPARAM lParam)
-{
-	LRESULT result = 0;
-
-	switch (msg) {
-		case WM_NCDESTROY:
-			return 0;
-
-		case WM_ERASEBKGND:
-			return TRUE;
-
-		case WM_SIZE:
-		{
-			return 0;
-		}
-		case WM_KEYDOWN:
-		{
-			break;
-		}
-		case WM_KEYUP:
-		{
-			::MessageBox(NULL, TEXT("111"), TEXT(""), MB_OK);
-			break;
-		}
-		case WM_CHAR:
-		{
-			break;
-		}
-		case WM_MOUSEWHEEL:
-		{
-			break;
-		}
-		case WM_SETFOCUS:
-			return 0;
-
-		case WM_KILLFOCUS:
-			return 0;
-
-		case WM_SETCURSOR:
-			break;
-
-		case WM_IME_STARTCOMPOSITION: {
-			break;
-		}
-	}
-	return ::DefWindowProc(hWnd, msg, wParam, lParam);
-}
-
-BJSCV* ScintillaScroll(LONG_PTR funcName, int argc, LONG_PTR argv, int sizeofBJSCV)
-{
-	if(GetUIBoolReverse(0) && GetUIBoolReverse(2) || argc>1)
-	{
-		int structSize=0;
-		if(argc<=2)
-		{
-			LONG_PTR bid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
-			if(_MDText.lastBid==bid)
-			{
-				char* args = bwParseCefV8Args(argv, structSize);
-				if(structSize)
-				{
-					BJSCV* val = (BJSCV*)(args+0*structSize);
-					if(val->value_type==typeInt)
-					{
-						doScintillaScroll(val->intVal);
-					}
-				}
-			}
-		}
-	}
-	return 0;
-}
-
 void MarkDownTextDlg::syncWebToline(bool force)
 {
 	if(force || GetUIBoolReverse(0) && GetUIBoolReverse(1))
@@ -1034,192 +232,15 @@ void MarkDownTextDlg::syncWebToline(bool force)
 		CHAR jsSync[64]="syncLn(";
 		itoa(line, jsSync+7, 10);
 		strcpy(jsSync+strlen(jsSync), ")");
-		if(_MDText.mWebView) {
-			wkeRunJS(_MDText.mWebView, jsSync);
-		} else if(_MDText.mWebView_1){
-			mbRunJs(_MDText.mWebView_1, mbWebFrameGetMainFrame(_MDText.mWebView_1), jsSync, TRUE, 0, 0, 0);
-		} else if(mWebView_2){
-			bwExecuteJavaScript(mWebView_2, jsSync);
-		} else if(mWebView_3) {
-			TCHAR jsSync1[64];
-			MultiByteToWideChar(CP_ACP, 0, jsSync, -1, jsSync1, 64);
-			mWebView_3->ExecuteScript(jsSync1, 0);
+		if(mWebView0) {
+			mWebView0->EvaluateJavascript(jsSync);
 		}
 		lastSyncLn=line;
 	}
 }
 
-void onBrowserPrepared(bwWebView browserPtr)
-{
-	bwInstallJsNativeToWidget(browserPtr, "GetDocText1", GetDocText1);
-	bwInstallJsNativeToWidget(browserPtr, "Scinllo", ScintillaScroll);
-	_MDText.mWebView_2 = browserPtr;
-	_MDText.currentkernel = (LONG_PTR)browserPtr;
-	_MDText.hBrowser = bwGetHWNDForBrowser(browserPtr);
-	::SendMessage(_MDText.getHSelf(), WM_SIZE, 0, 0);
-	//_MDText.RefreshWebview(); 没有用
-	//SetWindowLongPtr(_MDText.hBrowser, GWLP_WNDPROC, (LONG_PTR)testWindowProc1);
-}
-
-bool onBrowserFocused(bwWebView browserPtr)
-{
-	HWND hwnd = bwGetHWNDForBrowser(browserPtr);
-	if(hwnd==_MDText.hBrowser) {
-		::SendMessage(nppData._nppHandle, NPPM_SETDOCKFOCUS, (WPARAM)hwnd, 0);
-	}
-	return false;
-}
-
-bool onBrowserClose(bwWebView browserPtr)
-{
-	HWND hwnd = bwGetHWNDForBrowser(browserPtr);
-	if(hwnd==_MDText.hBrowser) {
-		::SendMessage(nppData._nppHandle, NPPM_CLOSEDOCK, (WPARAM)hwnd, 0);
-	}
-	return true;
-}
-
-unsigned char FromHex(unsigned char x)   
-{   
-	unsigned char y;  
-	if (x >= 'A' && x <= 'Z') y = x - 'A' + 10;  
-	else if (x >= 'a' && x <= 'z') y = x - 'a' + 10;  
-	else if (x >= '0' && x <= '9') y = x - '0';  
-	else y=0;
-	return y;  
-}  
-
-void UrlDecode(char* dest, const char* str)  
-{  
-	size_t length = strlen(str);
-	char* ddd=dest;
-	for (size_t i = 0; i < length && ddd-dest+1<MAX_PATH; i++)  
-	{  
-		if (str[i] == '+') {
-			*ddd++ = ' ';  
-		}
-		else if (str[i] == '%')  
-		{  
-			assert(i + 2 < length);  
-			unsigned char high = FromHex(str[++i]);  
-			unsigned char low = FromHex(str[++i]);  
-			*ddd++ = high*16 + low;  
-		}
-		else if (str[i] == '?')  
-		{  
-			break;
-		}
-		else {
-			*ddd++ = str[i];  
-		}
-	}
-	*ddd='\0';
-}  
-
-void UrlDecode(char* dest, const TCHAR* str)  
-{  
-	size_t length = lstrlen(str);
-	char* ddd=dest;
-	for (size_t i = 0; i < length && ddd-dest+1<MAX_PATH; i++)  
-	{  
-		if (str[i] == '+') {
-			*ddd++ = ' ';  
-		}
-		else if (str[i] == '%')  
-		{  
-			assert(i + 2 < length);  
-			unsigned char high = FromHex(str[++i]);  
-			unsigned char low = FromHex(str[++i]);  
-			*ddd++ = high*16 + low;  
-		}
-		else if (str[i] == '?')  
-		{  
-			break;
-		}
-		else {
-			*ddd++ = str[i];  
-		}
-	}
-	*ddd='\0';
-}  
-
-url_intercept_result* InterceptBrowserWidget(const char* url, const url_intercept_result* ret)
-{
-	if(!url)
-	{
-		if(ret)
-			delete ret;
-		return 0;
-	}
-	if(strncmp(url, "https://tests/home", 18)==0)
-	{
-		_MDText.RefreshWebview(false);
-		return new url_intercept_result{(CHAR*)"Markdown Text", 14, 200, (CHAR*)"OK"};
-	}
-
-	if(strncmp(url, InternalResHead1, 12)==0)
-	{
-		auto path = url+12;
-		if(path)
-		{
-			if(strstr(path, "..")) // security check
-			{
-				return false;
-			}
-			char decodedUrl[MAX_PATH];
-			UrlDecode(decodedUrl, path);
-
-			DWORD dataLen;
-			auto bufferRes = loadPluginAsset(decodedUrl, dataLen);
-
-			if(bufferRes)
-			{
-				return new url_intercept_result{bufferRes, dataLen, 200, (CHAR*)"OK", "", true};
-			}
-		}
-	}
-
-
-	if(strncmp(url, "http://tests/MDT/", 17)==0)
-	{
-		LONG_PTR bid=0;
-		int from = STR2LONGPTRA((CHAR*)url+17, bid);
-		if(bid&&from) {
-			auto path = url+18+from;
-			char decodedUrl[MAX_PATH];
-			UrlDecode(decodedUrl, path);
-			DWORD dataLen;
-			auto data = loadSourceAsset(bid, decodedUrl, dataLen);
-			if(data) {
-				url_intercept_result* result = new url_intercept_result{data, dataLen, 200, (CHAR*)"OK"};
-				result->delete_internal = 1;
-				return result;
-			}
-		}
-	}
-
-	return nullptr;
-}
-
-clock_t browser_deferred_create_time=0;
-char wke_mb=0;
-
-
 // Global variables
-
-// The main window class name.
-static TCHAR szWindowClass[] = _T("DesktopApp");
-
-// The string that appears in the application's title bar.
-static TCHAR szTitle[] = _T("WebView sample");
-
 HINSTANCE hInst;
-
-// Forward declarations of functions included in this code module:
-LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-
-// Pointer to WebViewController
-// Pointer to WebView window
 
 // Initize various browser controls here.
 void MarkDownTextDlg::display(bool toShow){
@@ -1227,357 +248,9 @@ void MarkDownTextDlg::display(bool toShow){
 
 	setClosed(!toShow);
 
-	if(toShow && currentkernel==0) 
+	if(toShow && !mWebView0) 
 	{
-		TCHAR WKPath[MAX_PATH]={0};
-		TCHAR WKPath1[MAX_PATH]={0};
-		::GetModuleFileName((HINSTANCE)g_hModule, WKPath, MAX_PATH);
-		::PathRemoveFileSpec(WKPath);
-		int error_code=0;
-		if(PathFileExists(WKPath))
-		{ // ThriveEngines !
-			bool browser_deferred_creating=false;
-			if(browser_deferred_create_time)
-			{
-				clock_t time = clock();
-				if(time-browser_deferred_create_time<550)
-					browser_deferred_creating=1;
-				else
-					browser_deferred_create_time=0;
-			}
-			// Webview2
-			if(!browser_deferred_creating && !currentkernel && kernelType==3)
-			{
-				currentkernelType=3;
-				auto options = Microsoft::WRL::Make<CoreWebView2EnvironmentOptions>();
-				regWndClassWin(L"WINWND", CS_HREDRAW | CS_VREDRAW);
-				HWND hWnd = ::CreateWindowEx(0 , L"WINWND" , NULL
-					, WS_CHILD , 0 , 0 , 840 , 680 , _hSelf , NULL , ::GetModuleHandle(NULL), NULL);
-				hBrowser=hWnd;
-				ShowWindow(hWnd, 1);
-				HRESULT hr = CreateCoreWebView2EnvironmentWithOptions(0,0,0,
-					Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>([this](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
-					m_webViewEnvironment=env;
-					env->CreateCoreWebView2Controller(hBrowser, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>([this](HRESULT result, ICoreWebView2Controller* controller) -> HRESULT {
-						if (controller) {
-							webviewController = controller;
-							webviewController->get_CoreWebView2(&mWebView_3);
-						}
-
-						ICoreWebView2Settings* Settings;
-						mWebView_3->get_Settings(&Settings);
-						Settings->put_IsScriptEnabled(TRUE);
-						Settings->put_AreDefaultScriptDialogsEnabled(TRUE);
-						Settings->put_IsWebMessageEnabled(TRUE);
-
-						currentkernel = (LONG_PTR)mWebView_3.get();
-
-						SendMessage(_hSelf, WM_SIZE, 0, 0);
-
-						static EventRegistrationToken pageEventRegistrationToken = {};
-						mWebView_3->AddWebResourceRequestedFilter(L"*", COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL);
-						CHECK_FAILURE(mWebView_3->add_WebResourceRequested(
-							Callback<ICoreWebView2WebResourceRequestedEventHandler>([this](
-									ICoreWebView2* sender,
-									ICoreWebView2WebResourceRequestedEventArgs* args) {
-							COREWEBVIEW2_WEB_RESOURCE_CONTEXT resourceContext;
-							CHECK_FAILURE(args->get_ResourceContext(&resourceContext));
-							// Ensure that the type is image
-							wil::com_ptr<ICoreWebView2WebResourceRequest> req;
-							args->get_Request(&req);
-							wil::unique_cotaskmem_string navigationTargetUri;
-							req->get_Uri(&navigationTargetUri);
-							TCHAR* uriTarget=(TCHAR*)navigationTargetUri.get();
-
-							if(wcsncmp(uriTarget, TEXT("http://tests/MDT/"), 17)==0)
-							{ // constuct page here
-							  //::MessageBox(NULL, TEXT("来了"), TEXT(""), MB_OK);
-								auto end=uriTarget+wcslen(uriTarget);
-								uriTarget+=17;
-								auto PageId=uriTarget;
-								for(;uriTarget<end;uriTarget++)
-								{
-									if(*uriTarget=='/') 
-									{
-										*uriTarget++='\0';
-										break;
-									}
-								}
-								LONG_PTR bid=0;
-								STR2LONGPTR(PageId, bid);
-								if(bid)
-								{
-									if (resourceContext == COREWEBVIEW2_WEB_RESOURCE_CONTEXT_DOCUMENT)
-									{
-										CHAR* page_content = new CHAR[1024];
-										//post message
-										//strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script>var w=window,wv=w.chrome.webview;wv.addEventListener(\'message\', event => APMD(event.data));w.update=function(){wv.postMessage('");
-										//auto nxt_st=page_content+strlen(page_content);
-										//nxt_st+=LONGPTR2STR(nxt_st, bid);
-										//strcpy(nxt_st, "');}</script><body><script src=\"http://mdbr/");
-
-										//xhr http
-										strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/ui.js\"></script><script>var w=window;w.update=function(){var R=new XMLHttpRequest();R.open('POST','");
-										auto nxt_st=page_content+strlen(page_content);
-										nxt_st+=LONGPTR2STR(nxt_st, bid);
-										strcpy(nxt_st, ".text',true);R.onreadystatechange=function(){APMD(R.responseText)};R.send()}</script><body><script src=\"http://mdbr/");
-										
-										nxt_st+=strlen(nxt_st);
-										AppendPageResidue(nxt_st); // 加载WV2
-
-										wil::com_ptr<ICoreWebView2WebResourceResponse> response;
-										wil::com_ptr<IStream> stream = SHCreateMemStream((const BYTE*)page_content, strlen(page_content));
-
-										CHECK_FAILURE(m_webViewEnvironment->CreateWebResourceResponse(stream.get(), 200, L"OK", L"charset=utf-8", &response));
-
-										wil::com_ptr<ICoreWebView2HttpResponseHeaders> headers;
-										CHECK_FAILURE(response->get_Headers(&headers));
-										headers->AppendHeader(L"Content-Type", L"text/html; charset=utf-8");
-
-										CHECK_FAILURE(args->put_Response(response.get()));
-									}
-									else
-									{
-										size_t docLength=0;
-										auto str = GetDocTex(docLength, bid, 0);
-										if(docLength)
-										{
-											wil::com_ptr<ICoreWebView2WebResourceResponse> response;
-											wil::com_ptr<IStream> stream = SHCreateMemStream((const BYTE*)str, docLength);
-											CHECK_FAILURE(m_webViewEnvironment->CreateWebResourceResponse(stream.get(), 200, L"OK", L"charset=utf-8", &response));
-											wil::com_ptr<ICoreWebView2HttpResponseHeaders> headers;
-											CHECK_FAILURE(response->get_Headers(&headers));
-											headers->AppendHeader(L"Content-Type", L"text/*; charset=utf-8");
-											CHECK_FAILURE(args->put_Response(response.get()));
-										}
-									}
-								}
-								return S_OK;
-							}
-							else if(wcsncmp(uriTarget, TEXT("http://mdbr/"), 12)==0)
-							{
-								auto path = uriTarget+12;
-								if(path)
-								{
-									if(wcsstr(path, L"..")) // security check
-									{
-										return E_INVALIDARG;
-									}
-									else
-									{
-										char decodedUrl[MAX_PATH];
-										UrlDecode(decodedUrl, path);
-
-										DWORD dataLen;
-										auto buffer = loadPluginAsset(decodedUrl, dataLen);
-
-										if(buffer)
-										{
-											wil::com_ptr<ICoreWebView2WebResourceResponse> response;
-											wil::com_ptr<IStream> stream = SHCreateMemStream((const BYTE*)buffer, dataLen);
-											CHECK_FAILURE(m_webViewEnvironment->CreateWebResourceResponse(stream.get(), 200, L"OK", L"charset=utf-8", &response));
-											wil::com_ptr<ICoreWebView2HttpResponseHeaders> headers;
-											CHECK_FAILURE(response->get_Headers(&headers));
-											headers->AppendHeader(L"Content-Type", L"*/*; charset=utf-8");
-											CHECK_FAILURE(args->put_Response(response.get()));
-										}
-									}
-								}
-							}
-							return E_INVALIDARG;
-						}).Get(), &pageEventRegistrationToken));
-
-						EventRegistrationToken token;
-						if(0)
-						mWebView_3->add_WebMessageReceived(Callback<ICoreWebView2WebMessageReceivedEventHandler>(
-							[](ICoreWebView2* webview, ICoreWebView2WebMessageReceivedEventArgs * args) -> HRESULT {
-							PWSTR message;
-							args->TryGetWebMessageAsString(&message);
-							LONG_PTR bid=0;
-							STR2LONGPTR(message, bid);
-							if(bid)
-							{
-								// very slow !
-								//::MessageBox(NULL, TEXT("收到！"), TEXT("收到！"), MB_OK);
-								size_t docLength=0;
-								auto str = GetDocTex(docLength, bid, 0);
-								if(docLength)
-								{
-									TCHAR* buffer = new TCHAR[docLength];
-									MultiByteToWideChar(CP_ACP, 0, str, -1, buffer, docLength);
-									webview->PostWebMessageAsString(buffer);
-									delete[] buffer;
-									//webview->PostWebMessageAsString(L"# hello");
-								}
-							}
-							CoTaskMemFree(message);
-							return S_OK;
-						}).Get(), &token);
-
-						mWebView_3->add_WebMessageReceived(Callback<ICoreWebView2WebMessageReceivedEventHandler>(
-							[](ICoreWebView2* webview, ICoreWebView2WebMessageReceivedEventArgs * args) -> HRESULT {
-							PWSTR message;
-							args->TryGetWebMessageAsString(&message);
-							if(wcsncmp(message, L"scinllo", 7)==0)
-							{
-								auto number = message+7;
-								bool force;
-								if(force=number[0]==L'_')
-									number++;
-								if(GetUIBoolReverse(0) && GetUIBoolReverse(2) || force)
-								{
-									doScintillaScroll(_wtoi(number));
-								}
-							}
-							CoTaskMemFree(message);
-							return S_OK;
-						}).Get(), &token);
-
-						if(0)
-						mWebView_3->AddScriptToExecuteOnDocumentCreated(
-							L"window.chrome.webview.addEventListener(\'message\', event => alert(event.data));" \
-							L"window.chrome.webview.postMessage(window.document.URL);",
-							nullptr);
-						//mWebView_3->Navigate(L"https://www.bing.com/");
-						//mWebView_3->Navigate(L"http://tests/MDT/1.html");
-
-						RefreshWebview();
-						return S_OK;
-					}).Get());
-					return S_OK;
-				}).Get());
-				if (SUCCEEDED(hr))
-				{
-					browser_deferred_creating=1;
-					browser_deferred_create_time = clock();
-				}
-				else {
-					DestroyWindow(hBrowser);
-					if (RequestedSwitch && hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
-					{
-						::MessageBox(getHSelf(), L"Edge beta not found. ", TEXT(""), MB_OK);
-					}
-				}
-			}
-			// BrowserWidget
-			bool prefer_bw = kernelType==2||kernelType==-1;
-			if(!browser_deferred_creating && !currentkernel && prefer_bw)
-			{
-				currentkernelType=2;
-				auto libPath = LibPath;
-				if(!libPath)
-				{
-					lstrcpy(WKPath1, WKPath);
-					::PathAppend(WKPath1, L"..\\BrowserWidget\\cefclient.dll");
-					libPath = WKPath1;
-				}
-				if(PathFileExists(libPath))
-				{
-					if(bwInit(libPath) && bwCreateBrowser({_hSelf, "https://tests/home", onBrowserPrepared, InterceptBrowserWidget, onBrowserFocused, onBrowserClose}))
-					{
-						browser_deferred_create_time = clock();
-						browser_deferred_creating=1;
-						//::MessageBox(NULL, TEXT("111"), TEXT(""), MB_OK);
-					}
-				}
-				else if(RequestedSwitch)
-				{
-					::MessageBox(NULL, L"cefclient.dll not found. ", TEXT(""), MB_OK);
-				}
-			}
-			// mb and wke
-			if(!browser_deferred_creating)
-			{
-				::PathAppend(WKPath, L"miniblink_x64.dll");
-				if(PathFileExists(WKPath))
-				{
-					// mb
-					if(!currentkernel && kernelType!=0)
-					{
-						currentkernelType=1;
-						mbSetMbMainDllPath(WKPath);
-						::GetModuleFileName((HINSTANCE)g_hModule, WKPath1, MAX_PATH);
-						::PathRemoveFileSpec(WKPath1);
-						::PathAppend(WKPath1, L"mb_x64.dll");
-						if(PathFileExists(WKPath1))
-						{
-							mbSetMbDllPath(WKPath1);
-							mbSettings settings;
-							memset(&settings, 0, sizeof(settings));
-							//settings.mask = MB_ENABLE_NODEJS;
-							mbInit(&settings);
-							{
-								wke_mb|=0x2;
-								mWebView_1 = mbCreateWebView();
-								if(currentkernel=mWebView_1)
-								{
-									regWndClass(kClassWindow, CS_HREDRAW | CS_VREDRAW);
-									hBrowser = ::CreateWindowEx(0 , kClassWindow , NULL
-										, WS_CHILD , 0 , 0 , 840 , 680 , _hSelf , NULL , ::GetModuleHandle(NULL), NULL);
-									::SetProp(hBrowser, L"mb", (HANDLE)mWebView_1);
-									mbSetHandle(mWebView_1, hBrowser);
-									mbOnPaintUpdated(mWebView_1, handlePaintUpdatedCallback, hBrowser);
-									mbOnLoadUrlBegin(mWebView_1, handleLoadUrlBegin, (void*)mWebView_1);
-									mbOnDocumentReady(mWebView_1, handleDocumentReady, (void*)mWebView_1);
-									mbOnLoadingFinish(mWebView_1, handleLoadingFinish, (void*)mWebView_1);
-									mbOnCreateView(mWebView_1, handleCreateView, (void*)mWebView_1);
-									mbSetNavigationToNewWindowEnable(mWebView_1, 1);
-									mbSetCspCheckEnable(mWebView_1, false);
-									mbMoveToCenter(mWebView_1);
-									mbOnJsQuery(mWebView_1, onJsQuery, (void*)0);
-								}
-							}
-						}
-					}
-					// wke
-					if(!currentkernel && kernelType<=1)
-					{
-						currentkernelType=0;
-						wkeSetWkeDllPath(WKPath);
-						if(wkeInitialize()) 
-						{
-							wke_mb|=0x1;
-							mWebView = wkeCreateWebWindow(WKE_WINDOW_TYPE_CONTROL, _hSelf , 0, 0, 640, 480); 
-							if (currentkernel=(intptr_t)mWebView)
-							{
-								hBrowser = wkeGetWindowHandle(mWebView);
-								//setMoveWindowArea(0, 0, 640, 30); // 设置窗口可拖动区域，用于无边框窗体
-								//wkeSetWindowTitleW(mWebView, NPP_PLUGIN_NAME);
-								wkeOnDidCreateScriptContext(mWebView, onDidCreateScriptContextCallback, this);
-								wkeOnWindowClosing(mWebView, handleWindowClosing, this);
-								wkeOnWindowDestroy(mWebView, handleWindowDestroy, this);
-								wkeOnDocumentReady(mWebView, handleDocumentReady, this);
-								wkeOnTitleChanged(mWebView, handleTitleChanged, this);
-								wkeOnCreateView(mWebView, onCreateView, this);
-								wkeOnLoadUrlBegin(mWebView, onLoadUrlBegin, this);
-								wkeOnLoadUrlEnd(mWebView, onLoadUrlEnd, this);
-								wkeSetDebugConfig(mWebView, "decodeUrlRequest", nullptr);
-								wkeJsBindFunction("GetDocText", &GetDocText, nullptr, 1);
-								wkeJsBindFunction("Scinllo", &ScintillaScroll1, nullptr, 1);
-							} else {
-								error_code = 101;
-							}
-						} else {
-							error_code = 100;
-						}
-					}
-				}
-				else if(RequestedSwitch)
-				{
-					::MessageBox(NULL, L"miniblink_x64.dll not found. ", TEXT(""), MB_OK);
-				}
-			}
-			if(currentkernel)
-			{
-				if(mWebView) {
-					RefreshWebview();
-					wkeShowWindow(mWebView, TRUE);
-				} else if(mWebView_1){
-					RefreshWebview();
-					mbShowWindow(mWebView_1, TRUE);
-				}
-			}
-		}
+		presenter.initWebViewImpl(kernelType, this);
 	}
 
 	//::SendMessage( _hSelf, SELF_REFRESH, 0, 1);
@@ -1586,78 +259,6 @@ void MarkDownTextDlg::display(bool toShow){
 void MarkDownTextDlg::setClosed(bool toClose) {
 	_isClosed = toClose;
 	::SendMessage(nppData._nppHandle, NPPM_SETMENUITEMCHECK, funcMenu->_cmdID, !toClose);
-}
-
-bool STRENDWITH(TCHAR* strA,CHAR* strB)
-{
-	int valen = lstrlen(strA);
-	int pc = strlen(strB);
-	int to = valen-pc;
-	int po = 0;
-	// Note: toffset might be near -1>>>1.
-	if (to < 0) {
-		return false;
-	}
-	while (--pc >= 0) {
-		if (strA[to++] != strB[po++]) {
-			return false;
-		}
-	}
-	return true;
-}
-
-bool STRSTARTWITH(TCHAR* strA,CHAR* strB)
-{
-	int valen = lstrlen(strA);
-	int pc = strlen(strB);
-	int to = valen-pc;
-	int po = 0;
-	// Note: toffset might be near -1>>>1.
-	if (to < 0) {
-		return false;
-	}
-	while (--pc >= 0) {
-		if (strA[po] != strB[po++]) {
-			return false;
-		}
-	}
-	return true;
-}
-
-bool STRSTARTWITH(TCHAR* strA,TCHAR* strB)
-{
-	int valen = lstrlen(strA);
-	int pc = lstrlen(strB);
-	int to = valen-pc;
-	int po = 0;
-	// Note: toffset might be near -1>>>1.
-	if (to < 0) {
-		return false;
-	}
-	while (--pc >= 0) {
-		if (strA[po] != strB[po++]) {
-			return false;
-		}
-	}
-	return true;
-}
-
-bool STRENDWITH(TCHAR* strA,TCHAR* strB)
-{
-	int valen = lstrlen(strA);
-	int pc = lstrlen(strB);
-	int to = valen-pc;
-	int po = 0;
-	// Note: toffset might be near -1>>>1.
-	if (to < 0) {
-		return false;
-	}
-	while (--pc >= 0) {
-		if (strA[to++] != strB[po++]) {
-			return false;
-		}
-	}
-	return true;
 }
 
 void MarkDownTextDlg::AppendPageResidue(char* nxt_st) {
@@ -1698,7 +299,7 @@ bool checkFileExt(vector<char*> ext) {
 	return false;
 }
 
-bool checkRenderMarkdown() { 
+bool MarkDownTextDlg::checkRenderMarkdown() { 
 	if(bForcePreview)
 		return 1;
 	if(markdown_ext.size()==0) {
@@ -1710,7 +311,7 @@ bool checkRenderMarkdown() {
 	return checkFileExt(markdown_ext);
 }
 
-bool checkRenderHtml() { 
+bool MarkDownTextDlg::checkRenderHtml() { 
 	if(bForcePreview)
 		return 1;
 	if(html_ext.size()==0) {
@@ -1751,7 +352,7 @@ void MarkDownTextDlg::RefreshWebview(int source) {
 	//TCHAR buffer[256]={0};
 	//wsprintf(buffer,TEXT("RefreshWebview source=%d"), source, _MDText.CustomRoutineIdx);
 	//::SendMessage(nppData._nppHandle, NPPM_SETSTATUSBAR, STATUSBAR_DOC_TYPE, (LPARAM)buffer);
-	if(currentkernel&&NPPRunning)
+	if(mWebView0&&NPPRunning)
 	{
 		LONG_PTR bid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
 		//CustomRoutine = "MDViewer";
@@ -1771,119 +372,7 @@ void MarkDownTextDlg::RefreshWebview(int source) {
 		bool isMarkdown = isMDEngineActive();
 		bool isHtml = isHTMLEngineActive();
 		//bool isAscii = isAsciiActive();
-		if(mWebView) {
-			if(b1)
-			{
-				wkeRunJS(mWebView, "update()"); // wke soft update
-			}
-			else if(b2)
-			{
-				if(checkRenderMarkdown()) {
-					CHAR* page_content = new CHAR[512];
-					strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/ui.js\"></script><script>window.update=function(){APMD(GetDocText(''))}</script><body><script src=\"http://mdbr/");	
-					AppendPageResidue(page_content+172); // 加载wke
-					wkeLoadHTML(mWebView, page_content);
-					lastBid=bid;
-					lstrcpy(last_updated, last_actived);
-					//wkeLoadHTML(mWebView, "<!doctype html><meta charset=\"utf-8\"> <script src=\"http://mdbr/main.js\"></script><body><script>window.update=function(){APMD(GetDocText(''))};update();</script></body>");
-				}
-			}
-		} 
-		else if(mWebView_1) {
-			if(isHtml) {
-				//mbLoadURL(mWebView_1, "http://mdbr/doc.html");
-				mbLoadURL(mWebView_1, "http://mdbr/doc/index.html");
-				return;
-			}
-			if(b1)
-			{
-				mbRunJs(mWebView_1, mbWebFrameGetMainFrame(mWebView_1), "update()", false, 0,0,0); // mb soft update
-			}
-			else if(b2)
-			{
-				if(checkRenderMarkdown()) {
-					CHAR* page_content = new CHAR[512];
-					strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/ui.js\"></script><script>function onNative(msg,rsp){if(msg==0x666)window.APMD(rsp)};window.update=function(){window.mbQuery(0x666,\"\",onNative)}</script><body><script src=\"http://mdbr/");
-					AppendPageResidue(page_content+244); // 加载mb
-					mbLoadHtmlWithBaseUrl(mWebView_1, page_content, "file://");
-					lastBid=bid;
-					lstrcpy(last_updated, last_actived);
-					//mbLoadHtmlWithBaseUrl(mWebView_1, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/main.js\"></script><body><script>function onNative(msg,rsp){if(msg==0x666)window.APMD(rsp)}window.mbQuery(0x666,\"\",onNative);</script></body>", "file://");
-				}
-			}
-		} 
-		else if(mWebView_2) {
-			CHAR* page_id = new CHAR[64];  // LIBCEF 需要拟构网址。 传文件名，只传ID吧。 http://tests/MDT/{bid}/index.html
-			int st,ed;
-			strcpy(page_id, "http://tests/MDT/");
-			LONGPTR2STR(page_id+(st=strlen(page_id)), bid);
-			if(isHtml) {
-				if(b1||b2&&checkRenderHtml()) {
-					strcpy(page_id+(ed=strlen(page_id)), "/doc.html");
-					size_t len;
-					bwLoadStrData(mWebView_2, page_id+13, GetDocTex(len, bid, 0), 0);
-					if(b2) {
-						lastBid=bid;
-						lstrcpy(last_updated, last_actived);
-					}
-				}
-				return;
-			}
-			strcpy(page_id+(ed=strlen(page_id)), "/index.html");
-			if(b1 && STRSTARTWITH(bwGetUrl(mWebView_2), page_id))
-			{
-				bwExecuteJavaScript(mWebView_2, "update()"); // bw soft update
-			}
-			else if(b2)
-			{
-				if(checkRenderMarkdown()) {
-					CHAR* page_content = new CHAR[512];
-					strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/ui.js\"></script><script>window.update=function(){window.APMD(GetDocText1('");
-
-					auto nxt_st=page_content+136;
-					strncpy(nxt_st, page_id+st, ed-st);
-					nxt_st+=ed-st;
-
-					strcpy(nxt_st, "'));}</script><body><script src=\"http://mdbr/");
-
-					AppendPageResidue(nxt_st+45); // 加载bw
-					bwLoadStrData(mWebView_2, page_id+13, page_content, 0);
-					lastBid=bid;
-					lstrcpy(last_updated, last_actived);
-				}// else if(!legacy && checkRenderHtml()){
-
-					//lastBid=0;
-				//}
-			}
-			delete[] page_id;
-			//bwLoadStrData(mWebView_2, url_, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/main.js\"></script><body><script>window.APMD(GetDocText1(0));</script></body>", 0);
-		}
-		else if(mWebView_3)
-		{
-			TCHAR* page_id = new TCHAR[64], * new_st;  // Webview2 需要虚拟网址。 传文件名，只传ID吧。 http://tests/MDT/{bid}/index.html
-			lstrcpy(page_id, TEXT("http://tests/MDT/"));
-			new_st=page_id+17;
-			new_st+=LONGPTR2STR(new_st, bid);
-			lstrcpy(new_st, TEXT("/index.html"));
-
-			wil::unique_cotaskmem_string uri;
-			mWebView_3->get_Source(&uri);
-			if(b1 && STRSTARTWITH(uri.get(), page_id))
-			{
-				mWebView_3->ExecuteScript(L"update()", 0); // WV2 soft update
-			}
-			else if(b2)
-			{
-				if(checkRenderMarkdown()) {
-					mWebView_3->Navigate(page_id);
-					lastBid=bid;
-					lstrcpy(last_updated, last_actived);
-				}// else if(!legacy && checkRenderHtml()){
-
-				 //lastBid=0;
-				 //}
-			}
-		}
+		mWebView0->updateArticle(bid, _MDText.CustomRoutineIdx, b1, b2);
 	}
 }
 
@@ -2052,29 +541,16 @@ INT_PTR CALLBACK MarkDownTextDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 		{
 			RECT rc;
 			getClientRect(rc);
-
 			int toolbarHeight=toolBar.getHeight();//28;
-			//rc.top+=100;
-			//rc.bottom-=100;
-			if(currentkernel)
+			if(hBrowser)
 			{
-				if(hBrowser)
-				{
-					if (webviewController) {
-						webviewController->put_Bounds(rc);
-					}
-					::MoveWindow(hBrowser, rc.left, rc.top+toolbarHeight, rc.right, rc.bottom-toolbarHeight,1);
+				if (currentkernelType==WEBVIEW2_TYPE) {
+					mWebView0->notifyWindowSizeChanged(rc);
 				}
-				//if(mWebView) {
-				//	wkeMoveWindow(mWebView,rc.left, rc.top+toolbarHeight, rc.right, rc.bottom-toolbarHeight);
-				//	//::MoveWindow(wkeGetWindowHandle(mWebView), rc.left, rc.top, rc.right, rc.bottom,TRUE);
-				//} else if(mWebView_1 && hBrowser) {
-				//}
+				::MoveWindow(hBrowser, rc.left, rc.top+toolbarHeight, rc.right, rc.bottom-toolbarHeight,1);
 			}
-
 			rc.bottom=toolbarHeight;
 			ListBoxPanel.reSizeTo(rc);
-
 			redraw();
 		} break;
 		case WM_NOTIFY: 
@@ -2304,28 +780,10 @@ void removeAllChildExceptOne(HWND hwnd, HWND ex) {
 // Switch Browser Implemetation.
 void MarkDownTextDlg::destoryWebViews(bool exit)
 {
-	if(currentkernel)
+	if(mWebView0)
 	{
-		if(mWebView)
-		{
-			wkeDestroyWebView(mWebView);
-			mWebView=0;
-		}
-		if(mWebView_1)
-		{
-			mbDestroyWebView(mWebView_1);
-			mWebView_1=0;
-		}
-		if(mWebView_2)
-		{
-			bwDestroyWebview(mWebView_2, exit);
-			mWebView_2=0;
-		}
-		if(mWebView_3)
-		{
-			webviewController->Close();
-		}
-		currentkernel=0;
+		mWebView0->DestroyWebView(exit);
+		mWebView0 = 0;
 	}
 	if(!exit && IsWindow(hBrowser))
 	{
@@ -2338,7 +796,7 @@ void MarkDownTextDlg::switchEngineByIndex(int id)
 {
 	if(currentkernelType!=id||(GetKeyState(VK_CONTROL) & 0x8000))
 	{
-		if(id<2&&wke_mb&&(id+1)^wke_mb)
+		if(id<2&&presenter.wke_mb&&(id+1)^presenter.wke_mb)
 		{ // The miniblink kernels are not well designed in this aspect. It requires restarting of the editor.
 			requestedInvalidSwitch=id+1;
 			if(::MessageBox(nppData._nppHandle, TEXT("Restart is required to switch between wke and mb\r\n\r\nContinue?")
@@ -2466,14 +924,8 @@ void GlobalOnPvMnChecked(HMENU hMenu, int idx) {
 		}
 		break;
 		case 264:
-			if(_MDText.mWebView) {
-				wkeRunJS(_MDText.mWebView, "doScintillo(1)");
-			} else if(_MDText.mWebView_1){
-				mbRunJs(_MDText.mWebView_1, mbWebFrameGetMainFrame(_MDText.mWebView_1), "doScintillo(1)", TRUE, 0, 0, 0);
-			} else if(_MDText.mWebView_2){
-				bwExecuteJavaScript(_MDText.mWebView_2, "doScintillo(1)");
-			} else if(_MDText.mWebView_3){
-				_MDText.mWebView_3->ExecuteScript(L"doScintillo(1)", 0);
+			if(_MDText.mWebView0) {
+				_MDText.mWebView0->EvaluateJavascript("doScintillo(1)");
 			}
 		break;
 		case 265:
@@ -2527,14 +979,8 @@ void SwitchEngines(int idx) {
 }
 
 void ResetZoom(){
-	if(_MDText.mWebView) {
-		wkeSetZoomFactor(_MDText.mWebView, 1);
-	} else if(_MDText.mWebView_1){
-		mbSetZoomFactor(_MDText.mWebView_1, 1);
-	} else if(_MDText.mWebView_2){
-		bwSetZoomLevel(_MDText.mWebView_2, 0);
-	} else if(_MDText.mWebView_3){
-		_MDText.webviewController->put_ZoomFactor(1);
+	if(_MDText.mWebView0) {
+		_MDText.mWebView0->ResetZoom();
 	}
 }
 
@@ -2556,14 +1002,9 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 		{
 			if(source==0)
 			{
-				if(_MDText.mWebView) {
-					wkeShowDevtools(_MDText.mWebView, L"C:\\tmp\\miniblink-20200824\\front_end\\inspector.html", 0, 0);
-				} else if(_MDText.mWebView_1){
-					mbSetDebugConfig(_MDText.mWebView_1, "showDevTools", "C:\\tmp\\miniblink-20200824\\front_end\\inspector.html");
-				} else if(_MDText.mWebView_2){
-					bwShowDevTools(_MDText.mWebView_2);
-				} else if(_MDText.mWebView_3){
-					_MDText.mWebView_3->OpenDevToolsWindow();
+				if(mWebView0) {
+					// todo concat the path
+					mWebView0->ShowDevTools(L"C:\\tmp\\miniblink-20200824\\front_end\\inspector.html");
 				}
 			}
 		}
@@ -2590,67 +1031,26 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 		}
 		return;
 		case IDM_EX_DOWN:
-			if(currentkernel) {
-				if(source==0){
-					if(mWebView) {
-						//if(wkeGoBack(mWebView))
-						wkeGoBack(mWebView);
-					} else if(mWebView_1){
-						mbGoBack(mWebView_1);
-					} else if(mWebView_2){
-						//if(bwCanGoBack(mWebView_2))
-						bwGoBack(mWebView_2);
-					} else if(mWebView_3){
-						//if(mWebView_3->CanGoBack())
-						mWebView_3->GoBack();
-					}
-				}
+			if(source==0&&mWebView0){
+				mWebView0->GoBack();
 			}
 		return;
 		case IDM_EX_UP:
-			if(currentkernel) {
-				if(mWebView) {
-					//if(wkeGoForward(mWebView))
-					wkeGoForward(mWebView);
-				} else if(mWebView_1){
-					mbGoForward(mWebView_1);
-				} else if(mWebView_2){
-					//if(bwCanGoForward(mWebView_2))
-					bwGoForward(mWebView_2);
-				} else if(mWebView_2){
-					//if(mWebView_3->CanGoForward())
-					mWebView_3->GoForward();
-				}
+			if(mWebView0) {
+				mWebView0->GoForward();
 			}
 		return;
 		case IDM_EX_REFRESH:
-			if(source==0)
+			if(source==0 && mWebView0)
 			{
-				if(currentkernel) {
-					lastBid=0;
-					RefreshWebview();
-				}
+				RefreshWebview();
 			}
 		return;
 		case IDM_EX_ZOO:
-			#define mbzd 0.25
 			if(source==0)
 			{
-				if(mWebView) {
-					//if(wkeGoForward(mWebView))
-					float zoom=wkeZoomFactor(mWebView)-mbzd;
-					if(zoom<0.25) zoom=0.25;
-					wkeSetZoomFactor(mWebView, zoom);
-				} else if(mWebView_1){
-					float zoom=mbGetZoomFactor(mWebView_1)-mbzd;
-					if(zoom<0.25) zoom=0.25;
-					mbSetZoomFactor(mWebView_1, zoom);
-				} else if(mWebView_2){
-					bwZoomLevelDelta(mWebView_2, -1);
-				} else if(mWebView_3){
-					double zoom;
-					webviewController->get_ZoomFactor(&zoom);
-					webviewController->put_ZoomFactor(zoom-0.15);
+				if(mWebView0) {
+					mWebView0->ZoomOut();
 				}
 				return;
 			}
@@ -2658,21 +1058,8 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 		{
 			if(source==0)
 			{
-				if(mWebView) {
-					//if(wkeGoForward(mWebView))
-					float zoom=wkeZoomFactor(mWebView)+mbzd;
-					if(zoom>5) zoom=5;
-					wkeSetZoomFactor(mWebView, zoom);
-				} else if(mWebView_1){
-					float zoom=mbGetZoomFactor(mWebView_1)+mbzd;
-					if(zoom>5) zoom=5;
-					mbSetZoomFactor(mWebView_1, zoom);
-				} else if(mWebView_2){
-					bwZoomLevelDelta(mWebView_2, 1);
-				} else if(mWebView_3){
-					double zoom;
-					webviewController->get_ZoomFactor(&zoom);
-					webviewController->put_ZoomFactor(zoom+0.15);
+				if(mWebView0) {
+					mWebView0->ZoomIn();
 				}
 			}
 			else if(source==1)
