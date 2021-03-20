@@ -1,5 +1,6 @@
 #include "APresenterBWidget.h"
-#include "MDTextDlg.h"
+#include "PluginDefinition.h"
+#include "APresentee.h"
 #include "SU.h"
 
 BJSCV* GetDocText1(LONG_PTR funcName, int argc, LONG_PTR argv, int sizeofBJSCV)
@@ -35,7 +36,7 @@ BJSCV* GetDocText1(LONG_PTR funcName, int argc, LONG_PTR argv, int sizeofBJSCV)
 	}
 	size_t len;
 	bool del;
-	auto ret = new BJSCV{typeString, 0, _MDText.GetDocTex(len, bid, &del)};
+	auto ret = new BJSCV{typeString, 0, presentee->GetDocTex(len, bid, &del)};
 	ret->delete_internal = del;
 	return ret;
 }
@@ -101,7 +102,7 @@ BJSCV* ScintillaScroll(LONG_PTR funcName, int argc, LONG_PTR argv, int sizeofBJS
 		if(argc<=2)
 		{
 			LONG_PTR bid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
-			if(_MDText.lastBid==bid)
+			if(presentee->lastBid==bid)
 			{
 				char* args = bwParseCefV8Args(argv, structSize);
 				if(structSize)
@@ -109,7 +110,7 @@ BJSCV* ScintillaScroll(LONG_PTR funcName, int argc, LONG_PTR argv, int sizeofBJS
 					BJSCV* val = (BJSCV*)(args+0*structSize);
 					if(val->value_type==typeInt)
 					{
-						_MDText.doScintillaScroll(val->intVal);
+						presentee->doScintillaScroll(val->intVal);
 					}
 				}
 			}
@@ -129,7 +130,7 @@ url_intercept_result* InterceptBrowserWidget(const char* url, const url_intercep
 	}
 	if(strncmp(url, "https://tests/home", 18)==0)
 	{
-		_MDText.RefreshWebview(false);
+		presentee->RefreshWebview(false);
 		return new url_intercept_result{(CHAR*)"Markdown Text", 14, 200, (CHAR*)"OK"};
 	}
 
@@ -146,7 +147,7 @@ url_intercept_result* InterceptBrowserWidget(const char* url, const url_intercep
 			UrlDecode(decodedUrl, path);
 
 			DWORD dataLen;
-			auto bufferRes = _MDText.loadPluginAsset(decodedUrl, dataLen);
+			auto bufferRes = presentee->loadPluginAsset(decodedUrl, dataLen);
 
 			if(bufferRes)
 			{
@@ -165,7 +166,7 @@ url_intercept_result* InterceptBrowserWidget(const char* url, const url_intercep
 			char decodedUrl[MAX_PATH];
 			UrlDecode(decodedUrl, path);
 			DWORD dataLen;
-			auto data = _MDText.loadSourceAsset(bid, decodedUrl, dataLen);
+			auto data = presentee->loadSourceAsset(bid, decodedUrl, dataLen);
 			if(data) {
 				url_intercept_result* result = new url_intercept_result{data, dataLen, 200, (CHAR*)"OK"};
 				result->delete_internal = 1;
@@ -181,11 +182,11 @@ void onBrowserPrepared(bwWebView browserPtr)
 {
 	bwInstallJsNativeToWidget(browserPtr, "GetDocText1", GetDocText1);
 	bwInstallJsNativeToWidget(browserPtr, "Scinllo", ScintillaScroll);
-	if (APresenterBWidget* wv = dynamic_cast<APresenterBWidget*>(_MDText.mWebView0)) {
+	if (APresenterBWidget* wv = dynamic_cast<APresenterBWidget*>(presentee->mWebView0)) {
 		wv->mWebView = browserPtr;
 	}
-	_MDText.hBrowser = bwGetHWNDForBrowser(browserPtr);
-	::SendMessage(_MDText.getHSelf(), WM_SIZE, 0, 0);
+	presentee->hBrowser = bwGetHWNDForBrowser(browserPtr);
+	::SendMessage(presentee->getHWND(), WM_SIZE, 0, 0);
 	//_MDText.RefreshWebview(); 没有用
 	//SetWindowLongPtr(_MDText.hBrowser, GWLP_WNDPROC, (LONG_PTR)testWindowProc1);
 }
@@ -193,7 +194,7 @@ void onBrowserPrepared(bwWebView browserPtr)
 bool onBrowserFocused(bwWebView browserPtr)
 {
 	HWND hwnd = bwGetHWNDForBrowser(browserPtr);
-	if(hwnd==_MDText.hBrowser) {
+	if(hwnd==presentee->hBrowser) {
 		::SendMessage(nppData._nppHandle, NPPM_SETDOCKFOCUS, (WPARAM)hwnd, 0);
 	}
 	return false;
@@ -202,7 +203,7 @@ bool onBrowserFocused(bwWebView browserPtr)
 bool onBrowserClose(bwWebView browserPtr)
 {
 	HWND hwnd = bwGetHWNDForBrowser(browserPtr);
-	if(hwnd==_MDText.hBrowser) {
+	if(hwnd==presentee->hBrowser) {
 		::SendMessage(nppData._nppHandle, NPPM_CLOSEDOCK, (WPARAM)hwnd, 0);
 	}
 	return true;
@@ -224,11 +225,11 @@ APresenterBWidget::APresenterBWidget(TCHAR* WKPath, int & error_code, HWND & hBr
 		if(bwInit(WKPath) && bwCreateBrowser({hwnd, "https://tests/home", onBrowserPrepared, InterceptBrowserWidget, onBrowserFocused, onBrowserClose}))
 		{
 			error_code=0;
-			_MDText.browser_deferred_create_time = clock();
+			presentee->browser_deferred_create_time = clock();
 			//::MessageBox(NULL, TEXT("111"), TEXT(""), MB_OK);
 		}
 	}
-	else if(_MDText.RequestedSwitch)
+	else if(presentee->RequestedSwitch)
 	{
 		::MessageBox(NULL, L"cefclient.dll not found. ", TEXT(""), MB_OK);
 	}
@@ -286,12 +287,12 @@ void APresenterBWidget::updateArticle(LONG_PTR bid, int articleType, bool softUp
 	strcpy(page_id, "http://tests/MDT/");
 	LONGPTR2STR(page_id+(st=strlen(page_id)), bid);
 	if(articleType==1) {
-		if(softUpdate||update&&_MDText.checkRenderHtml()) {
+		if(softUpdate||update&&presentee->checkRenderHtml()) {
 			strcpy(page_id+(ed=strlen(page_id)), "/doc.html");
 			size_t len;
-			bwLoadStrData(mWebView, page_id+13, _MDText.GetDocTex(len, bid, 0), 0);
+			bwLoadStrData(mWebView, page_id+13, presentee->GetDocTex(len, bid, 0), 0);
 			if(update) {
-				_MDText.lastBid=bid;
+				presentee->lastBid=bid;
 				lstrcpy(last_updated, last_actived);
 			}
 		}
@@ -304,7 +305,7 @@ void APresenterBWidget::updateArticle(LONG_PTR bid, int articleType, bool softUp
 	}
 	else if(update)
 	{
-		if(_MDText.checkRenderMarkdown()) {
+		if(presentee->checkRenderMarkdown()) {
 			CHAR* page_content = new CHAR[512];
 			strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/ui.js\"></script><script>window.update=function(){window.APMD(GetDocText1('");
 
@@ -314,9 +315,9 @@ void APresenterBWidget::updateArticle(LONG_PTR bid, int articleType, bool softUp
 
 			strcpy(nxt_st, "'));}</script><body><script src=\"http://mdbr/");
 
-			_MDText.AppendPageResidue(nxt_st+45); // 加载bw
+			presentee->AppendPageResidue(nxt_st+45); // 加载bw
 			bwLoadStrData(mWebView, page_id+13, page_content, 0);
-			_MDText.lastBid=bid;
+			presentee->lastBid=bid;
 			lstrcpy(last_updated, last_actived);
 		}// else if(!legacy && checkRenderHtml()){
 

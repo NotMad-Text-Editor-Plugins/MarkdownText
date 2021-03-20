@@ -6,6 +6,10 @@
 const char InternalResHead1[] = "http://mdbr/";
 const char InternalTESTSResHead1[] = "http://tests/MDT/";
 
+class APresentee;
+
+extern APresentee* presentee;
+
 class ArticlePresenter
 {
 public:

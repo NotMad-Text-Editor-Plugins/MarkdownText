@@ -8,13 +8,13 @@
 # define BROWSERWIDGET_TYPE 2
 # define WEBVIEW2_TYPE 3
 
-class MarkDownTextDlg;
+#include "APresentee.h"
 
 class APresenter
 {
 public:
 	char wke_mb=0;
-	int initWebViewImpl(int kernelType, MarkDownTextDlg * presentee);
+	int initWebViewImpl(int kernelType, APresentee * presentee);
 };
 
 #endif

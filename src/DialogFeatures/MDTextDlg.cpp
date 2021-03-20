@@ -22,34 +22,8 @@
 #include "../../NativeLang/src/NativeLang_def.h"
 #include <ProfileStd.h>
 #include "ArticlePresenter.h"
+#include "MDTextToolbar.h"
 #include "SU.h"
-
-// toggle the UI configuration boolean. |pos| flag position. |reverse| if set, then default to true.
-int ToggleUIBool(int pos, bool reverse)
-{
-	int mask = 1<<pos;
-	bool val = !(UISettings&mask);
-	UISettings&=~mask;
-	if(val)
-	{
-		UISettings|=mask;
-	}
-	return reverse?!val:val;
-}
-
-// get the UI configuration boolean, default to false. |pos| flag position.
-bool GetUIBool(int pos)
-{
-	int mask = 1<<pos;
-	return UISettings&mask;
-}
-
-// get the UI configuration boolean, but reversed. |pos| flag position.
-bool GetUIBoolReverse(int pos)
-{
-	int mask = 1<<pos;
-	return !(UISettings&mask);
-}
 
 void MarkDownTextDlg::doScintillaScroll(int ln)
 {
@@ -239,9 +213,6 @@ void MarkDownTextDlg::syncWebToline(bool force)
 	}
 }
 
-// Global variables
-HINSTANCE hInst;
-
 // Initize various browser controls here.
 void MarkDownTextDlg::display(bool toShow){
 	DockingDlgInterface::display(toShow);
@@ -272,15 +243,18 @@ void MarkDownTextDlg::AppendPageResidue(char* nxt_st) {
 	strcpy(nxt_st, "main.js\" onload=init(this)></script></body>");
 }
 
-HMENU hMenuEngines=0;
+// 
+// Engine Switch functions
+// 
 
-HMENU hMenuZoom=0;
-
-bool bAutoSwitchEngines=0;
-
-std::vector<char*> markdown_ext;
-
-std::vector<char*> html_ext;
+void MarkDownTextDlg::releaseEnginesMenu()
+{
+	if(hMenuEngines)
+	{
+		DestroyMenu(hMenuEngines);
+		hMenuEngines=0;
+	}
+}
 
 bool checkFileExt(vector<char*> ext) { 
 	auto len = lstrlen(last_actived);
@@ -320,17 +294,18 @@ bool MarkDownTextDlg::checkRenderHtml() {
 	return checkFileExt(html_ext);
 }
 
-bool checkRenderAscii() { 
-	return false;
+std::string* MarkDownTextDlg::setLibPathAt(int idx, char* newpath)
+{
+	char TmpLibPath[MAX_PATH_HALF];
+	sprintf(TmpLibPath, "LibPath%d", idx+1);
+	PutProfString(TmpLibPath, newpath);
+	std::string* val=GetProfString(TmpLibPath);
+	LibPaths[idx] = val;
+	return val;
 }
 
-void releaseEnginesMenu()
-{
-	if(hMenuEngines)
-	{
-		DestroyMenu(hMenuEngines);
-		hMenuEngines=0;
-	}
+bool checkRenderAscii() { 
+	return false;
 }
 
 bool isMDEngineActive() 
@@ -363,16 +338,16 @@ void MarkDownTextDlg::RefreshWebview(int source) {
 		if(autoSwitch)
 		{
 			int toIdx = checkRenderMarkdown()?0:checkRenderHtml()?1:checkRenderAscii()?2:-1;
-			if(toIdx>=0&&toIdx!=_MDText.CustomRoutineIdx)
+			if(toIdx>=0&&toIdx!=CustomRoutineIdx)
 			{
-				_MDText.CustomRoutineIdx=toIdx;
+				CustomRoutineIdx=toIdx;
 				releaseEnginesMenu();
 			}
 		}
 		bool isMarkdown = isMDEngineActive();
 		bool isHtml = isHTMLEngineActive();
 		//bool isAscii = isAsciiActive();
-		mWebView0->updateArticle(bid, _MDText.CustomRoutineIdx, b1, b2);
+		mWebView0->updateArticle(bid, CustomRoutineIdx, b1, b2);
 	}
 }
 
@@ -384,52 +359,6 @@ void MarkDownTextDlg::refreshDlg(bool updateList, bool fromEditor) {
 	} else {
 		hasChanged=1;
 	}
-};
-
-
-ToolBarButtonUnit PrivateToolBarIconList[] = {
-	{IDM_EX_TOGGLE, ICO_EX_TOGGLE, ICO_EX_TOGGLE, ICO_EX_TOGGLE, 0 }, 
-	{IDM_EX_DOWN, ICO_EX_DOWN, ICO_EX_DOWN, ICO_EX_DOWN, 0 }, 
-	{IDM_EX_UP, ICO_EX_UP, ICO_EX_UP, ICO_EX_UP, 0 }, 
-	{IDM_EX_REFRESH, ICO_EX_Refresh, ICO_EX_Refresh, ICO_EX_Refresh, 0 }, 
-	{IDM_EX_DELTA, ICO_EX_DELTA, ICO_EX_DELTA, ICO_EX_DELTA, 0 }, 
-	{IDM_EX_ZOI, ICO_EX_ZOI, ICO_EX_ZOI, ICO_EX_ZOI, 0 }, 
-	{IDM_EX_ZOO, ICO_EX_ZOO, ICO_EX_ZOO, ICO_EX_ZOO, 0 }, 
-	{IDM_EX_BOLDEN, ICO_EX_BOLDEN, ICO_EX_BOLDEN, ICO_EX_BOLDEN, 0 }, 
-	{IDM_EX_ITALIC, ICO_EX_ITALIC, ICO_EX_ITALIC, ICO_EX_ITALIC, 0 }, 
-	{IDM_EX_DEV, ICO_EX_DEV, ICO_EX_DEV, ICO_EX_DEV, 0 }, 
-	{IDM_EX_LOCATE, ICO_EX_LOCATE, ICO_EX_LOCATE, ICO_EX_LOCATE, 0 }, 
-};
-
-#define ListBoxToolBarSize sizeof(PrivateToolBarIconList)/sizeof(ToolBarButtonUnit)
-
-//	Note: On change, keep sure to change order of IDM_EX_... also in function GetNameStrFromCmd
-LPTSTR ListBoxToolBarToolTip[] = {
-	TEXT("Options"),
-	TEXT("Go Back"),
-	TEXT("Go Forward"),
-	TEXT("Refresh"),
-	TEXT("Alter Engine"),
-	TEXT("Zoom In"),
-	TEXT("Zoom Out"),
-	TEXT("Bold"),
-	TEXT("Italic"),
-	TEXT("DevTools"),
-	TEXT("Sync-Scroll"),
-};
-
-LPTSTR ListBoxToolBarToolTip_HAN[] = {
-	TEXT("选项"),
-	TEXT("后退"),
-	TEXT("前进"),
-	TEXT("刷新"),
-	TEXT("切换引擎"),
-	TEXT("放大"),
-	TEXT("缩小"),
-	TEXT("粗体"),
-	TEXT("斜体"),
-	TEXT("开发工具"),
-	TEXT("同步滚动"),
 };
 
 void MarkDownTextDlg::OnToolBarRequestToolTip( LPNMHDR nmhdr )
@@ -457,10 +386,6 @@ void MarkDownTextDlg::OnToolBarRequestToolTip( LPNMHDR nmhdr )
 		lpttt->lpszText = ToolTipText;
 	}
 }
-
-int BufferIdBeforeClick=0;
-
-TCHAR strHint[500]={0};
 
 int MarkDownTextDlg::getToolbarCommand(POINT &pointer) {
 	TBBUTTON tempBtn;
@@ -615,9 +540,13 @@ bool getMenuItemChecked(int mid) {
 	return false;
 }
 
-void SwitchEngines(int idx);
+void SwitchEnginesStatic(int idx) {
+	_MDText.SwitchEngines(idx);
+}
 
-void GlobalOnPvMnChecked(HMENU hMenu, int idx);
+void GlobalOnPvMnCheckedStatic(HMENU hMenu, int idx){
+	_MDText.GlobalOnPvMnChecked(hMenu, idx);
+}
 
 void simulToolbarMenu(HMENU pluginMenu, RECT *rc, HWND _hSelf, std::vector<FuncItem> & items){
 	int cmd = TrackPopupMenu(pluginMenu, TPM_RETURNCMD, rc->left,  rc->top, 0, _hSelf, NULL);
@@ -625,11 +554,11 @@ void simulToolbarMenu(HMENU pluginMenu, RECT *rc, HWND _hSelf, std::vector<FuncI
 	if(cmd) {
 		for(int idx=0,len=items.size();idx<len;idx++) {
 			if(items[idx]._cmdID==cmd) {
-				if(items[idx]._pFunc==(PFUNCPLUGINCMD)SwitchEngines) {
-					SwitchEngines(idx-MDCRST);
+				if(items[idx]._pFunc==(PFUNCPLUGINCMD)SwitchEnginesStatic) {
+					SwitchEnginesStatic(idx-MDCRST);
 				}
-				else if(items[idx]._pFunc==(PFUNCPLUGINCMD)GlobalOnPvMnChecked) {
-					GlobalOnPvMnChecked(pluginMenu, items[idx]._cmdID);
+				else if(items[idx]._pFunc==(PFUNCPLUGINCMD)GlobalOnPvMnCheckedStatic) {
+					GlobalOnPvMnCheckedStatic(pluginMenu, items[idx]._cmdID);
 				}
 				else
 				{
@@ -642,8 +571,6 @@ void simulToolbarMenu(HMENU pluginMenu, RECT *rc, HWND _hSelf, std::vector<FuncI
 		}
 	}
 }
-
-extern HANDLE				g_hModule;
 
 void PrivateTrackPopup(HWND _hSelf, HMENU pluginMenu, std::vector<FuncItem> items, int CMDID) 
 {
@@ -691,10 +618,6 @@ HMENU buildPluginPrivateMenu(std::vector<FuncItem> funcItem)
 
 void happy(){}
 
-int requestedInvalidSwitch=-1;
-
-bool MDEngineScanned;
-
 void MarkDownTextDlg::saveParameters()
 {
 	int core=requestedInvalidSwitch>0?requestedInvalidSwitch-1:kernelType;
@@ -704,6 +627,7 @@ void MarkDownTextDlg::saveParameters()
 	PutProfString("HTMLEngine", HTMLRoutine);
 	PutProfString("ADEngine", ADRoutine);
 	PutProfInt("UISettings", UISettings);
+	PutProfInt("LibCef", LibCefSel);
 	saveProf(g_ModulePath, configFileName);
 }
 
@@ -728,26 +652,32 @@ void MarkDownTextDlg::readParameters()
 	{
 		strcpy(ADRoutine, val->data());
 	}
-	// Alter the lib path
-	if(val=GetProfString("Libcef"))
-	{
-		auto path=val->data();
-		if(PathFileExistsA(path))
+	UISettings=GetProfInt("UISettings", 0);
+	maxPathHistory=0;
+	LibPaths.resize(maxPathHistory);
+	char TmpLibPath[MAX_PATH_HALF];
+	for(int i=0;;i++) {
+		sprintf(TmpLibPath, "LibPath%d", i+1);
+		if(val=GetProfString(TmpLibPath))
 		{
-			TCHAR* libPath = new TCHAR[MAX_PATH];
-			MultiByteToWideChar(CP_ACP, 0, path, -1, libPath, MAX_PATH);
-			PathAppend(libPath, TEXT("cefclient.dll"));
-			if(PathFileExists(libPath))
-			{
-				LibPath=libPath;
-			}
-			else
-			{
-				delete[] libPath;
-			}
+			LibPaths.push_back(val);
+			maxPathHistory++;
+		}
+		else 
+		{
+			break;
 		}
 	}
-	UISettings=GetProfInt("UISettings", 0);
+	if(maxPathHistory<3) {
+		for(;maxPathHistory<3;maxPathHistory++) {
+			//sprintf(TmpLibPath, "LibPath%d", i+1);
+			//PutProfString(TmpLibPath, "");
+			//val=GetProfString(TmpLibPath);
+			LibPaths.push_back(NULL);
+		}
+	}
+	LibCefSel=GetProfInt("LibCef", 0);
+
 	int inval=GetProfInt("EngineType", -1);
 	if(inval>2||inval<-1) {
 		inval=-1;
@@ -842,16 +772,7 @@ void engineToChromium(){ _MDText.switchEngineByIndex(2); }
 
 void engineToWebview2(){ _MDText.switchEngineByIndex(3); }
 
-std::vector<FuncItem> ZOOMER;
-std::vector<FuncItem> EngineSwicther;
-std::vector<wstring> MDEngines;
-HMENU hMenuLocate=0;
-std::vector<FuncItem> LocateScroll;
-#include <iostream>
-
-using namespace std;
-
-bool FindMarkdownEngines(TCHAR* path) {
+bool MarkDownTextDlg::FindMarkdownEngines(TCHAR* path) {
 	//see https://stackoverflow.com/questions/67273/how-do-you-iterate-through-every-file-directory-recursively-in-standard-c#answer-67336
 	MDEngines.clear();
 	HANDLE hFind = INVALID_HANDLE_VALUE;
@@ -893,22 +814,16 @@ bool FindMarkdownEngines(TCHAR* path) {
 	return true;
 }
 
-void CheckMenu(FuncItem* funcItem, bool val)
-{
-	auto menu = ::GetMenu(nppData._nppHandle);
-	::CheckMenuItem(menu, funcItem->_cmdID, MF_BYCOMMAND | (static_cast<BOOL>(val) ? MF_CHECKED : MF_UNCHECKED));
-}
-
-void GlobalOnPvMnChecked(HMENU hMenu, int idx) {
+void MarkDownTextDlg::GlobalOnPvMnChecked(HMENU hMenu, int idx) {
 	switch(idx) {
 		// IDM_EX_LOCATE
 		case 260:
 		{
 			bool val=ToggleUIBool(0, true);
 			CheckMenu(funcSync, val);
-			if(_MDText.isCreated())
+			if(isCreated())
 			{
-				_MDText.toolBar.setCheck(IDM_EX_LOCATE, val);
+				toolBar.setCheck(IDM_EX_LOCATE, val);
 			}
 		}
 		break;
@@ -924,18 +839,19 @@ void GlobalOnPvMnChecked(HMENU hMenu, int idx) {
 		}
 		break;
 		case 264:
-			if(_MDText.mWebView0) {
-				_MDText.mWebView0->EvaluateJavascript("doScintillo(1)");
+			if(mWebView0) {
+				mWebView0->EvaluateJavascript("doScintillo(1)");
 			}
 		break;
 		case 265:
-			_MDText.syncWebToline(true);
+			syncWebToline(true);
 		break;
 	}
 }
 
 // Switch internal or custom Markdown/HMTL/ASCIIDoc renderer.
-void SwitchEngines(int idx) {
+
+void MarkDownTextDlg::SwitchEngines(int idx) {
 	if(idx<-2) // reset custom engines.
 	{
 		MDEngineScanned=false;
@@ -944,27 +860,27 @@ void SwitchEngines(int idx) {
 	}
 	else if(idx==-2) // to use internal HTML engine
 	{
-		_MDText.CustomRoutineIdx=1;
-		_MDText.CustomRoutine[0]='\0';
+		CustomRoutineIdx=1;
+		CustomRoutine[0]='\0';
 	}
 	else if(idx==-1) // to use internal Markdown engine
 	{
-		_MDText.CustomRoutineIdx=0;
-		_MDText.CustomRoutine[0]='\0';
-		_MDText.MDRoutine[0]='\0';
+		CustomRoutineIdx=0;
+		CustomRoutine[0]='\0';
+		MDRoutine[0]='\0';
 	}
 	else if(idx>=0&&idx<MDEngines.size()) // to use custom engines
 	{
-		auto data2set = _MDText.CustomRoutine;
+		auto data2set = CustomRoutine;
 		WideCharToMultiByte(CP_ACP, 0, MDEngines[idx].data(), -1, data2set, MAX_PATH, NULL, NULL);
-		if(strncmp_casei(_MDText.CustomRoutine, "ASCII", 5)) {
+		if(strncmp_casei(CustomRoutine, "ASCII", 5)) {
 			// to treat as AsciiDoc engine.
-			_MDText.CustomRoutineIdx=2;
-			strcpy(_MDText.ADRoutine, data2set);
+			CustomRoutineIdx=2;
+			strcpy(ADRoutine, data2set);
 		} else {
 			// to treat as Markdown engine.
-			_MDText.CustomRoutineIdx=0;
-			strcpy(_MDText.MDRoutine, data2set);
+			CustomRoutineIdx=0;
+			strcpy(MDRoutine, data2set);
 		}
 	}
 	// update menu checks
@@ -972,9 +888,9 @@ void SwitchEngines(int idx) {
 	{
 		CheckMenuItem(hMenuEngines, i+MDCRST, MF_BYPOSITION|(i==idx?MF_CHECKED:MF_UNCHECKED));
 	}
-	_MDText.lastBid=0;
+	lastBid=0;
 	bForcePreview=1;
-	_MDText.RefreshWebview(2);
+	RefreshWebview(2);
 	bForcePreview=0;
 }
 
@@ -1091,10 +1007,10 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 				EngineSwicther.at(3)={TEXT("Chromium-Embeded ( Recommended )"), engineToChromium, 64, false, 0};
 				EngineSwicther.at(4)={TEXT("Webview2"), engineToWebview2, 65, false, 0};
 				EngineSwicther.at(5)={TEXT(""), 0, 0, false, 0};
-				EngineSwicther.at(6)={TEXT(""), (PFUNCPLUGINCMD)SwitchEngines, 66, false, 0};
+				EngineSwicther.at(6)={TEXT(""), (PFUNCPLUGINCMD)SwitchEnginesStatic, 66, false, 0};
 				lstrcpy(EngineSwicther.at(6)._itemName, ZH_CN?TEXT("切换渲染引擎："):TEXT("Switch Markdown Engine :"));
-				EngineSwicther.at(7)={TEXT("HTML"), (PFUNCPLUGINCMD)SwitchEngines, 67, false, 0};
-				EngineSwicther.at(8)={TEXT("md.html"), (PFUNCPLUGINCMD)SwitchEngines, 68, false, 0};
+				EngineSwicther.at(7)={TEXT("HTML"), (PFUNCPLUGINCMD)SwitchEnginesStatic, 67, false, 0};
+				EngineSwicther.at(8)={TEXT("md.html"), (PFUNCPLUGINCMD)SwitchEnginesStatic, 68, false, 0};
 			}
 			bool rebuildMenu = hMenuEngines==0||!MDEngineScanned;
 			if(hMenuEngines==0)
@@ -1129,7 +1045,7 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 				for(int i=0,ii,len=MDEngines.size();i<len;i++)
 				{
 					ii=MDCRST+i;
-					EngineSwicther.at(ii)={TEXT(""), (PFUNCPLUGINCMD)SwitchEngines, 60+MDCRST+i, false, 0};
+					EngineSwicther.at(ii)={TEXT(""), (PFUNCPLUGINCMD)SwitchEnginesStatic, 60+MDCRST+i, false, 0};
 					auto data=MDEngines[i].data();
 					lstrcpy(EngineSwicther.at(ii)._itemName, data);
 					::InsertMenu(hMenuEngines, ii, MF_BYPOSITION, EngineSwicther.at(ii)._cmdID, data);
@@ -1159,11 +1075,11 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 				{
 					LocateScroll.resize(5);
 					int i=0;
-					LocateScroll.at(i++)={TEXT("Sync Text -> Webview"), (PFUNCPLUGINCMD)GlobalOnPvMnChecked, 261, false, 0};
-					LocateScroll.at(i++)={TEXT("-->  Sync Now (&D)"), (PFUNCPLUGINCMD)GlobalOnPvMnChecked, 265, false, 0};
-					LocateScroll.at(i++)={TEXT("Sync Text <- Webview"), (PFUNCPLUGINCMD)GlobalOnPvMnChecked, 262, false, 0};
-					LocateScroll.at(i++)={TEXT("<--  Sync Now (&A)"), (PFUNCPLUGINCMD)GlobalOnPvMnChecked, 264, false, 0};
-					LocateScroll.at(i++)={TEXT("Locate current file"), (PFUNCPLUGINCMD)GlobalOnPvMnChecked, 263, false, 0};
+					LocateScroll.at(i++)={TEXT("Sync Text -> Webview"), (PFUNCPLUGINCMD)GlobalOnPvMnCheckedStatic, 261, false, 0};
+					LocateScroll.at(i++)={TEXT("-->  Sync Now (&D)"), (PFUNCPLUGINCMD)GlobalOnPvMnCheckedStatic, 265, false, 0};
+					LocateScroll.at(i++)={TEXT("Sync Text <- Webview"), (PFUNCPLUGINCMD)GlobalOnPvMnCheckedStatic, 262, false, 0};
+					LocateScroll.at(i++)={TEXT("<--  Sync Now (&A)"), (PFUNCPLUGINCMD)GlobalOnPvMnCheckedStatic, 264, false, 0};
+					LocateScroll.at(i++)={TEXT("Locate current file"), (PFUNCPLUGINCMD)GlobalOnPvMnCheckedStatic, 263, false, 0};
 				}
 				if(hMenuLocate==0)
 				{

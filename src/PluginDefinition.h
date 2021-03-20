@@ -85,33 +85,11 @@ void commandMenuInit();
 //
 void commandMenuCleanUp();
 
-//
-// Your plugin command functions
-//
-void PreviousLocation();
-void NextLocation();
-//void PreviousChangedLocation();
-//void NextChangedLocation();
-//
-//void MarkDownTextHistoryDlg();
-//void AutoRecord();
-//void SkipClosed();
-//void FlipAutoClean();
-//void PauseRecording();
-//void ManualRecord();
-void ClearAllRecords();
-//void NavigateInCurr();
-//void MarkChange();
-//void ShowAbout();
-//void PinMenu();
-
 extern MarkDownTextDlg _MDText;
 
 extern toolbarIcons		g_TBMarkdown;
 
 extern bool pinMenu;
-
-extern HANDLE  g_hModule;
 
 __declspec(selectany) bool NPPRunning = false;
 
@@ -138,8 +116,7 @@ extern int ToggleUIBool(int pos, bool reverse);
 extern bool GetUIBool(int pos);
 extern bool GetUIBoolReverse(int pos);
 
-extern void GlobalOnPvMnChecked(HMENU hMenu, int idx);
-extern void CheckMenu(FuncItem* funcItem, bool val);
+void CheckMenu(FuncItem* funcItem, bool val);
 
 #define MAX_PATH_HALF 128
 #define MDCRST 9

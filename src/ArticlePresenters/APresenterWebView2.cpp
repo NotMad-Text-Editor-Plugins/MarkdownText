@@ -1,6 +1,8 @@
 #include "APresenterWebView2.h"
-#include "MDTextDlg.h"
+#include "PluginDefinition.h"
+#include "APresentee.h"
 #include "SU.h"
+#include <shlwapi.h>
 
 #define kClassWindow L"TestMbWindow"
 
@@ -56,7 +58,11 @@ APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND h
 		, WS_CHILD , 0 , 0 , 840 , 680 , hParent , NULL , ::GetModuleHandle(NULL), NULL);
 	hBrowser=hWnd;
 	::ShowWindow(hWnd, 1);
-	HRESULT hr = CreateCoreWebView2EnvironmentWithOptions(0,0,0,
+	// todo, cannot set path here.
+	//TEXT("C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\89.0.774.57")
+	//	,TEXT("D:\\Code\\FigureOut\\Textrument\\PowerEditor\\bin64\\Textrument.exe.WebView2")
+	HRESULT hr = CreateCoreWebView2EnvironmentWithOptions(
+		NULL , NULL , NULL,
 		Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>([this, hBrowser, hParent](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
 		m_webViewEnvironment=env;
 		env->CreateCoreWebView2Controller(hBrowser, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>([this, hParent](HRESULT result, ICoreWebView2Controller* controller) -> HRESULT {
@@ -122,7 +128,7 @@ APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND h
 							strcpy(nxt_st, ".text',true);R.onreadystatechange=function(){APMD(R.responseText)};R.send()}</script><body><script src=\"http://mdbr/");
 
 							nxt_st+=strlen(nxt_st);
-							_MDText.AppendPageResidue(nxt_st); // 加载WV2
+							presentee->AppendPageResidue(nxt_st); // 加载WV2
 
 							wil::com_ptr<ICoreWebView2WebResourceResponse> response;
 							wil::com_ptr<IStream> stream = SHCreateMemStream((const BYTE*)page_content, strlen(page_content));
@@ -138,7 +144,7 @@ APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND h
 						else
 						{
 							size_t docLength=0;
-							auto str = _MDText.GetDocTex(docLength, bid, 0);
+							auto str = presentee->GetDocTex(docLength, bid, 0);
 							if(docLength)
 							{
 								wil::com_ptr<ICoreWebView2WebResourceResponse> response;
@@ -168,7 +174,7 @@ APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND h
 							UrlDecode(decodedUrl, path);
 
 							DWORD dataLen;
-							auto buffer = _MDText.loadPluginAsset(decodedUrl, dataLen);
+							auto buffer = presentee->loadPluginAsset(decodedUrl, dataLen);
 
 							if(buffer)
 							{
@@ -199,7 +205,7 @@ APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND h
 					// very slow !
 					//::MessageBox(NULL, TEXT("收到！"), TEXT("收到！"), MB_OK);
 					size_t docLength=0;
-					auto str = _MDText.GetDocTex(docLength, bid, 0);
+					auto str = presentee->GetDocTex(docLength, bid, 0);
 					if(docLength)
 					{
 						TCHAR* buffer = new TCHAR[docLength];
@@ -225,7 +231,7 @@ APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND h
 						number++;
 					if(GetUIBoolReverse(0) && GetUIBoolReverse(2) || force)
 					{
-						_MDText.doScintillaScroll(_wtoi(number));
+						presentee->doScintillaScroll(_wtoi(number));
 					}
 				}
 				CoTaskMemFree(message);
@@ -240,7 +246,7 @@ APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND h
 			//mWebView->Navigate(L"https://www.bing.com/");
 			//mWebView->Navigate(L"http://tests/MDT/1.html");
 
-			_MDText.RefreshWebview();
+			presentee->RefreshWebview();
 			return S_OK;
 		}).Get());
 		return S_OK;
@@ -251,7 +257,7 @@ APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND h
 	}
 	else {
 		DestroyWindow(hBrowser);
-		if (_MDText.RequestedSwitch && hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
+		if (presentee->RequestedSwitch && hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
 		{
 			::MessageBox(hParent, L"Edge beta not found. ", TEXT(""), MB_OK);
 		}
@@ -272,7 +278,12 @@ void APresenterWebView2::GoForward()
 
 void APresenterWebView2::DestroyWebView(bool exit) 
 {
-	webviewController->Close();
+	if(webviewController) {
+		webviewController->Close();
+		m_webViewEnvironment.reset();
+		webviewController.reset();
+		mWebView.reset();
+	}
 }
 
 void APresenterWebView2::EvaluateJavascript(char * JS) 
@@ -312,6 +323,7 @@ void APresenterWebView2::ShowWindow()
 
 void APresenterWebView2::updateArticle(LONG_PTR bid, int articleType, bool softUpdate, bool update) 
 {
+	if(!mWebView) return;
 	TCHAR* page_id = new TCHAR[64], * new_st;  // Webview2 需要虚拟网址。 传文件名，只传ID吧。 http://tests/MDT/{bid}/index.html
 	lstrcpy(page_id, TEXT("http://tests/MDT/"));
 	new_st=page_id+17;
@@ -326,9 +338,9 @@ void APresenterWebView2::updateArticle(LONG_PTR bid, int articleType, bool softU
 	}
 	else if(update)
 	{
-		if(_MDText.checkRenderMarkdown()) {
+		if(presentee->checkRenderMarkdown()) {
 			mWebView->Navigate(page_id);
-			_MDText.lastBid=bid;
+			presentee->lastBid=bid;
 			lstrcpy(last_updated, last_actived);
 		}// else if(!legacy && checkRenderHtml()){
 
@@ -338,5 +350,7 @@ void APresenterWebView2::updateArticle(LONG_PTR bid, int articleType, bool softU
 }
 
 void APresenterWebView2::notifyWindowSizeChanged(RECT & rc) {
-	webviewController->put_Bounds(rc);
+	if(webviewController) {
+		webviewController->put_Bounds(rc);
+	}
 }

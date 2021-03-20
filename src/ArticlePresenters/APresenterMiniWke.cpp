@@ -1,5 +1,6 @@
 #include "APresenterMiniblink.h"
-#include "MDTextDlg.h"
+#include "PluginDefinition.h"
+#include "APresentee.h"
 
 
 void WKE_CALL_TYPE onDidCreateScriptContextCallback(wkeWebView webView, void* param, wkeWebFrameHandle frameId, void* context, int extensionGroup, int worldId)
@@ -53,7 +54,7 @@ bool onLoadUrlBegin(wkeWebView webView, void* param, const char* url, void *job)
 				return false;
 			}
 			DWORD dataLen;
-			auto buffer = _MDText.loadPluginAsset(path, dataLen);
+			auto buffer = presentee->loadPluginAsset(path, dataLen);
 			if(buffer)
 			{
 				wkeNetSetData(job, buffer, dataLen);
@@ -91,7 +92,7 @@ jsValue WKE_CALL_TYPE GetDocText(jsExecState es, void* param)
 	//OutputDebugStringA(path.c_str());
 
 	size_t len;
-	auto ret=jsString(es, _MDText.GetDocTex(len, 0, 0));
+	auto ret=jsString(es, presentee->GetDocTex(len, 0, 0));
 	//::MessageBox(NULL, TEXT("111"), TEXT(""), MB_OK);
 	return ret;
 	//return jsString(es, "# Hello `md.html` World!");
@@ -111,10 +112,10 @@ jsValue WKE_CALL_TYPE ScintillaScroll1(jsExecState es, void* param)
 			if (!jsIsNumber(arg0))
 				return jsUndefined();
 			LONG_PTR bid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
-			if(_MDText.lastBid==bid)
+			if(presentee->lastBid==bid)
 			{
 				int val=jsToInt(es, arg0);
-				_MDText.doScintillaScroll(val);
+				presentee->doScintillaScroll(val);
 			}
 		}
 	}
@@ -208,12 +209,12 @@ void APresenterMiniWke::updateArticle(LONG_PTR bid, int articleType, bool softUp
 	}
 	else if(update)
 	{
-		if(_MDText.checkRenderMarkdown()) {
+		if(presentee->checkRenderMarkdown()) {
 			CHAR* page_content = new CHAR[512];
 			strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/ui.js\"></script><script>window.update=function(){APMD(GetDocText(''))}</script><body><script src=\"http://mdbr/");	
-			_MDText.AppendPageResidue(page_content+172); // 加载wke
+			presentee->AppendPageResidue(page_content+172); // 加载wke
 			wkeLoadHTML(mWebView, page_content);
-			_MDText.lastBid=bid;
+			presentee->lastBid=bid;
 			lstrcpy(last_updated, last_actived);
 			//wkeLoadHTML(mWebView, "<!doctype html><meta charset=\"utf-8\"> <script src=\"http://mdbr/main.js\"></script><body><script>window.update=function(){APMD(GetDocText(''))};update();</script></body>");
 		}

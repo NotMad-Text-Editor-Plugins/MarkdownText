@@ -30,8 +30,6 @@
 
 MarkDownTextDlg _MDText;
 
-extern int BufferIdBeforeClick;
-
 extern bool WindowOpaqueMsg;
 
 bool pinMenu = false;
@@ -44,6 +42,33 @@ long SaveColor = DefaultSaveColor;
 #else
 	#define generic_itoa itoa
 #endif
+
+// toggle the UI configuration boolean. |pos| flag position. |reverse| if set, then default to true.
+int ToggleUIBool(int pos, bool reverse)
+{
+	int mask = 1<<pos;
+	bool val = !(UISettings&mask);
+	UISettings&=~mask;
+	if(val)
+	{
+		UISettings|=mask;
+	}
+	return reverse?!val:val;
+}
+
+// get the UI configuration boolean, default to false. |pos| flag position.
+bool GetUIBool(int pos)
+{
+	int mask = 1<<pos;
+	return UISettings&mask;
+}
+
+// get the UI configuration boolean, but reversed. |pos| flag position.
+bool GetUIBoolReverse(int pos)
+{
+	int mask = 1<<pos;
+	return !(UISettings&mask);
+}
 
 void pluginCleanUp()
 {
@@ -223,6 +248,12 @@ void UnderlineText()
 	WrapTextWith("<u>", "</u>");
 }
 
+void CheckMenu(FuncItem* funcItem, bool val)
+{
+	auto menu = ::GetMenu(nppData._nppHandle);
+	::CheckMenuItem(menu, funcItem->_cmdID, MF_BYCOMMAND | (static_cast<BOOL>(val) ? MF_CHECKED : MF_UNCHECKED));
+}
+
 void PauseUpdate()
 {
 	CheckMenu(funcUpdate, ToggleUIBool(3, false));
@@ -238,12 +269,38 @@ void PauseUpdate()
 
 void SyncScroll()
 {
-	GlobalOnPvMnChecked(0, 260);
+	_MDText.GlobalOnPvMnChecked(0, 260);
 }
+
+
+#include "OptionsDlg.h"
+
+OptionsDlg* pFrame;
 
 void Settings()
 {
-	::SendMessage(nppData._nppHandle, NPPM_SETSTATUSBAR, STATUSBAR_DOC_TYPE, (LPARAM)TEXT("Not implemented yet……"));
+	//::SendMessage(nppData._nppHandle, NPPM_SETSTATUSBAR, STATUSBAR_DOC_TYPE, (LPARAM)TEXT("Not implemented yet……"));
+
+	CPaintManagerUI::SetInstance((HINSTANCE)g_hModule);
+	CPaintManagerUI::SetResourcePath(CPaintManagerUI::GetInstancePath());
+
+	//HRESULT Hr = ::CoInitialize(NULL);
+	//if( FAILED(Hr) ) return 0;
+
+
+	//if(!pFrame) 
+	{
+		pFrame = new OptionsDlg();
+		pFrame->Create(nppData._nppHandle
+			, _T("MarkdownText - Settings")
+			, UI_WNDSTYLE_FRAME|WS_CLIPCHILDREN, WS_EX_WINDOWEDGE);
+		//pFrame->Create(_MDText.getHSelf(), _T("这是一个最简单的测试用exe，修改test1.xml就可以看到效果"), UI_WNDSTYLE_FRAME|WS_CLIPCHILDREN, WS_EX_WINDOWEDGE);
+		pFrame->CenterWindow();
+		pFrame->ShowWindow(true);
+	}
+
+
+
 }
 
 void commandMenuInit()

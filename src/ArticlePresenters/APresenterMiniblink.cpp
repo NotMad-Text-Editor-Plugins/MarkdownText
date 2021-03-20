@@ -1,5 +1,7 @@
 #include "APresenterMiniblink.h"
-#include "MDTextDlg.h"
+#include "PluginDefinition.h"
+#include "APresentee.h"
+#include "shlwapi.h"
 
 
 #define kClassWindow L"TestMbWindow"
@@ -77,14 +79,14 @@ BOOL MB_CALL_TYPE handleLoadUrlBegin(mbWebView webView, void* param, const char*
 				if(strncmp(decodeURL, "index.html", 5)==0)
 				{
 					size_t len;
-					auto res=_MDText.GetDocTex(len, 0, 0);
+					auto res=presentee->GetDocTex(len, 0, 0);
 					mbNetSetData(job, res, len);
 					//delete[] res;
 					return true;
 				}
 				else {
 					DWORD dataLen;
-					auto buffer = _MDText.loadSourceAsset(0, decodeURL, dataLen);
+					auto buffer = presentee->loadSourceAsset(0, decodeURL, dataLen);
 					if(buffer)
 					{
 						mbNetSetData(job, buffer, dataLen);
@@ -99,7 +101,7 @@ BOOL MB_CALL_TYPE handleLoadUrlBegin(mbWebView webView, void* param, const char*
 				return false;
 			}
 			DWORD dataLen;
-			auto buffer = _MDText.loadPluginAsset(path, dataLen);
+			auto buffer = presentee->loadPluginAsset(path, dataLen);
 			if(buffer)
 			{
 				mbNetSetData(job, buffer, dataLen);
@@ -155,7 +157,7 @@ void MB_CALL_TYPE onJsQuery(mbWebView webView, void* param, mbJsExecState es, in
 	if(customMsg==0x666)
 	{
 		size_t len;
-		auto res=_MDText.GetDocTex(len, 0, 0);
+		auto res=presentee->GetDocTex(len, 0, 0);
 		mbResponseQuery(webView, queryId, customMsg, res);
 		delete[] res;
 	}
@@ -170,7 +172,7 @@ void MB_CALL_TYPE onJsQuery(mbWebView webView, void* param, mbJsExecState es, in
 				number++;
 			if(GetUIBoolReverse(0) && GetUIBoolReverse(2) || force)
 			{
-				_MDText.doScintillaScroll(atoi(number));
+				presentee->doScintillaScroll(atoi(number));
 			}
 		}
 	}
@@ -526,7 +528,7 @@ void APresenterMiniblink::ShowWindow()
 
 void APresenterMiniblink::updateArticle(LONG_PTR bid, int articleType, bool softUpdate, bool update) 
 {
-	if(_MDText.CustomRoutineIdx==1) {
+	if(presentee->CustomRoutineIdx==1) {
 		//mbLoadURL(mWebView, "http://mdbr/doc.html");
 		mbLoadURL(mWebView, "http://mdbr/doc/index.html");
 		return;
@@ -537,12 +539,12 @@ void APresenterMiniblink::updateArticle(LONG_PTR bid, int articleType, bool soft
 	}
 	else if(update)
 	{
-		if(_MDText.checkRenderMarkdown()) {
+		if(presentee->checkRenderMarkdown()) {
 			CHAR* page_content = new CHAR[512];
 			strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/ui.js\"></script><script>function onNative(msg,rsp){if(msg==0x666)window.APMD(rsp)};window.update=function(){window.mbQuery(0x666,\"\",onNative)}</script><body><script src=\"http://mdbr/");
-			_MDText.AppendPageResidue(page_content+244); // 加载mb
+			presentee->AppendPageResidue(page_content+244); // 加载mb
 			mbLoadHtmlWithBaseUrl(mWebView, page_content, "file://");
-			_MDText.lastBid=bid;
+			presentee->lastBid=bid;
 			lstrcpy(last_updated, last_actived);
 			//mbLoadHtmlWithBaseUrl(mWebView, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/main.js\"></script><body><script>function onNative(msg,rsp){if(msg==0x666)window.APMD(rsp)}window.mbQuery(0x666,\"\",onNative);</script></body>", "file://");
 		}

@@ -13,8 +13,8 @@
 * limitations under the License.
 */
 #pragma once
-#ifndef LNHISTORY_DLG_H
-#define LNHISTORY_DLG_H
+#ifndef _MDTEXT_DLG_H_
+#define _MDTEXT_DLG_H_
 
 #include "DockingDlgInterface.h"
 #include "PluginDefinition.h"
@@ -51,7 +51,8 @@ extern void ClearLocationList();
 bool SetPosByIndex(int delta, bool doit=true);
 void EnableTBButton(menuList flagIndex, bool state, bool force=false);
 #define TB_ENABLEBUTTON         (WM_USER + 1)
-class MarkDownTextDlg : public DockingDlgInterface
+
+class MarkDownTextDlg : public DockingDlgInterface, public APresentee
 {
 public :
 	MarkDownTextDlg() : DockingDlgInterface(IDD_LOCATIONNAVIGATE) {};
@@ -67,6 +68,10 @@ public :
 
 	void refreshDlg(bool updateList, bool fromEditor);
 
+	HWND getHWND() {
+		return _hSelf;
+	};
+
 	void setParent(HWND parent2set){
 		_hParent = parent2set;
 	};
@@ -75,21 +80,13 @@ public :
 	void destoryWebViews(bool exit=false);
 	void switchEngineByIndex(int id);
 
-	ArticlePresenter* mWebView0;
-	HWND hBrowser=nullptr;
-
 	// 0=MD; 1=HTML; 2=ASCII
-	int CustomRoutineIdx=-1;
 	char CustomRoutine[MAX_PATH_HALF]={0};
 	char MDRoutine[MAX_PATH_HALF]={0};
 	char HTMLRoutine[MAX_PATH_HALF]={0};
 	char ADRoutine[MAX_PATH_HALF]={0};
-	TCHAR* LibPath=nullptr;
-	LONG_PTR lastBid=0;
-	ToolBar toolBar;
 
-	bool RequestedSwitch=false;
-	clock_t browser_deferred_create_time=0;
+	ToolBar toolBar;
 
 	void doScintillaScroll(int ln);
 
@@ -103,13 +100,36 @@ public :
 
 	bool checkRenderHtml();
 
+	std::string* setLibPathAt(int idx, char* newpath);
 protected :
 	virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam);
 	SelfCtrl _color,_savecolor;
+
+	HMENU hMenuEngines=0;
+
+	HMENU hMenuZoom=0;
+
+	bool bAutoSwitchEngines=0;
+
+	std::vector<char*> markdown_ext;
+
+	std::vector<char*> html_ext;
+
+	void releaseEnginesMenu();
+
+	std::vector<FuncItem> ZOOMER;
+	std::vector<FuncItem> EngineSwicther;
+	std::vector<wstring> MDEngines;
+	HMENU hMenuLocate=0;
+	std::vector<FuncItem> LocateScroll;
+
+	int requestedInvalidSwitch=-1;
+	bool MDEngineScanned;
+
+	bool FindMarkdownEngines(TCHAR* path);
 public :
 	APresenter presenter;
 	int kernelType=-1; // -1_auto 0_wke 1_mb 2_bw 3_WV2
-	int currentkernelType=0; // 0_wke 1_mb 2_bw 3_WV2
 	int skFlags=0;
 	bool hasChanged;
 	ToolbarPanel ListBoxPanel;
@@ -120,6 +140,14 @@ public :
 	void AppendPageResidue(char* appendSt);
 	void syncWebToline(bool force=false);
 	int lastSyncLn=0;
+
+	bool autoSwitchOnStart;
+	bool alwaysOffOnStart;
+	int maxPathHistory;
+
+	void SwitchEngines(int idx);
+
+	void GlobalOnPvMnChecked(HMENU hMenu, int idx);
 };
 
 #endif //LNHISTORY_DLG_H

@@ -52,6 +52,12 @@
     <ClCompile Include="..\..\PowerEditor\src\WinControls\ToolBar\ToolBar.cpp">
       <Filter>Source\PluginFeatures</Filter>
     </ClCompile>
+    <ClCompile Include="src\DialogFeatures\OptionsDlg.cpp">
+      <Filter>Source\DialogFeatures</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DirectUILib\DuiLib\ControlEx\UIBeautifulSwitch.cpp">
+      <Filter>Source\DuiLibFeatures</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\ArticlePresenters\APresenterMiniblink.h">
@@ -113,6 +119,18 @@
     </ClInclude>
     <ClInclude Include="..\..\PowerEditor\src\MISC\PluginsManager\PluginInterface.h">
       <Filter>Source\PluginFeatures</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DialogFeatures\OptionsDlg.h">
+      <Filter>Source\DialogFeatures</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DirectUILib\DuiLib\ControlEx\UIBeautifulSwitch.h">
+      <Filter>Source\DuiLibFeatures</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ArticlePresenters\APresentee.h">
+      <Filter>Source\ArticlePresenters</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DialogFeatures\MDTextToolbar.h">
+      <Filter>Source\DialogFeatures</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -222,6 +240,9 @@
     </Filter>
     <Filter Include="Source\PluginFeatures">
       <UniqueIdentifier>{ec89e0a4-c31c-47bc-9681-5b141f6808dd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\DuiLibFeatures">
+      <UniqueIdentifier>{26699e81-eb55-4044-82b4-90e0b40b9f08}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
