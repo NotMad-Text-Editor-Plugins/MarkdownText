@@ -39,7 +39,6 @@ using namespace std;
 const TCHAR sectionName[] = TEXT("Setting");
 const TCHAR strMarkColor[] = TEXT("MarkColor");
 const TCHAR strSaveColor[] = TEXT("SaveColor");
-const TCHAR configFileName[] = TEXT("MarkDownText.ini");
 
 extern bool legacy ;
 

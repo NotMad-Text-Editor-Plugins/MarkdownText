@@ -231,7 +231,7 @@ APresenterBWidget::APresenterBWidget(TCHAR* WKPath, int & error_code, HWND & hBr
 	}
 	else if(presentee->RequestedSwitch)
 	{
-		::MessageBox(NULL, L"cefclient.dll not found. ", TEXT(""), MB_OK);
+		::MessageBox(nppData._nppHandle, TEXT("cefclient.dll"), TEXT("Runtime Not Found!"), MB_OK);
 	}
 }
 

@@ -14,7 +14,7 @@ class APresenter
 {
 public:
 	char wke_mb=0;
-	int initWebViewImpl(int kernelType, APresentee * presentee);
+	int initWebViewImpl(int kernelType, APresentee * presentee, bool fallback);
 };
 
 #endif

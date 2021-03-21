@@ -2,6 +2,8 @@
 // Microsoft Visual C++ generated include file.
 // Used by MDText.rc
 //
+#ifndef SW_HIDE
+
 #define SW_HIDE                         0
 #define HIDE_WINDOW                     0
 #define WM_NULL                         0x0000
@@ -562,57 +564,10 @@
 #define VK_MULTIPLY                     0x6A
 #define VK_ADD                          0x6B
 #define VK_SEPARATOR                    0x6C
-#define IDB_BITMAP1                     108
 #define VK_SUBTRACT                     0x6D
-#define IDB_BITMAP2                     109
 #define VK_DECIMAL                      0x6E
-#define IDB_BITMAP3                     110
 #define VK_DIVIDE                       0x6F
-#define IDB_BITMAP4                     111
 #define VK_F1                           0x70
-#define IDI_ICON1                       112
-
-#define IDI_ICON5                113
-#define IDI_ICON_NEXT                114
-#define IDI_ICON_MD                115
-#define IDI_ICON_NEXT1                116
-#define IDI_ICON_PREV1                117
-#define IDI_ICON_PREV1_ACT                118
-#define IDI_ICON_PREV1_OFF                119
-#define IDI_ICON_PREV_ACT                120
-#define IDI_ICON_PREV_OFF                121
-#define IDI_ICON_NEXT1_ACT                122
-#define IDI_ICON_NEXT1_OFF                123
-#define IDI_ICON_NEXT_ACT                124
-#define IDI_ICON_NEXT_OFF                125
-
-#define ICO_EX_UP                   135
-#define ICO_EX_DOWN                 136
-#define ICO_EX_DELTA                137
-#define ICO_EX_ITALIC				138
-#define ICO_EX_TOGGLE               139
-#define ICO_EX_BOLDEN               140
-#define ICO_EX_ZOI                  141
-#define ICO_EX_ZOO                  142
-#define ICO_EX_Refresh              143
-#define ICO_EX_DEV					144
-#define ICO_EX_LOCATE				145
-
-#define IDM_EX_TOGGLE               2001
-#define IDM_EX_DOWN                 2002
-#define IDM_EX_UP                   2003
-#define IDM_EX_REFRESH              2004
-#define IDM_EX_DELTA                2005
-#define IDM_EX_ZOI                  2006
-#define IDM_EX_ZOO                  2007
-#define IDM_EX_BOLDEN               2008
-#define IDM_EX_ITALIC               2009
-#define IDM_EX_DEV					2010
-#define IDM_EX_LOCATE				2011
-
-#define IDM_EX_PASTE                    2003
-#define IDM_EX_PASTE_ALL                2004
-#define IDM_EX_COPY_TO_CLIPBOARD        2005
 
 
 #define VK_F2                           0x71
@@ -942,18 +897,7 @@
 #define WM_PENWINFIRST                  0x0380
 #define WM_PENWINLAST                   0x038F
 #define WM_DDE_FIRST                    0x03E0
-#define IDC_LOC_LIST                    1001
-#define IDC_STATIC_ABOUT                1003
-#define IDC_CHECK1                      1004
-#define IDC_CHECK_AUTO                  1004
-#define IDC_BUTTON_CLEAR                1005
-#define IDC_CHECK_ALWAYS                1006
-#define IDC_CHECK_SAVERECORD            1007
-#define IDC_CHECK_INCURR                1008
-#define IDC_CHECK_MARK                  1010
-#define ID_STATIC_COLOR                 1011
-#define IDC_CHECK_BOOKMARK              1012
-#define ID_STATIC_SAVECOLOR             1013
+
 #define CF_GDIOBJLAST                   0x03FF
 #define WM_USER                         0x0400
 #define WVR_VALIDRECTS                  0x0400
@@ -1144,11 +1088,7 @@
 #define LVS_ALIGNLEFT                   0x0800
 #define TVS_INFOTIP                     0x0800
 #define TCS_RAGGEDRIGHT                 0x0800
-#define IDD_LOCATIONNAVIGATE            2500
-#define ID_LNHISTORY_EDIT               2501
-#define ID_LNHISTORY_EDIT2              2502
-#define ID_UGO_STATIC                   2505
-#define ID_UGO_STATIC2                  2506
+
 #define LVS_ALIGNMASK                   0x0c00
 #define CS_BYTEALIGNCLIENT              0x1000
 #define RBS_REGISTERDROP                0x1000
@@ -1165,6 +1105,7 @@
 #define LVS_NOCOLUMNHEADER              0x4000
 #define TVS_NONEVENHEIGHT               0x4000
 #define TCS_TOOLTIPS                    0x4000
+
 #define IDH_NO_HELP                     28440
 #define IDH_MISSING_CONTEXT             28441
 #define IDH_GENERIC_HELP_BUTTON         28442
@@ -1237,6 +1178,55 @@
 #define WM_APP                          0x8000
 #define HELP_TCARD                      0x8000
 #define RBS_DBLCLKTOGGLE                0x8000
+#endif // !SW_HIDE
+
+#define IDC_LOC_LIST                    1001
+#define IDC_STATIC_ABOUT                1003
+#define IDC_CHECK1                      1004
+#define IDC_CHECK_AUTO                  1004
+#define IDC_BUTTON_CLEAR                1005
+#define IDC_CHECK_ALWAYS                1006
+#define IDC_CHECK_SAVERECORD            1007
+#define IDC_CHECK_INCURR                1008
+#define IDC_CHECK_MARK                  1010
+#define ID_STATIC_COLOR                 1011
+#define IDC_CHECK_BOOKMARK              1012
+#define ID_STATIC_SAVECOLOR             1013
+
+#define IDD_LOCATIONNAVIGATE            2500
+#define ID_LNHISTORY_EDIT               2501
+#define ID_LNHISTORY_EDIT2              2502
+#define ID_UGO_STATIC                   2505
+#define ID_UGO_STATIC2                  2506
+
+#define IDI_ICON1                       112
+
+#define IDI_ICON5                113
+#define IDI_ICON_NEXT                114
+#define IDI_ICON_MD                115
+#define IDI_ICON_NEXT1                116
+#define IDI_ICON_PREV1                117
+#define IDI_ICON_PREV1_ACT                118
+#define IDI_ICON_PREV1_OFF                119
+#define IDI_ICON_PREV_ACT                120
+#define IDI_ICON_PREV_OFF                121
+#define IDI_ICON_NEXT1_ACT                122
+#define IDI_ICON_NEXT1_OFF                123
+#define IDI_ICON_NEXT_ACT                124
+#define IDI_ICON_NEXT_OFF                125
+
+#define ICO_EX_UP                   135
+#define ICO_EX_DOWN                 136
+#define ICO_EX_DELTA                137
+#define ICO_EX_ITALIC				138
+#define ICO_EX_TOGGLE               139
+#define ICO_EX_BOLDEN               140
+#define ICO_EX_ZOI                  141
+#define ICO_EX_ZOO                  142
+#define ICO_EX_Refresh              143
+#define ICO_EX_DEV					144
+#define ICO_EX_LOCATE				145
+
 #define LVS_NOSORTHEADER                0x8000
 #define TVS_NOHSCROLL                   0x8000
 #define TCS_FOCUSNEVER                  0x8000
@@ -1261,6 +1251,28 @@
 #define SC_MONITORPOWER                 0xF170
 #define SC_CONTEXTHELP                  0xF180
 #define LVS_TYPESTYLEMASK               0xfc00
+
+
+#define IDB_BITMAP1                     108
+#define IDB_BITMAP2                     109
+#define IDB_BITMAP3                     110
+#define IDB_BITMAP4                     111
+
+#define IDM_EX_TOGGLE               2001
+#define IDM_EX_DOWN                 2002
+#define IDM_EX_UP                   2003
+#define IDM_EX_REFRESH              2004
+#define IDM_EX_DELTA                2005
+#define IDM_EX_ZOI                  2006
+#define IDM_EX_ZOO                  2007
+#define IDM_EX_BOLDEN               2008
+#define IDM_EX_ITALIC               2009
+#define IDM_EX_DEV					2010
+#define IDM_EX_LOCATE				2011
+
+#define IDM_EX_PASTE                    2003
+#define IDM_EX_PASTE_ALL                2004
+#define IDM_EX_COPY_TO_CLIPBOARD        2005
 
 // Next default values for new objects
 // 

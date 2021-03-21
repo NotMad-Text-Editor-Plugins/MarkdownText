@@ -25,6 +25,8 @@
 #include "MDTextToolbar.h"
 #include "SU.h"
 
+const TCHAR* configFileName = TEXT("MarkDownText.ini");
+
 void MarkDownTextDlg::doScintillaScroll(int ln)
 {
 	int curScintilla;
@@ -221,7 +223,7 @@ void MarkDownTextDlg::display(bool toShow){
 
 	if(toShow && !mWebView0) 
 	{
-		presenter.initWebViewImpl(kernelType, this);
+		presenter.initWebViewImpl(kernelType, this, true);
 	}
 
 	//::SendMessage( _hSelf, SELF_REFRESH, 0, 1);
@@ -757,16 +759,30 @@ void MarkDownTextDlg::switchEngineByIndex(int id)
 		}
 		if(requestedInvalidSwitch)
 			requestedInvalidSwitch=0;
-		//todo check kernel exists
+
 		RequestedSwitch=true;
-		destoryWebViews();
-		// remain strange window stubs after destory previous ? window
 		//removeAllChildExceptOne(_hSelf, GetParent(toolBar.getHParent())); 
 		browser_deferred_create_time=0;
-		hBrowser=0;
-		kernelType=id;
-		lastBid=0;
+
+		ArticlePresenter* mwold = mWebView0;
+		HWND hold = hBrowser;
+
+		if(presenter.initWebViewImpl(id, this, false)==0)
+		{
+			lastBid=0;
+			kernelType=id;
+			if(mwold)
+			{
+				mwold->DestroyWebView();
+			}
+			if(IsWindow(hold))
+			{
+				CloseWindow(hold);
+				DestroyWindow(hold);
+			}
+		}
 		display(1);
+
 		for(int i=0;i<=4;i++)
 			CheckMenuItem(hMenuEngines, i+1, MF_BYPOSITION|(currentkernelType==i?MF_CHECKED:MF_UNCHECKED));
 		SendMessage(_hSelf, WM_SIZE, 0, 0);

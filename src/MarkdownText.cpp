@@ -13,6 +13,8 @@ TCHAR currFile[MAX_PATH]={0};
 
 typedef const TBBUTTON *LPCTBBUTTON;
 
+HWND mainAppWnd;
+
 // export entry point
 BOOL APIENTRY DllMain( HANDLE hModule, 
                        DWORD  reasonForCall, 
@@ -47,7 +49,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 extern "C" __declspec(dllexport) void setInfo(NppData notpadPlusData)
 {
 	nppData = notpadPlusData;
-	_MDText.init((HINSTANCE)_MDText.getHinst(), nppData._nppHandle);
+	_MDText.init((HINSTANCE)_MDText.getHinst(), mainAppWnd=nppData._nppHandle);
 	commandMenuInit();
 }
 
@@ -63,6 +65,8 @@ extern "C" __declspec(dllexport) FuncItem * getFuncsArray(int *nbF)
 	*nbF = nbFunc;
 	return funcItems.data();
 }
+
+__declspec(selectany)  toolbarIcons		g_TBMarkdown{0,0,0x666,0,IDI_ICON_MD,0,0,IDB_BITMAP1};
 
 // export the listener
 extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)

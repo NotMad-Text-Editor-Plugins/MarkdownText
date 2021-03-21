@@ -23,7 +23,6 @@
 //
 #include "PluginInterface.h"
 #include <vector>
-#include "resource.h"
 
 class MarkDownTextDlg;
 
@@ -87,8 +86,6 @@ void commandMenuCleanUp();
 
 extern MarkDownTextDlg _MDText;
 
-extern toolbarIcons		g_TBMarkdown;
-
 extern bool pinMenu;
 
 __declspec(selectany) bool NPPRunning = false;
@@ -101,7 +98,6 @@ __declspec(selectany) TCHAR			last_updated[MAX_PATH]{0};
 __declspec(selectany)  std::vector<FuncItem> funcItems;
 __declspec(selectany)  NppData nppData;
 __declspec(selectany)  HANDLE				g_hModule;
-__declspec(selectany)  toolbarIcons		g_TBMarkdown{0,0,0x666,0,IDI_ICON_MD,0,0,IDB_BITMAP1};
 
 __declspec(selectany) bool			legacy;
 __declspec(selectany) bool			bForcePreview=false;

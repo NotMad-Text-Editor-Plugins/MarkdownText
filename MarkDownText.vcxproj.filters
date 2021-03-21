@@ -132,6 +132,9 @@
     <ClInclude Include="src\DialogFeatures\MDTextToolbar.h">
       <Filter>Source\DialogFeatures</Filter>
     </ClInclude>
+    <ClInclude Include="src\DialogFeatures\WarningDlg.hpp">
+      <Filter>Source\DialogFeatures</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\icon1.ico">

@@ -39,10 +39,12 @@ TCHAR* getLibPath(int sel, std::vector<std::string*> & lp
 }
 
 // instantiate a new Webview widget according to the type. 
-int APresenter::initWebViewImpl(int kernelType, APresentee * pt) 
+int APresenter::initWebViewImpl(int kernelType, APresentee * pt, bool fallback) 
 {
 	ArticlePresenter *newImpl=nullptr, *tmpImpl=nullptr;
 	presentee = pt;
+
+	fallback &= presentee->mWebView0==NULL||!IsWindow(presentee->hBrowser);
 
 	int currentkernelType=-1;
 
@@ -74,6 +76,10 @@ int APresenter::initWebViewImpl(int kernelType, APresentee * pt)
 				browser_deferred_creating=1;
 				presentee->browser_deferred_create_time = clock();
 			}
+			else if(!fallback&&kernelType==WEBVIEW2_TYPE)
+			{
+				return -1;
+			}
 		}
 
 		/* BrowserWidget */
@@ -90,6 +96,10 @@ int APresenter::initWebViewImpl(int kernelType, APresentee * pt)
 			if( SUCCEED ) {
 				newImpl = tmpImpl;
 				browser_deferred_creating=1;
+			}
+			else if(!fallback&&kernelType==BROWSERWIDGET_TYPE)
+			{
+				return -1;
 			}
 		}
 
@@ -117,13 +127,14 @@ int APresenter::initWebViewImpl(int kernelType, APresentee * pt)
 			}
 			else if(presentee->RequestedSwitch)
 			{
-				::MessageBox(NULL, L"miniblink_x64.dll not found. ", TEXT(""), MB_OK);
+				::MessageBox(presentee->getHWND(), MiniBlinkMainLibName, TEXT("Runtime Not Found!"), MB_OK);
 			}
 			if( SUCCEED ) {
 				newImpl = tmpImpl;
 				presentee->mWebView0 = tmpImpl;
 				presentee->RefreshWebview();
 				tmpImpl->ShowWindow();
+				SendMessage(presentee->getHWND(), WM_SIZE, 0, 0);
 			} 
 		}
 	}

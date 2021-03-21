@@ -4,6 +4,8 @@
 #include "SU.h"
 #include <shlwapi.h>
 
+#include "WarningDlg.hpp"
+
 #define kClassWindow L"TestMbWindow"
 
 
@@ -259,7 +261,13 @@ APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND h
 		DestroyWindow(hBrowser);
 		if (presentee->RequestedSwitch && hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
 		{
-			::MessageBox(hParent, L"Edge beta not found. ", TEXT(""), MB_OK);
+			//::MessageBox(hParent, L"WebView2 not found. ", TEXT("Runtime Not Found!"), MB_OK);
+			WarnDlg* wdlg = new WarnDlg(TEXT("test2.xml"));
+			wdlg->Create(nppData._nppHandle
+				, _T("Runtime Not Found!")
+				, WS_OVERLAPPED | WS_SYSMENU | WS_CAPTION , WS_EX_DLGMODALFRAME );
+			wdlg->CenterWindow();
+			wdlg->ShowModal(nppData._nppHandle);
 		}
 	}
 }

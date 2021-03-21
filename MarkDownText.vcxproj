@@ -421,6 +421,7 @@
     <ClInclude Include="src\DialogFeatures\OptionsDlg.h" />
     <ClInclude Include="src\DialogFeatures\resource.h" />
     <ClInclude Include="src\DialogFeatures\SelfCtrl.h" />
+    <ClInclude Include="src\DialogFeatures\WarningDlg.hpp" />
     <ClInclude Include="src\menuCmdID.h" />
     <ClInclude Include="src\PluginDefinition.h" />
     <ClInclude Include="src\stdafx.h" />

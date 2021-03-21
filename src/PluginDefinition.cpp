@@ -277,6 +277,8 @@ void SyncScroll()
 
 OptionsDlg* pFrame;
 
+HWND handle;
+
 void Settings()
 {
 	//::SendMessage(nppData._nppHandle, NPPM_SETSTATUSBAR, STATUSBAR_DOC_TYPE, (LPARAM)TEXT("Not implemented yet……"));
@@ -298,7 +300,6 @@ void Settings()
 		pFrame->CenterWindow();
 		pFrame->ShowWindow(true);
 	}
-
 
 
 }
