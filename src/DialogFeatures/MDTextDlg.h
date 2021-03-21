@@ -100,7 +100,7 @@ public :
 
 	bool checkRenderHtml();
 
-	std::string* setLibPathAt(int idx, char* newpath);
+	std::string* setLibPathAt(std::vector<std::string*> & paths, int idx, char* newpath, char * key);
 protected :
 	virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam);
 	SelfCtrl _color,_savecolor;
@@ -127,6 +127,7 @@ protected :
 	bool MDEngineScanned;
 
 	bool FindMarkdownEngines(TCHAR* path);
+	void readLibPaths(int & max, std::vector<std::string*> & LibPaths, char* key, int & sel, char* selkey);
 public :
 	APresenter presenter;
 	int kernelType=-1; // -1_auto 0_wke 1_mb 2_bw 3_WV2
@@ -144,6 +145,8 @@ public :
 	bool autoSwitchOnStart;
 	bool alwaysOffOnStart;
 	int maxPathHistory;
+	int maxPathHistory1;
+	int maxPathHistory2;
 
 	void SwitchEngines(int idx);
 

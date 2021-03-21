@@ -30,7 +30,7 @@ private:
 class APresenterMiniblink : public ArticlePresenter
 {
 public:
-	APresenterMiniblink(TCHAR* WKPath, TCHAR* WKPath1, int & error_code, HWND & hBrowser, HWND hwnd);
+	APresenterMiniblink(TCHAR* WKPath, const TCHAR* modulePath, int & error_code, HWND & hBrowser, HWND hwnd);
 	void GoBack() override;
 	void GoForward() override;
 	void DestroyWebView(bool exit = false) override;

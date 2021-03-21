@@ -9,6 +9,35 @@
 
 APresentee* presentee;
 
+#define MiniBlinkMainLibName TEXT("miniblink_x64.dll")
+
+TCHAR* getLibPath(int sel, std::vector<std::string*> & lp
+	, TCHAR* dllName, TCHAR* defPath
+	, TCHAR* modulePath, TCHAR* tmpPath
+)
+{
+	if(sel>=0&&sel<lp.size())
+	{
+		// try to use the libpath specified in the settings dialog. 
+		auto lpstr = lp[sel];
+		if(lpstr) {
+			char* path = (char*)lpstr->data();
+			MultiByteToWideChar(CP_ACP, 0, path, -1, tmpPath, MAX_PATH);
+			PathAppend(tmpPath, dllName);
+			if(PathFileExists(tmpPath))
+			{
+				return tmpPath;
+			}
+		}
+	}
+	lstrcpy(tmpPath, modulePath);
+	if(defPath) {
+		::PathAppend(tmpPath, defPath);
+	}
+	::PathAppend(tmpPath, dllName);
+	return tmpPath;
+}
+
 // instantiate a new Webview widget according to the type. 
 int APresenter::initWebViewImpl(int kernelType, APresentee * pt) 
 {
@@ -52,31 +81,11 @@ int APresenter::initWebViewImpl(int kernelType, APresentee * pt)
 		if(!browser_deferred_creating && prefer_bw)
 		{
 			currentkernelType=BROWSERWIDGET_TYPE;
-			TCHAR* libPath = NULL;
-			int sel = presentee->LibCefSel;
-			auto & lp = presentee->LibPaths;
-			if(sel>=0&&sel<lp.size())
-			{
-				// try to use the libpath specified in the settings dialog. 
-				auto lpstr = lp[sel];
-				if(lpstr) {
-					char* path = (char*)lpstr->data();
-					MultiByteToWideChar(CP_ACP, 0, path, -1, WKPath1, MAX_PATH);
-					PathAppend(WKPath1, TEXT("cefclient.dll"));
-					if(PathFileExists(WKPath1))
-					{
-						libPath=WKPath1;
-					}
-				}
-			}
+			TCHAR* libPath = getLibPath(presentee->LibCefSel
+				, presentee->LibPaths
+				, TEXT("cefclient.dll"), TEXT("..\\BrowserWidget\\")
+				, WKPath, WKPath1);
 
-			if(!libPath)
-			{
-				// fallback to plugins/BrowserWidget as the libpath.
-				lstrcpy(WKPath1, WKPath);
-				::PathAppend(WKPath1, L"..\\BrowserWidget\\cefclient.dll");
-				libPath = WKPath1;
-			}
 			tmpImpl = new APresenterBWidget(libPath, error_code, presentee->hBrowser, presentee->getHWND()); 
 			if( SUCCEED ) {
 				newImpl = tmpImpl;
@@ -87,20 +96,23 @@ int APresenter::initWebViewImpl(int kernelType, APresentee * pt)
 		/* mb and wke */
 		if(!browser_deferred_creating)
 		{
-			::PathAppend(WKPath, L"miniblink_x64.dll");
-			if(PathFileExists(WKPath))
+			TCHAR* libPath = getLibPath(presentee->LibMbSel
+				, presentee->MbPaths
+				, MiniBlinkMainLibName, NULL
+				, WKPath, WKPath1);
+			if(PathFileExists(libPath))
 			{
 				if(error_code && kernelType!=MINILINK_WKE_TYPE)
 				{
 					wke_mb|=0x2;
 					currentkernelType=MINILINK_TYPE; // mb
-					tmpImpl = new APresenterMiniblink(WKPath, WKPath1, error_code, presentee->hBrowser, presentee->getHWND()); 
+					tmpImpl = new APresenterMiniblink(libPath, WKPath, error_code, presentee->hBrowser, presentee->getHWND()); 
 				}
 				if(error_code && kernelType<=MINILINK_TYPE)
 				{
 					wke_mb|=0x1;
 					currentkernelType=MINILINK_WKE_TYPE; // wke
-					tmpImpl = new APresenterMiniWke(WKPath, error_code, presentee->hBrowser, presentee->getHWND());
+					tmpImpl = new APresenterMiniWke(libPath, error_code, presentee->hBrowser, presentee->getHWND());
 				}
 			}
 			else if(presentee->RequestedSwitch)

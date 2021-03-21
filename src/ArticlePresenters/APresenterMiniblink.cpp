@@ -432,14 +432,22 @@ BOOL regWndClass(LPCTSTR lpcsClassName, DWORD dwStyle)
 ////// class definition starts here       //////
 ////////////////////////////////////////////////
 
+#define MiniBlinkMBLibName TEXT("mb_x64.dll")
 
 
-APresenterMiniblink::APresenterMiniblink(TCHAR* WKPath, TCHAR* WKPath1, int & error_code, HWND & hBrowser, HWND hwnd) 
+APresenterMiniblink::APresenterMiniblink(TCHAR* WKPath, const TCHAR* modulePath, int & error_code, HWND & hBrowser, HWND hwnd) 
 {
 	mbSetMbMainDllPath(WKPath);
-	::GetModuleFileName((HINSTANCE)g_hModule, WKPath1, MAX_PATH);
+	TCHAR WKPath1[MAX_PATH];
+	lstrcpy(WKPath1, WKPath);
 	::PathRemoveFileSpec(WKPath1);
-	::PathAppend(WKPath1, L"mb_x64.dll");
+	::PathAppend(WKPath1, MiniBlinkMBLibName);
+	if(!PathFileExists(WKPath1))
+	{
+		lstrcpy(WKPath1, modulePath);
+		::PathRemoveFileSpec(WKPath1);
+		::PathAppend(WKPath1, MiniBlinkMBLibName);
+	}
 	error_code = -1;
 	if(PathFileExists(WKPath1))
 	{

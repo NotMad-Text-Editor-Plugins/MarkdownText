@@ -29,6 +29,48 @@ bool OptionsDlg::OnValueChanged(void* param) {
     return true;
 }
 
+
+struct ComboeditContext
+{
+    CComboUI*   combo;
+    CControlUI* edit;
+    int * sel;
+    std::vector<std::string*> * paths;
+    CHAR* pick_tips;
+    CHAR* key;
+};
+
+void drawComboEditUI(CComboUI* combo, CControlUI* edit
+    , int & sel, std::vector<std::string*> & paths
+    , char * tips, char * key
+)
+{
+    if( combo ) {
+        combo->SetTag((LONG_PTR)(new ComboeditContext{combo, edit, &sel, &paths, tips, key}));
+        if(edit) edit->SetTag((LONG_PTR)combo);
+        auto & lp = paths;
+        TCHAR tmpPath[MAX_PATH]{0};
+        combo->itemRightClickable = true;
+        combo->SetItemTextStyle(DT_VCENTER|DT_SINGLELINE);
+        combo->RemoveAll();
+        for(int i=0,len=lp.size();i<len;i++) {
+            auto listItem = new CListLabelElementUI();
+            char* data = (char*)(lp[i]?lp[i]->data():NULL);
+            if(!data) 
+            {
+                data = "";
+            }
+            MultiByteToWideChar(CP_ACP, 0, data, -1, tmpPath, MAX_PATH); // bytes conversion :: data from ini to display
+            listItem->SetText(tmpPath);
+            listItem->SetToolTip(TEXT("右击选择文件夹"));
+            combo->Add(listItem);
+            if(i==sel && edit) {
+                edit->SetText(tmpPath);
+            }
+        }
+    }
+}
+
 void OptionsDlg::OnPrepare() 
 {
     //CCheckBoxUI *pCheck = static_cast<CCheckBoxUI*>(m_pm.FindControl(_T("chkOption")));
@@ -43,33 +85,17 @@ void OptionsDlg::OnPrepare()
     //     pSwitch->OnNotify += MakeDelegate(this, &CFrameWindowWnd::OnValueChanged);
     // }
 
-    bwpath = static_cast<CComboUI*>(m_pm.FindControl(_T("bwpath")));
-
+    bwpath = static_cast<CComboUI*>(  m_pm.FindControl(_T("bwpath")));
     bwedit = static_cast<CControlUI*>(m_pm.FindControl(_T("bwedit")));
+    mbpath = static_cast<CComboUI*>(  m_pm.FindControl(_T("mbpath")));
+    mbedit = static_cast<CControlUI*>(m_pm.FindControl(_T("mbedit")));
+    wkpath = static_cast<CComboUI*>(  m_pm.FindControl(_T("wkpath")));
+    wkedit = static_cast<CControlUI*>(m_pm.FindControl(_T("wkedit")));
 
+    drawComboEditUI(bwpath, bwedit, _MDText.LibCefSel, _MDText.LibPaths, "Pick LibCef folder: ( contains cefclient.dll )", "LibPath%d");
+    drawComboEditUI(mbpath, mbedit, _MDText.LibMbSel, _MDText.MbPaths, "Pick Miniblink folder: ( contains miniblink_x64.dll )", "MbPath%d");
+    drawComboEditUI(wkpath, wkedit, _MDText.LibWkeSel, _MDText.WkePaths, "Pick WKE Path: ( wke.dll )", "WkePath%d");
 
-    if( bwpath ) {
-        auto & lp = _MDText.LibPaths;
-        TCHAR tmpPath[MAX_PATH]{0};
-        bwpath->itemRightClickable = true;
-        bwpath->SetItemTextStyle(DT_VCENTER|DT_SINGLELINE);
-        bwpath->RemoveAll();
-        for(int i=0,len=lp.size();i<len;i++) {
-            auto listItem = new CListLabelElementUI();
-            char* data = (char*)(lp[i]?lp[i]->data():NULL);
-            if(!data) 
-            {
-                data = "";
-            }
-            MultiByteToWideChar(CP_ACP, 0, data, -1, tmpPath, MAX_PATH); // bytes conversion :: data from ini to display
-            listItem->SetText(tmpPath);
-            listItem->SetToolTip(TEXT("右击选择文件夹"));
-            bwpath->Add(listItem);
-            if(i==_MDText.LibCefSel) {
-                bwedit->SetText(tmpPath);
-            }
-        }
-    }
 
     //pCheck->SetAttribute(_T("normalimage"), _T("file='image\\switchbutton.png' source='0,0,143,91'"));
     //pCheck->SetAttribute(_T("selectedimage"), _T("file='image\\switchbutton.png' source='0,182,143,273'"));
@@ -77,9 +103,9 @@ void OptionsDlg::OnPrepare()
 }
 
 
-void OptionsDlg::setTweakedPath(char* path)
+void OptionsDlg::setTweakedPath(ComboeditContext* ctx, char* path)
 {
-    auto & lp = _MDText.LibPaths;
+    auto & lp = *ctx->paths;
     auto sz = lp.size();
     bool tweaking = path;
     if(path) 
@@ -88,9 +114,9 @@ void OptionsDlg::setTweakedPath(char* path)
             itemTweakingIndex = sz;
             lp.push_back(NULL);
         }
-        _MDText.setLibPathAt(itemTweakingIndex, path);
+        _MDText.setLibPathAt(lp, itemTweakingIndex, path, ctx->key);
     } else if(itemTweakingIndex>=0&&itemTweakingIndex<sz){
-        _MDText.LibCefSel = itemTweakingIndex;
+        *ctx->sel = itemTweakingIndex;
         auto item = lp[itemTweakingIndex];
         path = (char*)(item?item->data():0);
     }
@@ -99,49 +125,39 @@ void OptionsDlg::setTweakedPath(char* path)
     if(path) 
     {
         MultiByteToWideChar(CP_ACP, 0, path, -1, tmpPath, MAX_PATH); // bytes conversion :: data from file picker or converted display to display
-        if(bwedit&&itemTweakingIndex==_MDText.LibCefSel) {
-            bwedit->SetText(tmpPath);
+        if(ctx->edit&&itemTweakingIndex==*ctx->sel) {
+            ctx->edit->SetText(tmpPath);
         }
     }
     if(tweaking) 
     {
-        auto item = bwpath->GetItemAt(itemTweakingIndex);
+        auto item = ctx->combo->GetItemAt(itemTweakingIndex);
         if(item) item->SetText(tmpPath);
     }
 }
 
 static int CALLBACK BrowseForFolderCallBack(HWND hwnd, UINT message, LPARAM lParam, LPARAM lpData) {
     if (message == BFFM_INITIALIZED) {
+        // navigate to one of the paths stored in the ini file
         OptionsDlg * tDlg = (OptionsDlg * )lpData;
-        int sel = tDlg->itemTweakingIndex;
-        auto & lp = _MDText.LibPaths;
-        if(sel>=0&&sel<lp.size())
+        if(tDlg->itemTweakingCtx)
         {
-            auto lpstr = lp[sel];
-            if(lpstr) {
-                char* path = (char*)lpstr->data();
-                TCHAR tmppath[MAX_PATH];
-                MultiByteToWideChar(CP_ACP, 0, path, -1, tmppath, MAX_PATH); // bytes conversion :: data from ini to file picker
-                ::SendMessage(hwnd, BFFM_SETSELECTION, 1, (LPARAM)tmppath);
+            int sel = tDlg->itemTweakingIndex;
+            auto & lp = *tDlg->itemTweakingCtx->paths;
+            if(sel>=0&&sel<lp.size())
+            {
+                auto lpstr = lp[sel];
+                if(lpstr) {
+                    char* path = (char*)lpstr->data();
+                    TCHAR tmppath[MAX_PATH];
+                    MultiByteToWideChar(CP_ACP, 0, path, -1, tmppath, MAX_PATH); // bytes conversion :: data from ini to file picker
+                    ::SendMessage(hwnd, BFFM_SETSELECTION, 1, (LPARAM)tmppath);
+                }
             }
+
         }
     }
     return 0;
-}
-
-string WChar2MByte(const wchar_t* wstr)
-{
-    char* str;
-    int nLen;
-    string strRet;
-
-    nLen = WideCharToMultiByte(CP_ACP, 0, wstr, -1, NULL, 0, NULL, NULL);
-    str = new char[nLen];
-    WideCharToMultiByte(CP_ACP, 0, wstr, -1, str, nLen, NULL, NULL);
-    strRet = str;
-    delete []str;
-
-    return strRet;
 }
 
 void OptionsDlg::Notify(TNotifyUI& msg)
@@ -163,42 +179,47 @@ void OptionsDlg::Notify(TNotifyUI& msg)
             CPaintManagerUI::ReloadSkin();
         }
     }
-    // notify :: right click on a list item of combobox
-    else if( msg.pSender == bwpath ) 
+    else if( msg.pSender == bwpath || msg.pSender == wkpath || msg.pSender == mbpath ) 
     {
+        ComboeditContext* ctx = (ComboeditContext*)msg.pSender->GetTag();
+        if( itemTweakingCtx = ctx )
         if( msg.sType == DUI_MSGTYPE_ITEMSELECT ) 
         {
-            int index = msg.wParam;
-            itemTweakingIndex = index;
-            setTweakedPath(NULL);
+            // notify :: select a list item of combobox
+            itemTweakingIndex = msg.wParam;
+            setTweakedPath(ctx, NULL);
         }
         else if( msg.sType == DUI_MSGTYPE_ITEMMENU ) 
         {
+            // notify :: right click on a list item of combobox
             itemTweakingIndex = msg.wParam;
             CHAR path[MAX_PATH];
             BROWSEINFOA bi = { 0 };
             bi.ulFlags = BIF_USENEWUI;
             bi.lParam = (LPARAM)this;
             bi.lpfn = BrowseForFolderCallBack;
-            bi.lpszTitle = "Pick LibCef folder: ( contains cefclient.dll )";
+            bi.lpszTitle = ctx->pick_tips;
             bi.hwndOwner = nppData._nppHandle;  // fix window flicker :: GetHWND(); 
             LPITEMIDLIST pidl = SHBrowseForFolderA ( &bi );
             if (pidl != 0 && SHGetPathFromIDListA(pidl, path)) {
-                setTweakedPath(path);
+                setTweakedPath(ctx, path);
             }
         }
     }
     // notify :: return on the edit control
-    else if( msg.pSender == bwedit ) {
+    else if( msg.pSender == bwedit || msg.pSender == wkedit || msg.pSender == mbedit ) {
+        CControlUI* tag = (CControlUI*)msg.pSender->GetTag();
+        ComboeditContext* ctx = (ComboeditContext*)tag->GetTag();
+        if( itemTweakingCtx = ctx )
         if( msg.sType == DUI_MSGTYPE_RETURN ) {
-            itemTweakingIndex = _MDText.LibCefSel;
+            itemTweakingIndex = *itemTweakingCtx->sel;
             CHAR path[MAX_PATH*2];
-            auto tmpText = bwedit->GetText();
+            auto tmpText = msg.pSender->GetText();
             int len = WideCharToMultiByte(CP_ACP, 0, tmpText
                 , tmpText.GetLength(), path, MAX_PATH*2-1, 0, 0); // bytes conversion :: data from display to ini and display
             path[len] = '\0';
-            ::MessageBoxA(NULL, path, (""), MB_OK);
-            setTweakedPath(path);
+            //::MessageBoxA(NULL, path, (""), MB_OK);
+            setTweakedPath(ctx, path);
         }
     }
 }

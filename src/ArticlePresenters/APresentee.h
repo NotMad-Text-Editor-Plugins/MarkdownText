@@ -22,7 +22,11 @@ public:
 	LONG_PTR lastBid=0;
 
 	int LibCefSel;
+	int LibWkeSel;
+	int LibMbSel;
 	std::vector<std::string*> LibPaths;
+	std::vector<std::string*> WkePaths;
+	std::vector<std::string*> MbPaths;
 
 	bool RequestedSwitch=false;
 	clock_t browser_deferred_create_time=0;

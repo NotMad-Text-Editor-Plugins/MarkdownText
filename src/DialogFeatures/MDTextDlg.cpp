@@ -294,13 +294,14 @@ bool MarkDownTextDlg::checkRenderHtml() {
 	return checkFileExt(html_ext);
 }
 
-std::string* MarkDownTextDlg::setLibPathAt(int idx, char* newpath)
+std::string* MarkDownTextDlg::setLibPathAt(std::vector<std::string*> & paths, int idx, char* newpath, char * key)
 {
-	char TmpLibPath[MAX_PATH_HALF];
-	sprintf(TmpLibPath, "LibPath%d", idx+1);
+	char TmpLibPath[MAX_PATH];
+	sprintf(TmpLibPath, key, idx+1);
 	PutProfString(TmpLibPath, newpath);
 	std::string* val=GetProfString(TmpLibPath);
-	LibPaths[idx] = val;
+	//::MessageBoxA(NULL, (*val).data(), TmpLibPath, MB_OK);
+	paths[idx] = val;
 	return val;
 }
 
@@ -628,7 +629,37 @@ void MarkDownTextDlg::saveParameters()
 	PutProfString("ADEngine", ADRoutine);
 	PutProfInt("UISettings", UISettings);
 	PutProfInt("LibCef", LibCefSel);
+	PutProfInt("LibWke", LibWkeSel);
+	PutProfInt("LibMb", LibMbSel);
 	saveProf(g_ModulePath, configFileName);
+}
+
+void MarkDownTextDlg::readLibPaths(int & max, std::vector<std::string*> & LibPaths, char* key, int & sel, char* selkey)
+{
+	max = 0;
+	std::string* val;
+	LibPaths.resize(max);
+	char TmpLibPath[MAX_PATH_HALF];
+	for(int i=0;;i++) {
+		sprintf(TmpLibPath, key, i+1);
+		if(val=GetProfString(TmpLibPath))
+		{
+			LibPaths.push_back(val);
+			max++;
+		}
+		else 
+		{
+			break;
+		}
+	}
+	if(max<3) {
+		for(;max<3;max++) {
+			LibPaths.push_back(NULL);
+		}
+	}
+	sel = GetProfInt(selkey, 0);
+	if(sel>=max) sel=max-1;
+	if(sel<=0) sel=0;
 }
 
 void MarkDownTextDlg::readParameters()
@@ -653,30 +684,9 @@ void MarkDownTextDlg::readParameters()
 		strcpy(ADRoutine, val->data());
 	}
 	UISettings=GetProfInt("UISettings", 0);
-	maxPathHistory=0;
-	LibPaths.resize(maxPathHistory);
-	char TmpLibPath[MAX_PATH_HALF];
-	for(int i=0;;i++) {
-		sprintf(TmpLibPath, "LibPath%d", i+1);
-		if(val=GetProfString(TmpLibPath))
-		{
-			LibPaths.push_back(val);
-			maxPathHistory++;
-		}
-		else 
-		{
-			break;
-		}
-	}
-	if(maxPathHistory<3) {
-		for(;maxPathHistory<3;maxPathHistory++) {
-			//sprintf(TmpLibPath, "LibPath%d", i+1);
-			//PutProfString(TmpLibPath, "");
-			//val=GetProfString(TmpLibPath);
-			LibPaths.push_back(NULL);
-		}
-	}
-	LibCefSel=GetProfInt("LibCef", 0);
+	readLibPaths(maxPathHistory, LibPaths, "LibPath%d", LibCefSel, "LibCef");
+	readLibPaths(maxPathHistory1, WkePaths, "WkePath%d", LibWkeSel, "LibWke");
+	readLibPaths(maxPathHistory2, MbPaths, "MbPath%d", LibMbSel, "LibMb");
 
 	int inval=GetProfInt("EngineType", -1);
 	if(inval>2||inval<-1) {
