@@ -262,7 +262,7 @@ APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND h
 		if (presentee->RequestedSwitch && hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
 		{
 			//::MessageBox(hParent, L"WebView2 not found. ", TEXT("Runtime Not Found!"), MB_OK);
-			WarnDlg* wdlg = new WarnDlg(TEXT("test2.xml"));
+			WarnDlg* wdlg = new WarnDlg(TEXT("wv2.xml"));
 			wdlg->Create(nppData._nppHandle
 				, _T("Runtime Not Found!")
 				, WS_OVERLAPPED | WS_SYSMENU | WS_CAPTION , WS_EX_DLGMODALFRAME );

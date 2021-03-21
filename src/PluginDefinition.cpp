@@ -284,7 +284,11 @@ void Settings()
 	//::SendMessage(nppData._nppHandle, NPPM_SETSTATUSBAR, STATUSBAR_DOC_TYPE, (LPARAM)TEXT("Not implemented yet……"));
 
 	CPaintManagerUI::SetInstance((HINSTANCE)g_hModule);
-	CPaintManagerUI::SetResourcePath(CPaintManagerUI::GetInstancePath());
+	TCHAR tmpPath[MAX_PATH];
+	lstrcpy(tmpPath, CPaintManagerUI::GetInstancePath());
+	PathAppend(tmpPath, TEXT("..\\..\\..\\..\\plugins\\MarkdownText\\res\\skin"));
+	CPaintManagerUI::SetResourcePath(tmpPath);
+
 
 	//HRESULT Hr = ::CoInitialize(NULL);
 	//if( FAILED(Hr) ) return 0;

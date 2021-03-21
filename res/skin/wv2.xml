@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Window mininfo="200,260" size="450,320">
+
+	<Font shared="true" id="0" name="幼圆" size="22" default="true" />
+	<Font shared="true" id="1" name="微软雅黑" size="28" />
+	<Font shared="true" id="12" name="微软雅黑" size="16" />
+	
+	<Include source="scrollbar.xml" />
+	<Default shared="true" name="Slider" value="thumbsize=&quot;10,10&quot; bkimage=&quot;file='bg.bmp' corner='6,0,6,0' mask='#FFFF00FF'&quot; foreimage=&quot;file='fg.bmp' corner='6,0,6,0' mask='#FFFF00FF'&quot; thumbimage=&quot;file='thumb.bmp' source='30,0,40,10' mask='#FFDAEBF9'&quot; thumbhotimage=&quot;file='thumb.bmp' source='10,0,20,10' mask='#FFDAEBF9'&quot; " />
+	
+	<Default shared="true" name="Button" value="textcolor=&quot;#FFFFFF&quot; hottextcolor=&quot;#FFFFFF&quot; focusedtextcolor=&quot;#000000&quot; pushedtextcolor=&quot;#77a8de&quot; hotimage=&quot;file='Button/btn.png' corner='5,11,5,11' source='0,24,96,48'&quot; normalimage=&quot;file='Button/btn.png' corner='5,11,5,11' source='0,24,96,48'&quot; pushedimage=&quot;file='Button/btn.png' corner='5,11,5,11' source='0,48,96,72'&quot; " />
+	
+	<Default shared="true" name="Option" value="textcolor=&quot;#FFbac0c5&quot; hottextcolor=&quot;#FF386382&quot; selectedtextcolor=&quot;#FF386382&quot; disabledtextcolor=&quot;#FFbac0c5&quot; textpadding=&quot;18,2,0,0&quot; align=&quot;left&quot; selectedimage=&quot;file='Button/RadioBtnSel.png' source='0,0,13,13' dest='0,5,14,19'&quot; normalimage=&quot;file='Button/RadioBtnNon.png' source='0,0,13,13' dest='0,5,14,19'&quot;" />
+	<Default shared="true" name="CheckBox" value="textcolor=&quot;#FFbac0c5&quot; hottextcolor=&quot;#FF386382&quot; selectedtextcolor=&quot;#FF386382&quot; disabledtextcolor=&quot;#FFbac0c5&quot; textpadding=&quot;20,2,0,0&quot; align=&quot;left&quot; selectedimage=&quot;file='Icon/checked.png' dest='0,2,16,18'&quot; normalimage=&quot;file='Icon/unchecked.png' dest='0,2,16,18'&quot;" />
+	
+	
+	<VerticalLayout inset="10,6,10,6" bkcolor="#FFFFFFFF" colorhsl="true"
+					vscrollbar="true" autovscroll="true" valign="center" halign="center"	>
+					
+		
+       <RichEdit minheight="100" maxwidth="280" name="dwnHint" bkcolor="#0000FFFF" font="2" text="找不到 WebView2 运行时。请选择以下两者之一：" autovscroll="true" readonly="true" padding="2,2.8,0,0"/>
+
+		<Control height="4"/>
+		<HorizontalLayout minheight="35" maxheight="50" >
+			<Control/>
+			<Button ud="https://developer.microsoft.com/microsoft-edge/webview2" text="{b}下载 WebView2 Runtime{/b}" showhtml="true" width="360"  bkcolor="#0000E000" nativebkcolor="#0000E000"/>
+			<Control/>
+		</HorizontalLayout>
+		<Control height="4"/>
+		<HorizontalLayout minheight="35" maxheight="50" >
+			<Control/>
+				<Button ud="https://www.microsoftedgeinsider.com" text="{b}下载 Edge Insider{/b}" showhtml="true" width="360" bkcolor="#0000E000" nativebkcolor="#0000E000"/>
+			<Control/>
+		</HorizontalLayout>
+		
+	</VerticalLayout>
+
+</Window>

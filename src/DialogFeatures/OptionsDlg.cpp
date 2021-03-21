@@ -230,7 +230,7 @@ LRESULT OptionsDlg::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
         m_pm.Init(m_hWnd);
         CDialogBuilder builder;
 
-        CControlUI* pRoot = builder.Create(TEXT("test1.xml"), (UINT)0, 0, &m_pm);
+        CControlUI* pRoot = builder.Create(TEXT("settings.xml"), (UINT)0, 0, &m_pm);
 
         ASSERT(pRoot && "Failed to parse XML");
         m_pm.AttachDialog(pRoot);
@@ -263,7 +263,7 @@ LRESULT OptionsDlg::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
         //::PostQuitMessage(0L);
     }
     else if( uMsg == WM_NCACTIVATE ) {
-        if( !::IsIconic(*this) ) return (wParam == 0) ? TRUE : FALSE;
+        //if( !::IsIconic(*this) ) return (wParam == 0) ? TRUE : FALSE;
     }
     LRESULT lRes = 0;
     if( m_pm.MessageHandler(uMsg, wParam, lParam, lRes) ) return lRes;

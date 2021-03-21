@@ -227,6 +227,24 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="res\skin\wv2.xml">
+      <Filter>resource\skin</Filter>
+    </None>
+    <None Include="res\skin\Combo_mir.bmp">
+      <Filter>resource\skin</Filter>
+    </None>
+    <None Include="res\skin\Combo_nor.bmp">
+      <Filter>resource\skin</Filter>
+    </None>
+    <None Include="res\skin\Combo_over.bmp">
+      <Filter>resource\skin</Filter>
+    </None>
+    <None Include="res\skin\settings.xml">
+      <Filter>resource\skin</Filter>
+    </None>
+    <None Include="res\skin\Button\btn.png">
+      <Filter>resource\skin\button</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
@@ -246,6 +264,12 @@
     </Filter>
     <Filter Include="Source\DuiLibFeatures">
       <UniqueIdentifier>{26699e81-eb55-4044-82b4-90e0b40b9f08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="resource\skin">
+      <UniqueIdentifier>{e8a13a08-f070-4c18-b055-1d59c73e8d74}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="resource\skin\button">
+      <UniqueIdentifier>{7e3f3e8c-a82b-4b64-8f20-584c919abeed}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

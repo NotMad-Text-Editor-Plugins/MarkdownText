@@ -454,6 +454,10 @@
     <Image Include="res\prev_act.ico" />
     <Image Include="res\prev_off.ico" />
     <Image Include="res\refresh.ico" />
+    <None Include="res\skin\Combo_mir.bmp" />
+    <None Include="res\skin\Combo_nor.bmp" />
+    <None Include="res\skin\Combo_over.bmp" />
+    <None Include="res\skin\Button\btn.png" />
     <Image Include="res\up.ico" />
     <Image Include="res\zoom_in.ico" />
     <Image Include="res\zoom_out.ico" />
@@ -463,6 +467,10 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\DialogFeatures\MDText.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\skin\settings.xml" />
+    <None Include="res\skin\wv2.xml" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

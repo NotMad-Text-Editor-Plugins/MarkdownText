@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Window mininfo="200,360" size="450,600">
+	<Font shared="true" id="0" name="幼圆" size="23" default="true" />
+	<Font shared="true" id="1" name="微软雅黑" size="28" />
+	 
+	<Include source="scrollbar.xml" />
+	
+	<VerticalLayout inset="20,15,20,6" bkcolor="#FFFFFFFF" colorhsl="true" vscrollbar="true" autovscroll="true" 	>
+	
+	
+		
+		<HorizontalLayout minheight="30" maxheight="80">
+            <RichEdit name="wordedit" bkcolor="#0000FFFF" font="2" password="false" mutiline="false" rich="false" text="启动时自动运行" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>
+			<BSwitch textcolor="#FF333333" valign="vcenter" height="30" width="60" bkcolor="#FF888888" forecolor="#FFFF0000" value="50" min="0" max="100"/>
+		    <Control width="5" />
+		</HorizontalLayout>
+		
+		
+		<Control minheight="6" maxheight="10"/>
+		
+		<HorizontalLayout minheight="30" maxheight="80">
+            <RichEdit name="wordedit" bkcolor="#0000FFFF" font="2" password="false" mutiline="false" rich="false" text="启动时保持关闭" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>
+			<BSwitch textcolor="#FF333333" valign="vcenter" height="30" width="60" bkcolor="#FF888888" forecolor="#FFFF0000" value="50" min="0" max="100"/>
+		    <Control width="5" />
+		</HorizontalLayout>
+		
+		<Control minheight="6" maxheight="10"/>
+		
+		<HorizontalLayout  minheight="30" maxheight="38">
+			<RichEdit maxwidth="140" bkcolor="#0000FFFF" font="2" mutiline="false" rich="false" text="LibCef3目录：" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>	
+			<Container bkcolor="#FF00FFFF" >
+				<Combo name="bwpath"  itemmenu="true" normalimage="file='Combo_nor.bmp' corner='2,2,24,2'" hotimage="file='Combo_over.bmp' corner='2,2,24,2'" pushedimage="file='Combo_over.bmp' corner='2,2,24,2'" textpadding="1,1,1,1" font="12" textcolor="#00FFFFFF">
+				</Combo>
+				<HorizontalLayout   mouse="false">
+					<Edit name="bwedit"  textcolor="#FF666666" bkcolor="#0000FFFF" font="12" multiline="false" rich="false"  padding="4,0,0,0"/>
+					<Label bkcolor="#0000FFFF"  width="30" mouse="false" />
+				</HorizontalLayout>
+			</Container>
+		</HorizontalLayout>
+		
+		<Control minheight="8" maxheight="10"/>
+		
+		<HorizontalLayout  minheight="30" maxheight="38">
+			<RichEdit maxwidth="140" bkcolor="#0000FFFF" font="2" mutiline="false" rich="false" text="MiniBlink目录：" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>	
+			<Container bkcolor="#FF00FFFF" >
+				<Combo name="mbpath"  itemmenu="true" normalimage="file='Combo_nor.bmp' corner='2,2,24,2'" hotimage="file='Combo_over.bmp' corner='2,2,24,2'" pushedimage="file='Combo_over.bmp' corner='2,2,24,2'" textpadding="1,1,1,1" font="12" textcolor="#00FFFFFF">
+				</Combo>
+				<HorizontalLayout   mouse="false">
+					<Edit name="mbedit"  textcolor="#FF666666" bkcolor="#0000FFFF" font="12" multiline="false" rich="false"  padding="4,0,0,0"/>
+					<Label bkcolor="#0000FFFF"  width="30" mouse="false" />
+				</HorizontalLayout>
+			</Container>
+		</HorizontalLayout>
+		
+		<Control minheight="8" maxheight="10"/>
+		
+		<HorizontalLayout  minheight="30" maxheight="38">
+			<RichEdit maxwidth="140" bkcolor="#0000FFFF" font="2" mutiline="false" rich="false" text="Wke目录：" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>	
+			<Container bkcolor="#FF00FFFF" >
+				<Combo name="wkpath"  itemmenu="true" normalimage="file='Combo_nor.bmp' corner='2,2,24,2'" hotimage="file='Combo_over.bmp' corner='2,2,24,2'" pushedimage="file='Combo_over.bmp' corner='2,2,24,2'" textpadding="1,1,1,1" font="12" textcolor="#00FFFFFF">
+				</Combo>
+				<HorizontalLayout   mouse="false">
+					<Edit name="wkedit"  textcolor="#FF666666" bkcolor="#0000FFFF" font="12" multiline="false" rich="false"  padding="4,0,0,0"/>
+					<Label bkcolor="#0000FFFF"  width="30" mouse="false" />
+				</HorizontalLayout>
+			</Container>
+		</HorizontalLayout>
+		
+		<Control minheight="8" maxheight="10"/>
+		
+		<HorizontalLayout  minheight="30" maxheight="38">
+			<RichEdit  text="Markdown 扩展名：" maxwidth="200" bkcolor="#0000FFFF" font="2" mutiline="false" rich="false" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>
+			<Container bkcolor="#FF00FFFF" >
+				<Edit normalimage="file='Combo_mir.bmp' corner='2,2,24,2'"  textcolor="#FF666666" bkcolor="#0000FFFF" font="12" multiline="false" rich="false"  padding="4,0,0,0"/>
+			</Container>
+		</HorizontalLayout>
+		
+		<Control minheight="6" maxheight="10"/>
+		
+		<HorizontalLayout  minheight="30" maxheight="38">
+			<RichEdit text="AsciiDoc 扩展名：" maxwidth="200" bkcolor="#0000FFFF" font="2" mutiline="false" rich="false" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>
+			<Container bkcolor="#FF00FFFF" >
+				<Edit normalimage="file='Combo_mir.bmp' corner='2,2,24,2'"  textcolor="#FF666666" bkcolor="#0000FFFF" font="12" multiline="false" rich="false"  padding="4,0,0,0"/>
+			</Container>
+		</HorizontalLayout>
+		
+		<Control minheight="6" maxheight="10"/>
+		
+		<HorizontalLayout  minheight="30" maxheight="38">
+			<RichEdit text="HTML 扩展名：" maxwidth="200" bkcolor="#0000FFFF" font="2" mutiline="false" rich="false" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>
+			<Container bkcolor="#FF00FFFF" >
+				<Edit normalimage="file='Combo_mir.bmp' corner='2,2,24,2'"  textcolor="#FF666666" bkcolor="#0000FFFF" font="12" multiline="false" rich="false"  padding="4,0,0,0"/>
+			</Container>
+		</HorizontalLayout>
+		
+		
+		
+		
+		
+	</VerticalLayout>
+
+
+
+
+
+
+
+</Window>
