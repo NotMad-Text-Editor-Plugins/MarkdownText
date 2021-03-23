@@ -44,13 +44,13 @@ enum menuList
 	menuPreviewCurr = 0,
 	menuOption,
 
-	menuSeparator0,
+	//menuSeparator0,
 
 	menuBolden ,
 	menuItalic ,
 	menuUnderLine,
 
-	menuSeparator2,
+	//menuSeparator2,
 	menuPause,
 	menuSync,
 	menuSettings,
@@ -58,7 +58,7 @@ enum menuList
 	menuCount,
 };
 
-const int nbFunc = menuCount;
+//const int nbFunc = menuCount;
 // 270*300
 #define RecordConentMax  81000
 extern TCHAR currFile[MAX_PATH];// 当前窗口文件名
@@ -95,7 +95,9 @@ __declspec(selectany) TCHAR			path_buffer[MAX_PATH]{0};
 __declspec(selectany) TCHAR			last_actived[MAX_PATH]{0};
 __declspec(selectany) TCHAR			last_updated[MAX_PATH]{0};
 
-__declspec(selectany)  std::vector<FuncItem> funcItems;
+//__declspec(selectany)  std::vector<FuncItem> funcItems;
+__declspec(selectany)  FuncItem* funcItems;
+__declspec(selectany)  CHAR** PluginMenuStrIds;
 __declspec(selectany)  NppData nppData;
 __declspec(selectany)  HANDLE				g_hModule;
 

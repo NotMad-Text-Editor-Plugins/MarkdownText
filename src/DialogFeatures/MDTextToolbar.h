@@ -22,8 +22,8 @@ ToolBarButtonUnit PrivateToolBarIconList[] = {
 
 #define ListBoxToolBarSize sizeof(PrivateToolBarIconList)/sizeof(ToolBarButtonUnit)
 
-//	Note: On change, keep sure to change order of IDM_EX_... also in function GetNameStrFromCmd
-LPTSTR ListBoxToolBarToolTip[] = {
+//	Note: Once change, keep sure to change order of IDM_EX_... also in function GetNameStrFromCmd
+LPTSTR ToolBarToolTips[] = {
 	TEXT("Options"),
 	TEXT("Go Back"),
 	TEXT("Go Forward"),
@@ -37,18 +37,45 @@ LPTSTR ListBoxToolBarToolTip[] = {
 	TEXT("Sync-Scroll"),
 };
 
-LPTSTR ListBoxToolBarToolTip_HAN[] = {
-	TEXT("选项"),
-	TEXT("后退"),
-	TEXT("前进"),
-	TEXT("刷新"),
-	TEXT("切换引擎"),
-	TEXT("放大"),
-	TEXT("缩小"),
-	TEXT("粗体"),
-	TEXT("斜体"),
-	TEXT("开发工具"),
-	TEXT("同步滚动"),
+CHAR* ToolBarToolTipsId[] = {
+	("_opt"),
+	("_bk"),
+	("_fwd"),
+	("_rfsh"),
+	("_ae"),
+	("_zin"),
+	("_zou"),
+	("_b"),
+	("_i"),
+	("_dev"),
+	("_ss"),
 };
 
+LPTSTR MenuStrings[] = {
+	TEXT("Options"),
+	TEXT("Go Back"),
+	TEXT("Go Forward"),
+	TEXT("Refresh"),
+	TEXT("Alter Engine"),
+	TEXT("Zoom In"),
+	TEXT("Zoom Out"),
+	TEXT("Bold"),
+	TEXT("Italic"),
+	TEXT("DevTools"),
+	TEXT("Sync-Scroll"),
+};
+
+CHAR* MenuStringsId[] = {
+	("_opt"),
+	("_bk"),
+	("_fwd"),
+	("_rfsh"),
+	("_ae"),
+	("_zin"),
+	("_zou"),
+	("_b"),
+	("_i"),
+	("_dev"),
+	("_ss"),
+};
 #endif

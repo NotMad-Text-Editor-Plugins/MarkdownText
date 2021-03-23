@@ -76,7 +76,7 @@ public :
 	};
 	void saveParameters();
 	void readParameters();
-	void destoryWebViews(bool exit=false);
+	void destroyWebViews(bool exit=false);
 	void switchEngineByIndex(int id);
 
 	// 0=MD; 1=HTML; 2=ASCII
@@ -150,6 +150,24 @@ public :
 	void SwitchEngines(int idx);
 
 	void GlobalOnPvMnChecked(HMENU hMenu, int idx);
+
+	void setLanguageName(wstring & name, bool init=false);
+
+	wstring getLanguageName() {
+		return currentLanguageFile;
+	};
+
+	bool localeSet;
+
+	wstring currentLanguageFile = L"zh_中文.ini";
+
+	std::map<std::string, std::string> & getLocaliseMap();
+
+	string * getLocalString(char* name);
+
+	void localeTextToBuffer(TCHAR* buffer, int cchBuffer, char* name, TCHAR* defVal);
+
+	void destroyDynamicMenus();
 };
 
 #endif //LNHISTORY_DLG_H

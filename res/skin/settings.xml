@@ -10,8 +10,8 @@
 	
 		
 		<HorizontalLayout minheight="30" maxheight="80">
-            <RichEdit name="wordedit" bkcolor="#0000FFFF" font="2" password="false" mutiline="false" rich="false" text="启动时自动运行" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>
-			<BSwitch textcolor="#FF333333" valign="vcenter" height="30" width="60" bkcolor="#FF888888" forecolor="#FFFF0000" value="50" min="0" max="100"/>
+            <RichEdit name="at_run" bkcolor="#0000FFFF" font="2" password="false" mutiline="false" rich="false" text="启动时自动运行" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>
+			<BSwitch name="sw1" textcolor="#FF333333" valign="vcenter" height="30" width="60" bkcolor="#FF888888" forecolor="#FFFF0000" value="50" min="0" max="100"/>
 		    <Control width="5" />
 		</HorizontalLayout>
 		
@@ -19,15 +19,15 @@
 		<Control minheight="6" maxheight="10"/>
 		
 		<HorizontalLayout minheight="30" maxheight="80">
-            <RichEdit name="wordedit" bkcolor="#0000FFFF" font="2" password="false" mutiline="false" rich="false" text="启动时保持关闭" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>
-			<BSwitch textcolor="#FF333333" valign="vcenter" height="30" width="60" bkcolor="#FF888888" forecolor="#FFFF0000" value="50" min="0" max="100"/>
+            <RichEdit name="no_run" bkcolor="#0000FFFF" font="2" password="false" mutiline="false" rich="false" text="启动时保持关闭" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>
+			<BSwitch name="sw2" textcolor="#FF333333" valign="vcenter" height="30" width="60" bkcolor="#FF888888" forecolor="#FFFF0000" value="50" min="0" max="100"/>
 		    <Control width="5" />
 		</HorizontalLayout>
 		
 		<Control minheight="6" maxheight="10"/>
 		
 		<HorizontalLayout  minheight="30" maxheight="38">
-			<RichEdit maxwidth="140" bkcolor="#0000FFFF" font="2" mutiline="false" rich="false" text="LibCef3目录：" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>	
+			<RichEdit name="LibCef" maxwidth="140" bkcolor="#0000FFFF" font="2" mutiline="false" rich="false" text="LibCef3目录：" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>	
 			<Container bkcolor="#FF00FFFF" >
 				<Combo name="bwpath"  itemmenu="true" normalimage="file='Combo_nor.bmp' corner='2,2,24,2'" hotimage="file='Combo_over.bmp' corner='2,2,24,2'" pushedimage="file='Combo_over.bmp' corner='2,2,24,2'" textpadding="1,1,1,1" font="12" textcolor="#00FFFFFF">
 				</Combo>
@@ -41,7 +41,7 @@
 		<Control minheight="8" maxheight="10"/>
 		
 		<HorizontalLayout  minheight="30" maxheight="38">
-			<RichEdit maxwidth="140" bkcolor="#0000FFFF" font="2" mutiline="false" rich="false" text="MiniBlink目录：" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>	
+			<RichEdit name="MiniBlink" maxwidth="140" bkcolor="#0000FFFF" font="2" mutiline="false" rich="false" text="MiniBlink目录：" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>	
 			<Container bkcolor="#FF00FFFF" >
 				<Combo name="mbpath"  itemmenu="true" normalimage="file='Combo_nor.bmp' corner='2,2,24,2'" hotimage="file='Combo_over.bmp' corner='2,2,24,2'" pushedimage="file='Combo_over.bmp' corner='2,2,24,2'" textpadding="1,1,1,1" font="12" textcolor="#00FFFFFF">
 				</Combo>
@@ -55,7 +55,7 @@
 		<Control minheight="8" maxheight="10"/>
 		
 		<HorizontalLayout  minheight="30" maxheight="38">
-			<RichEdit maxwidth="140" bkcolor="#0000FFFF" font="2" mutiline="false" rich="false" text="Wke目录：" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>	
+			<RichEdit name="Wke" maxwidth="140" bkcolor="#0000FFFF" font="2" mutiline="false" rich="false" text="Wke目录：" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>	
 			<Container bkcolor="#FF00FFFF" >
 				<Combo name="wkpath"  itemmenu="true" normalimage="file='Combo_nor.bmp' corner='2,2,24,2'" hotimage="file='Combo_over.bmp' corner='2,2,24,2'" pushedimage="file='Combo_over.bmp' corner='2,2,24,2'" textpadding="1,1,1,1" font="12" textcolor="#00FFFFFF">
 				</Combo>
@@ -69,7 +69,7 @@
 		<Control minheight="8" maxheight="10"/>
 		
 		<HorizontalLayout  minheight="30" maxheight="38">
-			<RichEdit  text="Markdown 扩展名：" maxwidth="200" bkcolor="#0000FFFF" font="2" mutiline="false" rich="false" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>
+			<RichEdit name="md_ext" text="Markdown 扩展名：" maxwidth="200" bkcolor="#0000FFFF" font="2" mutiline="false" rich="false" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>
 			<Container bkcolor="#FF00FFFF" >
 				<Edit normalimage="file='Combo_mir.bmp' corner='2,2,24,2'"  textcolor="#FF666666" bkcolor="#0000FFFF" font="12" multiline="false" rich="false"  padding="4,0,0,0"/>
 			</Container>
@@ -78,7 +78,7 @@
 		<Control minheight="6" maxheight="10"/>
 		
 		<HorizontalLayout  minheight="30" maxheight="38">
-			<RichEdit text="AsciiDoc 扩展名：" maxwidth="200" bkcolor="#0000FFFF" font="2" mutiline="false" rich="false" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>
+			<RichEdit name="ad_ext" text="AsciiDoc 扩展名：" maxwidth="200" bkcolor="#0000FFFF" font="2" mutiline="false" rich="false" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>
 			<Container bkcolor="#FF00FFFF" >
 				<Edit normalimage="file='Combo_mir.bmp' corner='2,2,24,2'"  textcolor="#FF666666" bkcolor="#0000FFFF" font="12" multiline="false" rich="false"  padding="4,0,0,0"/>
 			</Container>
@@ -87,7 +87,7 @@
 		<Control minheight="6" maxheight="10"/>
 		
 		<HorizontalLayout  minheight="30" maxheight="38">
-			<RichEdit text="HTML 扩展名：" maxwidth="200" bkcolor="#0000FFFF" font="2" mutiline="false" rich="false" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>
+			<RichEdit name="html_ext" text="HTML 扩展名：" maxwidth="200" bkcolor="#0000FFFF" font="2" mutiline="false" rich="false" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>
 			<Container bkcolor="#FF00FFFF" >
 				<Edit normalimage="file='Combo_mir.bmp' corner='2,2,24,2'"  textcolor="#FF666666" bkcolor="#0000FFFF" font="12" multiline="false" rich="false"  padding="4,0,0,0"/>
 			</Container>
@@ -95,7 +95,45 @@
 		
 		
 		
+		<Control minheight="8" maxheight="10"/>
 		
+		<HorizontalLayout minheight="30" maxheight="80">
+            <RichEdit name="at_rnd" bkcolor="#0000FFFF" font="2" password="false" mutiline="false" rich="false" text="根据扩展名自动切换渲染方式" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>
+			<BSwitch name="sw1" textcolor="#FF333333" valign="vcenter" height="30" width="60" bkcolor="#FF888888" forecolor="#FFFF0000" value="50" min="0" max="100"/>
+		    <Control width="5" />
+		</HorizontalLayout>
+		
+		<Control minheight="8" maxheight="10"/>
+		
+		
+		<HorizontalLayout  minheight="30" maxheight="38">
+			<RichEdit name="df_rnd" maxwidth="140" bkcolor="#0000FFFF" font="2" mutiline="false" rich="false" text="默认渲染方式：" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>	
+			<Container bkcolor="#FF00FFFF" >
+				<Combo name="rndType"  itemmenu="true" normalimage="file='Combo_nor.bmp' corner='2,2,24,2'" hotimage="file='Combo_over.bmp' corner='2,2,24,2'" pushedimage="file='Combo_over.bmp' corner='2,2,24,2'" textpadding="1,1,1,1" font="12" >
+					<ListLabelElement text="  Markdown" selected="true"/>
+					<ListLabelElement text="  AsciiDoc"/>
+					<ListLabelElement text="  HTML"/>
+				</Combo>
+			</Container>
+		</HorizontalLayout>
+		
+		<Control minheight="8" maxheight="10"/>
+		
+		
+		<HorizontalLayout  minheight="30" maxheight="38">
+			<RichEdit name="ui_loc" maxwidth="140" bkcolor="#0000FFFF" font="2" mutiline="false" rich="false" text="界面语言：" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>	
+			<Container bkcolor="#FF00FFFF" >
+				<Combo name="language"  itemmenu="true" normalimage="file='Combo_nor.bmp' corner='2,2,24,2'" hotimage="file='Combo_over.bmp' corner='2,2,24,2'" pushedimage="file='Combo_over.bmp' corner='2,2,24,2'" textpadding="1,1,1,1" font="12" >
+					<ListLabelElement text="  Markdown" selected="true"/>
+					<ListLabelElement text="  AsciiDoc"/>
+					<ListLabelElement text="  HTML"/>
+				</Combo>
+			</Container>
+		</HorizontalLayout>
+		
+		
+		<Control minheight="8" maxheight="10"/>
+		<Control minheight="8" maxheight="10"/>
 		
 	</VerticalLayout>
 

@@ -377,17 +377,28 @@ void MarkDownTextDlg::OnToolBarRequestToolTip( LPNMHDR nmhdr )
 	int resId = (int)lpttt->hdr.idFrom;
 	int ToolTipIndex = resId - PrivateToolBarIconList[0]._cmdID;
 
-	auto tooltips=ZH_CN?ListBoxToolBarToolTip_HAN:ListBoxToolBarToolTip;
-	TCHAR ToolTipText[MAX_PATH];
-	int len = NLGetText( (HINSTANCE)g_hModule, nppData._nppHandle, tooltips[ToolTipIndex], ToolTipText, sizeof(ToolTipText) );
-	if ( len == 0 )
+	auto tooltips=ToolBarToolTips;
+	auto locText = GetLocalText(getLocaliseMap(), ToolBarToolTipsId[ToolTipIndex]);
+
+	auto tips = tooltips[ToolTipIndex];
+	if(locText)
 	{
-		lpttt->lpszText = tooltips[ToolTipIndex];
+		TCHAR tmp[MAX_PATH];
+		int len = MultiByteToWideChar(CP_ACP, 0, locText->c_str(), -1, tmp, MAX_PATH-1);
+		tmp[len] = '\0';
+		tips = tmp;
 	}
-	else
-	{
-		lpttt->lpszText = ToolTipText;
-	}
+
+	//TCHAR ToolTipText[MAX_PATH];
+	//int len = NLGetText( (HINSTANCE)g_hModule, nppData._nppHandle, tips, ToolTipText, sizeof(ToolTipText) );
+	//if ( len == 0 )
+	//{
+		lpttt->lpszText = tips;
+	//}
+	//else
+	//{
+	//	lpttt->lpszText = ToolTipText;
+	//}
 }
 
 int MarkDownTextDlg::getToolbarCommand(POINT &pointer) {
@@ -537,8 +548,12 @@ bool getMenuItemNeedsKeep(int mid) {
 
 bool getMenuItemChecked(int mid) {
 	switch(mid) {
-		case menuUnderLine:
-			return false;
+		case menuPause:
+			return GetUIBool(3);
+		case menuSync:
+			return GetUIBoolReverse(0);
+		case menuOption:
+			return _MDText.isVisible();
 	}
 	return false;
 }
@@ -551,11 +566,11 @@ void GlobalOnPvMnCheckedStatic(HMENU hMenu, int idx){
 	_MDText.GlobalOnPvMnChecked(hMenu, idx);
 }
 
-void simulToolbarMenu(HMENU pluginMenu, RECT *rc, HWND _hSelf, std::vector<FuncItem> & items){
+void simulToolbarMenu(HMENU pluginMenu, RECT *rc, HWND _hSelf, FuncItem* items){
 	int cmd = TrackPopupMenu(pluginMenu, TPM_RETURNCMD, rc->left,  rc->top, 0, _hSelf, NULL);
 
 	if(cmd) {
-		for(int idx=0,len=items.size();idx<len;idx++) {
+		for(int idx=0,len=sizeof(*items);idx<len;idx++) {
 			if(items[idx]._cmdID==cmd) {
 				if(items[idx]._pFunc==(PFUNCPLUGINCMD)SwitchEnginesStatic) {
 					SwitchEnginesStatic(idx-MDCRST);
@@ -570,12 +585,13 @@ void simulToolbarMenu(HMENU pluginMenu, RECT *rc, HWND _hSelf, std::vector<FuncI
 				if(pinMenu && getMenuItemNeedsKeep(idx) /*|| idx==nbFunc-2*/) {
 					simulToolbarMenu(pluginMenu, rc, _hSelf, items);
 				}
+				break;
 			}
 		}
 	}
 }
 
-void PrivateTrackPopup(HWND _hSelf, HMENU pluginMenu, std::vector<FuncItem> items, int CMDID) 
+void PrivateTrackPopup(HWND _hSelf, HMENU pluginMenu, FuncItem* items, int CMDID) 
 {
 	if(pluginMenu) {
 		RECT rc, rcImg;
@@ -633,6 +649,8 @@ void MarkDownTextDlg::saveParameters()
 	PutProfInt("LibCef", LibCefSel);
 	PutProfInt("LibWke", LibWkeSel);
 	PutProfInt("LibMb", LibMbSel);
+	WideCharToMultiByte(CP_ACP, 0, currentLanguageFile.data(), -1, ADRoutine, MAX_PATH_HALF-1, NULL, NULL);
+	PutProfString("locale", ADRoutine);
 	saveProf(g_ModulePath, configFileName);
 }
 
@@ -685,6 +703,15 @@ void MarkDownTextDlg::readParameters()
 	{
 		strcpy(ADRoutine, val->data());
 	}
+	if(val=GetProfString("locale"))
+	{
+		TCHAR tmp[MAX_PATH_HALF];
+		MultiByteToWideChar(CP_ACP, 0, val->data(), -1, tmp, MAX_PATH_HALF-1);
+		currentLanguageFile = tmp;
+		localeSet=true;
+	} else {
+		localeSet=false;
+	}
 	UISettings=GetProfInt("UISettings", 0);
 	readLibPaths(maxPathHistory, LibPaths, "LibPath%d", LibCefSel, "LibCef");
 	readLibPaths(maxPathHistory1, WkePaths, "WkePath%d", LibWkeSel, "LibWke");
@@ -720,7 +747,7 @@ void removeAllChildExceptOne(HWND hwnd, HWND ex) {
 }
 
 // Switch Browser Implemetation.
-void MarkDownTextDlg::destoryWebViews(bool exit)
+void MarkDownTextDlg::destroyWebViews(bool exit)
 {
 	if(mWebView0)
 	{
@@ -798,6 +825,31 @@ void engineToChromium(){ _MDText.switchEngineByIndex(2); }
 
 void engineToWebview2(){ _MDText.switchEngineByIndex(3); }
 
+HMENU GetLegacyPluginMenu() {
+	HMENU pluginMenu = (HMENU)::SendMessage(nppData._nppHandle, NPPM_GETMENUHANDLE, NPPPLUGINMENU , (LPARAM)0);
+	int cc = GetMenuItemCount(pluginMenu);
+	int targetLen = lstrlen(NPP_PLUGIN_NAME);
+	for (size_t i = 0; i < cc; i++)
+	{
+		TCHAR tmpTexts[MAX_PATH_HALF];
+		int namePathLen = ::GetMenuString(pluginMenu, i, tmpTexts, MAX_PATH_HALF-1, MF_BYPOSITION);
+		if(namePathLen==targetLen&&!lstrcmp(NPP_PLUGIN_NAME, tmpTexts))
+		{
+			return GetSubMenu(pluginMenu, i);
+		}
+	}
+}
+
+HMENU GetPluginMenu() {
+	HMENU hMenuPlugin = (HMENU)::SendMessage(nppData._nppHandle, NPPM_GETPLUGINMENU, 0 , (LPARAM)g_hModule);
+
+	if(!hMenuPlugin) {
+		hMenuPlugin = GetLegacyPluginMenu();
+	}
+
+	return hMenuPlugin;
+}
+
 bool MarkDownTextDlg::FindMarkdownEngines(TCHAR* path) {
 	//see https://stackoverflow.com/questions/67273/how-do-you-iterate-through-every-file-directory-recursively-in-standard-c#answer-67336
 	MDEngines.clear();
@@ -838,6 +890,106 @@ bool MarkDownTextDlg::FindMarkdownEngines(TCHAR* path) {
 	hFind = INVALID_HANDLE_VALUE;
 
 	return true;
+}
+
+std::map<std::string, std::string> & MarkDownTextDlg::getLocaliseMap() {
+	return localizefile;
+}
+
+std::string * MarkDownTextDlg::getLocalString(char* name) {
+	return name?GetLocalText(getLocaliseMap(), name):NULL;
+}
+
+void MarkDownTextDlg::localeTextToBuffer(TCHAR* buffer, int cchBuffer, char* name, TCHAR* defVal)
+{
+	string* val = getLocalString(name);
+	if(val)
+	{
+		int len = MultiByteToWideChar(CP_ACP, 0, val->c_str(), -1, buffer, cchBuffer);
+	}
+	else if(defVal)
+	{
+		lstrcpy(buffer, defVal);
+	}
+}
+
+void MarkDownTextDlg::destroyDynamicMenus()
+{
+	if(isCreated())
+	{
+		if(hMenuZoom) 
+		{
+			if(IsMenu(hMenuZoom)) DestroyMenu(hMenuZoom);
+			ZOOMER.clear();
+			hMenuZoom=0;
+		}
+		if(hMenuEngines) 
+		{
+			if(IsMenu(hMenuEngines)) DestroyMenu(hMenuEngines);
+			EngineSwicther.clear();
+			hMenuEngines=0;
+		}
+		if(hMenuLocate) 
+		{
+			if(IsMenu(hMenuLocate)) DestroyMenu(hMenuLocate);
+			LocateScroll.clear();
+			hMenuLocate=0;
+		}
+	}
+}
+
+int funcSz(FuncItem* funcs)
+{
+	int sz=0;
+	while(sz<64)
+	{
+		if(funcs[sz]._itemName[0]==NULL)
+			break;
+		sz++;
+	}
+	return sz;
+}
+
+void MarkDownTextDlg::setLanguageName(wstring & name, bool init) {
+	if(currentLanguageFile!=name||init)
+	{
+		currentLanguageFile = name;
+		if(init&&(name.length()==0||name==TEXT("english.ini")))
+		{
+			return;
+		}
+		TCHAR path[MAX_PATH];
+		PathAppend(path, g_ModulePath);
+		PathAppend(path, TEXT("localization"));
+		PathAppend(path, name.c_str());
+		loadLanguge(path);
+		destroyDynamicMenus();
+		auto & lm = getLocaliseMap();
+		HMENU hMenuPlugin =  GetPluginMenu();
+		if(hMenuPlugin)
+		{
+			for (size_t pos = 0, len=funcSz(funcItems); pos < len; pos++)
+			{
+				int cmdID = ::GetMenuItemID(hMenuPlugin, pos);
+				if(cmdID) {
+					TCHAR* newStr;
+					string * str = getLocalString(PluginMenuStrIds[pos]);
+					if(str)
+					{
+						MultiByteToWideChar(CP_ACP, 0, str->data(), -1, path, MAX_PATH-1);
+						newStr = path;
+					}
+					else
+					{
+						newStr = funcItems[pos]._itemName;
+					}
+					::ModifyMenu(hMenuPlugin, pos, MF_BYPOSITION, cmdID, newStr);
+					if(getMenuItemChecked(cmdID-funcItems[0]._cmdID))
+						CheckMenuItem(hMenuPlugin, pos, MF_BYPOSITION|MF_CHECKED);
+				}
+			}
+		}
+	}
 }
 
 void MarkDownTextDlg::GlobalOnPvMnChecked(HMENU hMenu, int idx) {
@@ -959,17 +1111,7 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 		return;
 		case IDM_EX_TOGGLE:
 		{
-			HMENU hMenuPlugin = (HMENU)::SendMessage(nppData._nppHandle, NPPM_GETPLUGINMENU, 0 , (LPARAM)g_hModule);
-
-			if(!hMenuPlugin) {
-				//pluginMenu = (HMENU)::GetMenu(nppData._nppHandle);
-				if(!hMenuPlugin) {
-
-					//::MessageBox(NULL, TEXT("111"), TEXT(""), MB_OK);
-
-				}
-			}
-			PrivateTrackPopup(_hSelf, hMenuPlugin, funcItems, CMDID);
+			PrivateTrackPopup(_hSelf, GetPluginMenu(), funcItems, CMDID);
 		}
 		return;
 		case IDM_EX_DOWN:
@@ -1006,35 +1148,39 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 			}
 			else if(source==1)
 			{
+				lstrcpy(funcItems[0]._itemName, L"213");
 				if(ZOOMER.size()==0)
 				{
 					ZOOMER.resize(1);
 					ZOOMER.at(0)={TEXT(""), ResetZoom, 161, false, 0};
-					lstrcpy(ZOOMER.at(0)._itemName, ZH_CN?TEXT("重置"):TEXT("Reset"));
+					localeTextToBuffer(ZOOMER.at(0)._itemName, 63, "_rst", TEXT("Reset")); // 重置
 				}
 				if(hMenuZoom==0)
 				{
 					hMenuZoom = buildPluginPrivateMenu(ZOOMER);
 				}
-				PrivateTrackPopup(_hSelf, hMenuZoom, ZOOMER, CMDID);
+				PrivateTrackPopup(_hSelf, hMenuZoom, ZOOMER.data(), CMDID);
 			}
 		}
 		return;
 		case IDM_EX_DELTA:
 		{
+			TCHAR* text;
 			//todo localize
 			if(EngineSwicther.size()==0)
 			{
 				EngineSwicther.resize(MDCRST);
 				EngineSwicther.at(0)={TEXT(""), happy, 61, false, 0};
-				lstrcpy(EngineSwicther.at(0)._itemName, ZH_CN?TEXT("切换浏览器内核："):TEXT("Switch Browser Kernel :"));
+				//lstrcpy(EngineSwicther.at(0)._itemName, ZH_CN?TEXT("切换浏览器内核："):TEXT("Switch Browser Kernel :"));
+				localeTextToBuffer(EngineSwicther.at(0)._itemName, 63, "_sw_bw", TEXT("Switch Browser Kernel :"));
 				EngineSwicther.at(1)={TEXT("Miniblink-wke"), engineToWke, 62, false, 0};
 				EngineSwicther.at(2)={TEXT("Miniblink-mb"), engineToMb, 63, false, 0};
 				EngineSwicther.at(3)={TEXT("Chromium-Embeded ( Recommended )"), engineToChromium, 64, false, 0};
 				EngineSwicther.at(4)={TEXT("Webview2"), engineToWebview2, 65, false, 0};
 				EngineSwicther.at(5)={TEXT(""), 0, 0, false, 0};
 				EngineSwicther.at(6)={TEXT(""), (PFUNCPLUGINCMD)SwitchEnginesStatic, 66, false, 0};
-				lstrcpy(EngineSwicther.at(6)._itemName, ZH_CN?TEXT("切换渲染引擎："):TEXT("Switch Markdown Engine :"));
+				//lstrcpy(EngineSwicther.at(6)._itemName, ZH_CN?TEXT("切换渲染引擎："):TEXT(" :"));
+				localeTextToBuffer(EngineSwicther.at(6)._itemName, 63, "_sw_rt", TEXT("Switch Markdown Engine :"));
 				EngineSwicther.at(7)={TEXT("HTML"), (PFUNCPLUGINCMD)SwitchEnginesStatic, 67, false, 0};
 				EngineSwicther.at(8)={TEXT("md.html"), (PFUNCPLUGINCMD)SwitchEnginesStatic, 68, false, 0};
 			}
@@ -1086,7 +1232,7 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 				}
 			}
 			CheckMenuItem(hMenuEngines, currentkernelType+1, MF_BYPOSITION|MF_CHECKED);
-			PrivateTrackPopup(_hSelf, hMenuEngines, EngineSwicther, CMDID);
+			PrivateTrackPopup(_hSelf, hMenuEngines, EngineSwicther.data(), CMDID);
 		}
 		return;
 		case IDM_EX_LOCATE:
@@ -1106,6 +1252,13 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 					LocateScroll.at(i++)={TEXT("Sync Text <- Webview"), (PFUNCPLUGINCMD)GlobalOnPvMnCheckedStatic, 262, false, 0};
 					LocateScroll.at(i++)={TEXT("<--  Sync Now (&A)"), (PFUNCPLUGINCMD)GlobalOnPvMnCheckedStatic, 264, false, 0};
 					LocateScroll.at(i++)={TEXT("Locate current file"), (PFUNCPLUGINCMD)GlobalOnPvMnCheckedStatic, 263, false, 0};
+					i=0;
+					localeTextToBuffer(LocateScroll.at(i++)._itemName, 63, "_s_tw", NULL);
+					localeTextToBuffer(LocateScroll.at(i++)._itemName, 63, "_s_tw_", NULL);
+					localeTextToBuffer(LocateScroll.at(i++)._itemName, 63, "_s_wt", NULL);
+					localeTextToBuffer(LocateScroll.at(i++)._itemName, 63, "_s_wt_", NULL);
+					localeTextToBuffer(LocateScroll.at(i++)._itemName, 63, "_s_fd", NULL);
+
 				}
 				if(hMenuLocate==0)
 				{
@@ -1113,7 +1266,7 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 					::CheckMenuItem(hMenuLocate, static_cast<UINT>(261), MF_BYCOMMAND | (static_cast<BOOL>(GetUIBoolReverse(1) ? MF_CHECKED : MF_UNCHECKED)));
 					::CheckMenuItem(hMenuLocate, static_cast<UINT>(262), MF_BYCOMMAND | (static_cast<BOOL>(GetUIBoolReverse(2)) ? MF_CHECKED : MF_UNCHECKED));
 				}
-				PrivateTrackPopup(_hSelf, hMenuLocate, LocateScroll, CMDID);
+				PrivateTrackPopup(_hSelf, hMenuLocate, LocateScroll.data(), CMDID);
 			}
 		}
 		return;

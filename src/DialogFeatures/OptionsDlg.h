@@ -26,6 +26,10 @@ public:
     void setTweakedPath(ComboeditContext* ctx, char* path);
 
     LRESULT HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+    void HandleMessage(int type, TNotifyUI* msg);
+
+    bool FindLanguages();
 public:
     CPaintManagerUI m_pm;
 
@@ -36,8 +40,15 @@ public:
     CComboUI*   wkpath;
     CControlUI* wkedit;
 
+    CComboUI*   rdnType;
+    CComboUI*   language;
+
     int itemTweakingIndex;
     ComboeditContext* itemTweakingCtx;
+
+    bool languages_scanned=false;
+
+    std::vector<wstring> languages;
 };
 
 

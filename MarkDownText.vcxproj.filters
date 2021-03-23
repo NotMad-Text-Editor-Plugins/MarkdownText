@@ -58,6 +58,9 @@
     <ClCompile Include="..\DirectUILib\DuiLib\ControlEx\UIBeautifulSwitch.cpp">
       <Filter>Source\DuiLibFeatures</Filter>
     </ClCompile>
+    <ClCompile Include="..\DirectUILib\DuiLib\ControlEx\DuiLibTranslator.cpp">
+      <Filter>Source\DuiLibFeatures</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\ArticlePresenters\APresenterMiniblink.h">
@@ -134,6 +137,9 @@
     </ClInclude>
     <ClInclude Include="src\DialogFeatures\WarningDlg.hpp">
       <Filter>Source\DialogFeatures</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DirectUILib\DuiLib\ControlEx\DuiLibTranslator.h">
+      <Filter>Source\DuiLibFeatures</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

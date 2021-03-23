@@ -62,8 +62,8 @@ extern "C" __declspec(dllexport) const TCHAR * getName()
 // export functions
 extern "C" __declspec(dllexport) FuncItem * getFuncsArray(int *nbF)
 {
-	*nbF = nbFunc;
-	return funcItems.data();
+	*nbF = 10;
+	return funcItems;
 }
 
 __declspec(selectany)  toolbarIcons		g_TBMarkdown{0,0,0x666,0,IDI_ICON_MD,0,0,IDB_BITMAP1};
@@ -91,19 +91,23 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 				if(legacy)g_TBMarkdown.hToolbarBmp = (HBITMAP)::LoadImage(HRO, MAKEINTRESOURCE(IDB_BITMAP1), IMAGE_BITMAP, 0,0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
 				::SendMessage(nppData._nppHandle, NPPM_ADDTOOLBARICON, (WPARAM)funcItems[menuOption]._cmdID, (LPARAM)&g_TBMarkdown);
 
-				TCHAR mStr[16]={0};
-				GetMenuString(GetMenu(nppData._nppHandle), 0, mStr, 16, MF_BYPOSITION);
-				if(mStr[0]==L'文')
-				{
-					ZH_CN=1;
+				if(!_MDText.localeSet) {
+					TCHAR mStr[16]={0};
+					GetMenuString(GetMenu(nppData._nppHandle), 0, mStr, 16, MF_BYPOSITION);
+					ZH_CN=mStr[0]==L'文';
+					if(!ZH_CN)
+					{
+						_MDText.currentLanguageFile = TEXT("");
+					}
 				}
+				_MDText.setLanguageName(_MDText.currentLanguageFile, true);
 			}
 		break;
 		case NPPN_SHUTDOWN:
 		{
 			commandMenuCleanUp();
 			NPPRunning=0;
-			_MDText.destoryWebViews(true);
+			_MDText.destroyWebViews(true);
 			//bIsPaused=1;
 			//AllCloseFlag=1;
 		}

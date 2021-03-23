@@ -78,15 +78,17 @@ void pluginCleanUp()
 
 void commandMenuCleanUp()
 {
-	for(FuncItem fI:funcItems){
-		delete fI._pShKey;
+	if(funcItems)
+	{
+		for (size_t i = 0,len=sizeof(funcItems); i < len; i++)
+		{
+			delete funcItems[i]._pShKey;
+		}
+		delete[] funcItems;
+		funcItems=NULL;
 	}
-	funcItems.clear();
 }
 
-//----------------------------------------------//
-//-- ASSOCIATED FUNCTIONS START------------------//
-//----------------------------------------------//
 
 void PreviewCurrentFile() {
 	LONG_PTR bid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
@@ -126,31 +128,6 @@ void ToggleMDPanel()
 	if(!_MDText.isClosed()) {
 		//_MDText.RefreshWebview();
 	}
-}
-
-void ShowAbout()
-{
-	::MessageBox(nppData._nppHandle, TEXT(" You can use Ctrl+ - jump to previous cursor position \n You can use Ctrl+Shift+ - jump to next cursor position \n You can use Ctrl+Alt+ Z jump to previous changed position \n You can use Ctrl+Alt+ Y jump to next changed position \n 'Auto clear when close'- Will remove the file's record when file closed.\n 'Always record'- Will always record the position even after you jumped.\n 'Save record when App exit'- Record data when application exit and it will be loaded in next run \n 'In Curr'- If checked, navigate only in current file\n 'Mark'- If checked, modified line will be marked by bookmark or color\n 'Mark Color/Save Color'- Available if not select mark with bookmark, you could mark with different symbol.  \n\nBundled with Textrument (v0.1.1). \n\n (Save/Restore Currently unavailable!)  Version: Original Author: Austin Young<pattazl@gmail.com>"), TEXT("About Location Navigate"), MB_OK);
-}
-
-//----------------------------------------------//
-//-- ASSOCIATED FUNCTIONS END-------------------//
-//----------------------------------------------//
-
-bool setCommand(size_t index, TCHAR *cmdName, PFUNCPLUGINCMD pFunc, ShortcutKey *sk, bool check0nInit) 
-{
-	if (index >= nbFunc)
-		return false;
-
-	if (!pFunc)
-		return false;
-
-	lstrcpy(funcItems[index]._itemName, cmdName);
-	funcItems[index]._pFunc = pFunc;
-	funcItems[index]._init2Check = check0nInit;
-	funcItems[index]._pShKey = sk;
-
-	return true;
 }
 
 void WrapTextWith(char* padStart, char* padEnd)
@@ -335,43 +312,34 @@ void commandMenuInit()
 	ShortcutKey *incurrKey = new ShortcutKey{0,1,0,VK_OEM_MINUS};
 	ShortcutKey *markKey = new ShortcutKey{1,1,0,0x4D};// VK_M
 
-	funcItems.resize(nbFunc);
+	PluginMenuStrIds = new CHAR*[]{
+		"_vcf",
+		"_pnl",
+		NULL,
+		"_b",
+		"_i",
+		"_u",
+		NULL,
+		"_pp",
+		"_ss",
+		"_opt",
+		NULL,
+	};
 
-	int i=0;
-
-	ShortcutKey* shortKey = new ShortcutKey{0,0,0,NULL};
-	funcItems[i++]={TEXT("View Current File"), PreviewCurrentFile, menuPreviewCurr, false, shortKey};
-
-	shortKey = new ShortcutKey{1,0,1,0x4D}; // VK_M
-	funcMenu=&funcItems[i];
-	funcItems[i++]={TEXT("Markdown Text Panel"), ToggleMDPanel, menuOption, false, shortKey};
-
-	setCommand(i++, TEXT("-SEPARATOR-"),NULL, NULL, false);
-
-	shortKey = new ShortcutKey{0,0,0,NULL};
-	funcItems[i++]={TEXT("Bolden"), BoldenText, menuBolden, false, shortKey};
-
-	shortKey = new ShortcutKey{0,0,0,NULL};
-	funcItems[i++]={TEXT("Italic"), TiltText, menuItalic, false, shortKey};
-
-	shortKey = new ShortcutKey{0,0,0,NULL};
-	funcItems[i++]={TEXT("Underline"), UnderlineText, menuUnderLine, false, shortKey};
-	
-
-	setCommand(i++, TEXT("-SEPARATOR-"),NULL, NULL, false);
-
-	shortKey = new ShortcutKey{0,0,0,NULL};
-	funcUpdate=&funcItems[i];
-	funcItems[i++]={TEXT("Pause Update"), PauseUpdate, menuPause, GetUIBool(3), shortKey};
-
-	shortKey = new ShortcutKey{0,0,0,NULL}; //
-	funcSync=&funcItems[i];
-	funcItems[i++]={TEXT("Sync Scroll"), SyncScroll, menuSync, GetUIBoolReverse(0), shortKey};
-
-	shortKey = new ShortcutKey{0,0,0,NULL};
-	funcItems[i++]={TEXT("Options…"), Settings, menuSettings, false, shortKey};
-
-	// pause update
-	// pause update
-
+	funcItems = new FuncItem []{
+		 {TEXT("View Current File"), PreviewCurrentFile, menuPreviewCurr, false, new ShortcutKey{0,0,0,NULL}}
+		,{TEXT("Markdown Text Panel"), ToggleMDPanel, menuOption, false, new ShortcutKey{1,0,1,0x4D}} // VK_M
+		,{TEXT("-SEPARATOR-"), NULL, NULL, false} 
+		,{TEXT("Bolden"), BoldenText, menuBolden, false, new ShortcutKey{0,0,0,NULL}} 
+		,{TEXT("Italic"), TiltText, menuItalic, false, new ShortcutKey{0,0,0,NULL}} 
+		,{TEXT("Underline"), UnderlineText, menuUnderLine, false, new ShortcutKey{0,0,0,NULL}} 
+		,{TEXT("-SEPARATOR-"), NULL, NULL, false} 
+		,{TEXT("Pause Update"), PauseUpdate, menuPause, GetUIBool(3), new ShortcutKey{0,0,0,NULL}} 
+		,{TEXT("Sync Scroll"), SyncScroll, menuSync, GetUIBoolReverse(0), new ShortcutKey{0,0,0,NULL}} 
+		,{TEXT("Options…"), Settings, menuSettings, false, new ShortcutKey{0,0,0,NULL}} 
+		,NULL
+	};
+	funcMenu=&funcItems[1];
+	funcUpdate=&funcItems[7];
+	funcSync=&funcItems[8];
 }

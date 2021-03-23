@@ -386,6 +386,7 @@
     <ClCompile Include="..\CPPCommon\common_patch.cpp" />
     <ClCompile Include="..\CPPCommon\ProfileStd.cpp" />
     <ClCompile Include="..\CPPCommon\ToolbarPanel.cpp" />
+    <ClCompile Include="..\DirectUILib\DuiLib\ControlEx\DuiLibTranslator.cpp" />
     <ClCompile Include="..\DirectUILib\DuiLib\ControlEx\UIBeautifulSwitch.cpp" />
     <ClCompile Include="src\ArticlePresenters\APresenter.cpp" />
     <ClCompile Include="src\ArticlePresenters\APresenterBWidget.cpp" />
@@ -405,6 +406,7 @@
     <ClInclude Include="..\..\PowerEditor\src\WinControls\ToolBar\ToolBar.h" />
     <ClInclude Include="..\CPPCommon\ProfileStd.h" />
     <ClInclude Include="..\CPPCommon\ToolbarPanel.h" />
+    <ClInclude Include="..\DirectUILib\DuiLib\ControlEx\DuiLibTranslator.h" />
     <ClInclude Include="..\DirectUILib\DuiLib\ControlEx\UIBeautifulSwitch.h" />
     <ClInclude Include="src\ArticlePresenters\APresentee.h" />
     <ClInclude Include="src\ArticlePresenters\APresenter.h" />
