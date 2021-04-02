@@ -56,6 +56,12 @@ int ToggleUIBool(int pos, bool reverse)
 	return reverse?!val:val;
 }
 
+bool GetUIBool(int pos, bool reverse)
+{
+	return reverse?GetUIBoolReverse(pos):GetUIBool(pos);
+}
+
+
 // get the UI configuration boolean, default to false. |pos| flag position.
 bool GetUIBool(int pos)
 {
@@ -89,20 +95,13 @@ void commandMenuCleanUp()
 	}
 }
 
-
-void PreviewCurrentFile() {
-	LONG_PTR bid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
-	if(_MDText.lastBid!=bid)
-	{
-		bForcePreview=true;
-		_MDText.display(true);
-		_MDText.RefreshWebview();
-		bForcePreview=false;
-	}
-}
-
 void ToggleMDPanel()
 {
+	if(!NPPRunning) //  && (GetUIBoolReverse(5)||GetUIBool(6))
+	{
+		_MDText.bRunRequested = true;
+		return;
+	}
 	_MDText.setParent( nppData._nppHandle );
 	if ( !_MDText.isCreated() )
 	{
@@ -125,8 +124,20 @@ void ToggleMDPanel()
 		bool NeedShowDlg = !_MDText.isVisible();
 		_MDText.display(NeedShowDlg);
 	}
-	if(!_MDText.isClosed()) {
-		//_MDText.RefreshWebview();
+	//if(!_MDText.isClosed()) _MDText.RefreshWebview();
+}
+
+void PreviewCurrentFile() {
+	LONG_PTR bid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
+	if(!_MDText.isVisible()){
+		ToggleMDPanel();
+	}
+	if(_MDText.lastBid!=bid)
+	{
+		bForcePreview=true;
+		_MDText.display(true);
+		_MDText.RefreshWebview();
+		bForcePreview=false;
 	}
 }
 
@@ -258,6 +269,11 @@ HWND handle;
 
 void Settings()
 {
+	if (0)
+	{
+		_MDText.checkAutoRun();
+		return;
+	}
 	//::SendMessage(nppData._nppHandle, NPPM_SETSTATUSBAR, STATUSBAR_DOC_TYPE, (LPARAM)TEXT("Not implemented yet……"));
 
 	CPaintManagerUI::SetInstance((HINSTANCE)g_hModule);

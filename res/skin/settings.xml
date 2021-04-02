@@ -2,6 +2,7 @@
 <Window mininfo="200,360" size="450,600">
 	<Font shared="true" id="0" name="幼圆" size="23" default="true" />
 	<Font shared="true" id="1" name="微软雅黑" size="28" />
+	<Font shared="true" id="11" name="微软雅黑" size="16" />
 	 
 	<Include source="scrollbar.xml" />
 	
@@ -11,7 +12,7 @@
 		
 		<HorizontalLayout minheight="30" maxheight="80">
             <RichEdit name="at_run" bkcolor="#0000FFFF" font="2" password="false" mutiline="false" rich="false" text="启动时自动运行" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>
-			<BSwitch name="sw1" textcolor="#FF333333" valign="vcenter" height="30" width="60" bkcolor="#FF888888" forecolor="#FFFF0000" value="50" min="0" max="100"/>
+			<BSwitch name="sw1" ud="-5" textcolor="#FF333333" valign="vcenter" height="30" width="60" bkcolor="#FF888888" forecolor="#FFFF0000" value="50" min="0" max="100"/>
 		    <Control width="5" />
 		</HorizontalLayout>
 		
@@ -20,7 +21,7 @@
 		
 		<HorizontalLayout minheight="30" maxheight="80">
             <RichEdit name="no_run" bkcolor="#0000FFFF" font="2" password="false" mutiline="false" rich="false" text="启动时保持关闭" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>
-			<BSwitch name="sw2" textcolor="#FF333333" valign="vcenter" height="30" width="60" bkcolor="#FF888888" forecolor="#FFFF0000" value="50" min="0" max="100"/>
+			<BSwitch name="sw2" ud="6" textcolor="#FF333333" valign="vcenter" height="30" width="60" bkcolor="#FF888888" forecolor="#FFFF0000" value="50" min="0" max="100"/>
 		    <Control width="5" />
 		</HorizontalLayout>
 		
@@ -71,7 +72,7 @@
 		<HorizontalLayout  minheight="30" maxheight="38">
 			<RichEdit name="md_ext" text="Markdown 扩展名：" maxwidth="200" bkcolor="#0000FFFF" font="2" mutiline="false" rich="false" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>
 			<Container bkcolor="#FF00FFFF" >
-				<Edit normalimage="file='Combo_mir.bmp' corner='2,2,24,2'"  textcolor="#FF666666" bkcolor="#0000FFFF" font="12" multiline="false" rich="false"  padding="4,0,0,0"/>
+				<Edit name="mddt" ud="0" normalimage="file='Combo_mir.bmp' corner='2,2,24,2'"  textcolor="#FF333333" bkcolor="#0000FFFF" font="11" multiline="false" rich="false"  padding="4,0,0,0"/>
 			</Container>
 		</HorizontalLayout>
 		
@@ -80,7 +81,7 @@
 		<HorizontalLayout  minheight="30" maxheight="38">
 			<RichEdit name="ad_ext" text="AsciiDoc 扩展名：" maxwidth="200" bkcolor="#0000FFFF" font="2" mutiline="false" rich="false" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>
 			<Container bkcolor="#FF00FFFF" >
-				<Edit normalimage="file='Combo_mir.bmp' corner='2,2,24,2'"  textcolor="#FF666666" bkcolor="#0000FFFF" font="12" multiline="false" rich="false"  padding="4,0,0,0"/>
+				<Edit name="addt" ud="1" normalimage="file='Combo_mir.bmp' corner='2,2,24,2'"  textcolor="#FF333333" bkcolor="#0000FFFF" font="11" multiline="false" rich="false"  padding="4,0,0,0"/>
 			</Container>
 		</HorizontalLayout>
 		
@@ -89,7 +90,7 @@
 		<HorizontalLayout  minheight="30" maxheight="38">
 			<RichEdit name="html_ext" text="HTML 扩展名：" maxwidth="200" bkcolor="#0000FFFF" font="2" mutiline="false" rich="false" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>
 			<Container bkcolor="#FF00FFFF" >
-				<Edit normalimage="file='Combo_mir.bmp' corner='2,2,24,2'"  textcolor="#FF666666" bkcolor="#0000FFFF" font="12" multiline="false" rich="false"  padding="4,0,0,0"/>
+				<Edit name="htdt" ud="2" normalimage="file='Combo_mir.bmp' corner='2,2,24,2'"  textcolor="#FF333333" bkcolor="#0000FFFF" font="11" multiline="false" rich="false"  padding="4,0,0,0"/>
 			</Container>
 		</HorizontalLayout>
 		
@@ -99,7 +100,7 @@
 		
 		<HorizontalLayout minheight="30" maxheight="80">
             <RichEdit name="at_rnd" bkcolor="#0000FFFF" font="2" password="false" mutiline="false" rich="false" text="根据扩展名自动切换渲染方式" vscrollbar="false" hscrollbar="false" autohscroll="true" readonly="true" padding="2,2.8,0,0"/>
-			<BSwitch name="sw1" textcolor="#FF333333" valign="vcenter" height="30" width="60" bkcolor="#FF888888" forecolor="#FFFF0000" value="50" min="0" max="100"/>
+			<BSwitch name="sw3" ud="-7" textcolor="#FF333333" valign="vcenter" height="30" width="60" bkcolor="#FF888888" forecolor="#FFFF0000" value="50" min="0" max="100"/>
 		    <Control width="5" />
 		</HorizontalLayout>
 		
@@ -132,11 +133,18 @@
 		</HorizontalLayout>
 		
 		
-		<Control minheight="8" maxheight="10"/>
+		<Control minheight="18" maxheight="30"/>
 		<Control minheight="8" maxheight="10"/>
 		
+		<HorizontalLayout minheight="35" maxheight="50" >
+			<Control/>
+			<Button text="[  显示帮助…  ]"  textcolor="#FF757575"  name="help" hottextcolor="#FF111111" width="360"  bkcolor="#0000E000" nativebkcolor="#0000E000"/>
+			<Control/>
+		</HorizontalLayout>
 	</VerticalLayout>
 
+		<Control minheight="8" maxheight="10"/>
+		<Control minheight="8" maxheight="10"/>
 
 
 

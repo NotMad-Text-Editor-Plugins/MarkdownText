@@ -37,6 +37,8 @@ LPTSTR ToolBarToolTips[] = {
 	TEXT("Sync-Scroll"),
 };
 
+LPTSTR* ToolBarToolTipsTranslations = new LPTSTR[ListBoxToolBarSize]{};
+
 CHAR* ToolBarToolTipsId[] = {
 	("_opt"),
 	("_bk"),

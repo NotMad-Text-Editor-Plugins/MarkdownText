@@ -6,7 +6,11 @@
 
 #include "MDTextDlg.h"
 
+#include "ProfileStd.h"
+
 using namespace DuiLib;
+
+// Building the settings dialog using Duilib.
 
 OptionsDlg::OptionsDlg()
 { 
@@ -19,19 +23,16 @@ UINT OptionsDlg::GetClassStyle() const
     return UI_CLASSSTYLE_FRAME | CS_DBLCLKS; 
 };
 
-void OptionsDlg::OnFinalMessage(HWND /*hWnd*/) { 
-    //delete this; 
+void OptionsDlg::OnFinalMessage(HWND hWnd) { 
+    delete this; 
 };
 
+// not used
 bool OptionsDlg::OnValueChanged(void* param) {
-    //TNotifyUI* pMsg = (TNotifyUI*)param;
-    //if( pMsg->sType == _T("valuechanged") ) {
-    //    m_pm.SetOpacity((static_cast<CSliderUI*>(pMsg->pSender))->GetValue());
-    //}
     return true;
 }
 
-
+// LibPaths Combo Edit Storage
 struct ComboeditContext
 {
     CComboUI*   combo;
@@ -42,6 +43,8 @@ struct ComboeditContext
     CHAR* key;
 };
 
+// Make a "editable" combobox. An edit control was placed on the top of it.
+// Background images from "GameDemo"
 void drawComboEditUI(CComboUI* combo, CControlUI* edit
     , int & sel, std::vector<std::string*> & paths
     , char * tips, char * key
@@ -73,20 +76,37 @@ void drawComboEditUI(CComboUI* combo, CControlUI* edit
     }
 }
 
+// Initalize a simple material design checkbox.
+void drawSwitcherUI(CPaintManagerUI & m_pm, TCHAR* name, bool select)
+{
+    if( select ) {
+        COptionUI* sw = dynamic_cast<COptionUI*>(m_pm.FindControl(name));
+        if(sw)
+        {
+            sw->Selected(select, false);
+        }
+    }
+}
+
+void drawExtEdit(CPaintManagerUI & m_pm, TCHAR* name, int channel)
+{
+    CControlUI* ext = dynamic_cast<CControlUI*>(m_pm.FindControl(name));
+    if(ext)
+    {
+        string text;
+       _MDText.readExtensions(channel, &text);
+        if(text.length()) 
+        {
+            TCHAR tmpText[MAX_PATH]{0};
+            MultiByteToWideChar(CP_ACP, 0, text.data(), -1, tmpText, MAX_PATH-1); 
+            ext->SetText(tmpText);
+        }
+    }
+}
+
+//Initialize the UI
 void OptionsDlg::OnPrepare() 
 {
-    //CCheckBoxUI *pCheck = static_cast<CCheckBoxUI*>(m_pm.FindControl(_T("chkOption")));
-    //pCheck->Activate();
-    //pCheck->SetMaxHeight(40);
-    //pCheck->SetMaxWidth(60);
-
-
-    // CBSwitchUI* pSwitch = static_cast<CBSwitchUI*>(m_pm.FindControl(_T("circle_progress")));
-    //
-    // if( pSwitch ) {
-    //     pSwitch->OnNotify += MakeDelegate(this, &CFrameWindowWnd::OnValueChanged);
-    // }
-
     bwpath = static_cast<CComboUI*>(  m_pm.FindControl(_T("bwpath")));
     bwedit = static_cast<CControlUI*>(m_pm.FindControl(_T("bwedit")));
     mbpath = static_cast<CComboUI*>(  m_pm.FindControl(_T("mbpath")));
@@ -94,20 +114,25 @@ void OptionsDlg::OnPrepare()
     wkpath = static_cast<CComboUI*>(  m_pm.FindControl(_T("wkpath")));
     wkedit = static_cast<CControlUI*>(m_pm.FindControl(_T("wkedit")));
 
-    rdnType = static_cast<CComboUI*>(  m_pm.FindControl(_T("rndType")));
-    language = static_cast<CComboUI*>(  m_pm.FindControl(_T("language")));
+    //rdnType = static_cast<CComboUI*>(  m_pm.FindControl(_T("rndType")));  // default render types
+    language = static_cast<CComboUI*>(  m_pm.FindControl(_T("language")));// languages
 
     drawComboEditUI(bwpath, bwedit, _MDText.LibCefSel, _MDText.LibPaths, "Pick LibCef folder: ( contains cefclient.dll )", "LibPath%d");
     drawComboEditUI(mbpath, mbedit, _MDText.LibMbSel, _MDText.MbPaths, "Pick Miniblink folder: ( contains miniblink_x64.dll )", "MbPath%d");
     drawComboEditUI(wkpath, wkedit, _MDText.LibWkeSel, _MDText.WkePaths, "Pick WKE Path: ( wke.dll )", "WkePath%d");
+    
+    drawSwitcherUI(m_pm, TEXT("sw1"), GetUIBoolReverse(5)); // auto run
+    drawSwitcherUI(m_pm, TEXT("sw2"), GetUIBool(6));        // auto close
+    drawSwitcherUI(m_pm, TEXT("sw3"), GetUIBoolReverse(7)); // auto switch
 
-    HandleMessage(2, NULL);
-    //pCheck->SetAttribute(_T("normalimage"), _T("file='image\\switchbutton.png' source='0,0,143,91'"));
-    //pCheck->SetAttribute(_T("selectedimage"), _T("file='image\\switchbutton.png' source='0,182,143,273'"));
+    drawExtEdit(m_pm, TEXT("mddt"), 0);
+    drawExtEdit(m_pm, TEXT("addt"), 1);
+    drawExtEdit(m_pm, TEXT("htdt"), 2);
 
+    HandleMessage(2, NULL); // localize
 }
 
-
+// Set the active LibPaths
 void OptionsDlg::setTweakedPath(ComboeditContext* ctx, char* path)
 {
     auto & lp = *ctx->paths;
@@ -141,6 +166,7 @@ void OptionsDlg::setTweakedPath(ComboeditContext* ctx, char* path)
     }
 }
 
+// Initialze the folder picker
 static int CALLBACK BrowseForFolderCallBack(HWND hwnd, UINT message, LPARAM lParam, LPARAM lpData) {
     if (message == BFFM_INITIALIZED) {
         // navigate to one of the paths stored in the ini file
@@ -165,6 +191,7 @@ static int CALLBACK BrowseForFolderCallBack(HWND hwnd, UINT message, LPARAM lPar
     return 0;
 }
 
+// Find all files of localization/*.ini
 bool OptionsDlg::FindLanguages()
 {
     languages_scanned = true;
@@ -195,7 +222,8 @@ bool OptionsDlg::FindLanguages()
         }
     } while (FindNextFile(hFind, &ffd) != 0);
 
-    if (GetLastError() != ERROR_NO_MORE_FILES) {
+    if (GetLastError() != ERROR_NO_MORE_FILES) 
+    {
         FindClose(hFind);
         return false;
     }
@@ -206,6 +234,7 @@ bool OptionsDlg::FindLanguages()
     return true;
 }
 
+// To use the same stack data.
 void OptionsDlg::HandleMessage(int type, TNotifyUI* msg)
 {
     CHAR path[MAX_PATH*2];
@@ -287,25 +316,25 @@ void OptionsDlg::HandleMessage(int type, TNotifyUI* msg)
     }
 }
 
+void PutHotTextToIni(CControlUI* pSender)
+{
+    int id = _ttoi(pSender->GetUserData());
+    if(id>=0&&id<=3)
+    {
+        CHAR path[MAX_PATH];
+        auto tmpText = pSender->GetText();
+        int len = WideCharToMultiByte(CP_ACP, 0, tmpText
+            , tmpText.GetLength(), path, MAX_PATH-1, 0, 0); // bytes conversion :: data from display to ini
+        path[len] = '\0';
+        PutProfString(_MDText.extCtx[id].key, path);
+        _MDText.readExtensions(id, NULL);
+    }
+}
+
+// Duilib callback
 void OptionsDlg::Notify(TNotifyUI& msg)
 {
     if( msg.sType == _T("windowinit") ) OnPrepare();
-    else if( msg.sType == _T("click") ) 
-    {
-        if( msg.pSender->GetName() == _T("insertimagebtn") ) {
-            CRichEditUI* pRich = static_cast<CRichEditUI*>(m_pm.FindControl(_T("testrichedit")));
-            if( pRich ) {
-                pRich->RemoveAll();
-            }
-        }
-        else if( msg.pSender->GetName() == _T("changeskinbtn") ) {
-            if( CPaintManagerUI::GetResourcePath() == CPaintManagerUI::GetInstancePath() )
-                CPaintManagerUI::SetResourcePath(CPaintManagerUI::GetInstancePath() + _T("skin\\FlashRes"));
-            else
-                CPaintManagerUI::SetResourcePath(CPaintManagerUI::GetInstancePath());
-            CPaintManagerUI::ReloadSkin();
-        }
-    }
     else if( msg.pSender==language ) {
         if( msg.sType == DUI_MSGTYPE_PREDROPDOWN ) 
         { 
@@ -329,8 +358,56 @@ void OptionsDlg::Notify(TNotifyUI& msg)
     else if( msg.pSender == bwedit || msg.pSender == wkedit || msg.pSender == mbedit ) {
         HandleMessage(1, &msg);
     }
+    else 
+    {
+        CBSwitchUI* switcher = dynamic_cast<CBSwitchUI*>(msg.pSender);
+        if(switcher)
+        {
+            if(msg.sType == DUI_MSGTYPE_SELECTCHANGED)
+            {
+                auto & ud = switcher->GetUserData();
+                if(!ud.IsEmpty())
+                {
+                    int switcherid = _ttoi(ud.GetData());
+                    bool reverse=false;
+                    if(switcherid<0)
+                    {
+                        reverse = true;
+                        switcherid = -switcherid;
+                    }
+                    if(GetUIBool(switcherid, reverse)!=switcher->IsSelected())
+                    {
+                        ToggleUIBool(switcherid, reverse);
+                    }
+                }
+            }
+            return;
+        }
+
+        CEditUI* edit = dynamic_cast<CEditUI*>(msg.pSender);
+        if(edit)
+        {
+            // notify :: return on the edit control of extension fields
+            // todo get rid of the beep sound
+
+            auto & name = msg.pSender->GetName();
+            if(name.GetLength()==4&&lstrcmp(name.GetData()+2, TEXT("ht")))
+            {
+                if(msg.sType == DUI_MSGTYPE_TEXTCHANGED)
+                {
+                    PutHotTextToIni(msg.pSender);
+                }
+                //else if(msg.sType == DUI_MSGTYPE_RETURN)
+                //{
+                //    PutHotTextToIni(msg.pSender);
+                //}
+            }
+            return;
+        }
+    }
 }
 
+// Window Messages callback
 LRESULT OptionsDlg::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     if( uMsg == WM_CREATE ) {
@@ -343,37 +420,10 @@ LRESULT OptionsDlg::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
         m_pm.AttachDialog(pRoot);
         m_pm.AddNotifier(this);
 
-
         TranslateUI(m_pm, _MDText.getLocaliseMap());
 
         //m_pm.SetDPI(100);  // Set the new DPI, retrieved from the wParam
-
-        //m_pWndShadow = new CWndShadow;
-        //m_pWndShadow->Create(m_hWnd);
-        //RECT rcCorner = {3,3,4,4};
-        //RECT rcHoleOffset = {0,0,0,0};
-        //m_pWndShadow->SetImage(_T("LeftWithFill.png"), rcCorner, rcHoleOffset);
-
-        //DWMNCRENDERINGPOLICY ncrp = DWMNCRP_ENABLED;
-        //SetWindowAttribute(m_hWnd, DWMWA_TRANSITIONS_FORCEDISABLED, &ncrp, sizeof(ncrp));
-
-        //DWM_BLURBEHIND bb = {0};
-        //bb.dwFlags = DWM_BB_ENABLE;
-        //bb.fEnable = true;
-        //bb.hRgnBlur = NULL;
-        //EnableBlurBehindWindow(m_hWnd, bb);
-
-        //DWM_MARGINS margins = {-1}/*{0,0,0,25}*/;
-        //ExtendFrameIntoClientArea(m_hWnd, margins);
-
-        Init();
         return 0;
-    }
-    else if( uMsg == WM_DESTROY ) {
-        //::PostQuitMessage(0L);
-    }
-    else if( uMsg == WM_NCACTIVATE ) {
-        //if( !::IsIconic(*this) ) return (wParam == 0) ? TRUE : FALSE;
     }
     LRESULT lRes = 0;
     if( m_pm.MessageHandler(uMsg, wParam, lParam, lRes) ) return lRes;

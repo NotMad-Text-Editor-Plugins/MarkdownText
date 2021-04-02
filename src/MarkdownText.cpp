@@ -68,6 +68,8 @@ extern "C" __declspec(dllexport) FuncItem * getFuncsArray(int *nbF)
 
 __declspec(selectany)  toolbarIcons		g_TBMarkdown{0,0,0x666,0,IDI_ICON_MD,0,0,IDB_BITMAP1};
 
+bool autoRunChecking=false;
+
 // export the listener
 extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 {
@@ -115,6 +117,11 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 		case NPPN_READY:
 		{
 			NeedUpdate=NPPRunning=true;
+			// auto run according to the command line arguments and current active file.
+			if(!GetUIBool(6)&&(_MDText.bRunRequested || GetUIBoolReverse(5))) 
+			{
+				autoRunChecking = true;
+			}
 		}
 		break;
 		case NPPN_BEFORESHUTDOWN:
@@ -179,7 +186,11 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 		break;
 		case SCN_UPDATEUI:
 		{
-
+			if (autoRunChecking)
+			{
+				_MDText.checkAutoRun();
+				autoRunChecking = false;
+			}
 		}
 		break;
 		case SCN_SAVEPOINTREACHED:

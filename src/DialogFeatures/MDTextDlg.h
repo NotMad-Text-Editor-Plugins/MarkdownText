@@ -51,6 +51,13 @@ bool SetPosByIndex(int delta, bool doit=true);
 void EnableTBButton(menuList flagIndex, bool state, bool force=false);
 #define TB_ENABLEBUTTON         (WM_USER + 1)
 
+
+struct ReadExtContext{
+	char* key;
+	char* hotVal;
+	const char* defVal;
+};
+
 class MarkDownTextDlg : public DockingDlgInterface, public APresentee
 {
 public :
@@ -76,6 +83,7 @@ public :
 	};
 	void saveParameters();
 	void readParameters();
+	void  readExtensions(int channel, string * ret);
 	void destroyWebViews(bool exit=false);
 	void switchEngineByIndex(int id);
 
@@ -110,10 +118,6 @@ protected :
 
 	bool bAutoSwitchEngines=0;
 
-	std::vector<char*> markdown_ext;
-
-	std::vector<char*> html_ext;
-
 	void releaseEnginesMenu();
 
 	std::vector<FuncItem> ZOOMER;
@@ -127,6 +131,8 @@ protected :
 
 	bool FindMarkdownEngines(TCHAR* path);
 	void readLibPaths(int & max, std::vector<std::string*> & LibPaths, char* key, int & sel, char* selkey);
+	
+	const char* rnd_res;
 public :
 	APresenter presenter;
 	int kernelType=-1; // -1_auto 0_wke 1_mb 2_bw 3_WV2
@@ -168,6 +174,18 @@ public :
 	void localeTextToBuffer(TCHAR* buffer, int cchBuffer, char* name, TCHAR* defVal);
 
 	void destroyDynamicMenus();
+
+	std::vector<std::string> markdown_ext;
+
+	std::vector<std::string> asciidoc_ext;
+
+	std::vector<std::string> html_ext;
+
+	void checkAutoRun();
+
+	ReadExtContext* extCtx = NULL;
+
+	bool bRunRequested = false;
 };
 
 #endif //LNHISTORY_DLG_H

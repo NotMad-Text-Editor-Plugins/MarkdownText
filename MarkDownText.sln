@@ -72,8 +72,8 @@ Global
 		{E106ACD7-4E53-4AEE-942B-D0DD426DB34E}.Unicode Debug|x64.Build.0 = Debug|x64
 		{E106ACD7-4E53-4AEE-942B-D0DD426DB34E}.Unicode Realeas|Win32.ActiveCfg = Debug|Win32
 		{E106ACD7-4E53-4AEE-942B-D0DD426DB34E}.Unicode Realeas|Win32.Build.0 = Debug|Win32
-		{E106ACD7-4E53-4AEE-942B-D0DD426DB34E}.Unicode Realeas|x64.ActiveCfg = Debug|x64
-		{E106ACD7-4E53-4AEE-942B-D0DD426DB34E}.Unicode Realeas|x64.Build.0 = Debug|x64
+		{E106ACD7-4E53-4AEE-942B-D0DD426DB34E}.Unicode Realeas|x64.ActiveCfg = Release|x64
+		{E106ACD7-4E53-4AEE-942B-D0DD426DB34E}.Unicode Realeas|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

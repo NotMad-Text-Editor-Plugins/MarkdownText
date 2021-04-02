@@ -112,6 +112,7 @@ __declspec(selectany) FuncItem* funcUpdate;
 
 extern int ToggleUIBool(int pos, bool reverse);
 extern bool GetUIBool(int pos);
+extern bool GetUIBool(int pos, bool reverse);
 extern bool GetUIBoolReverse(int pos);
 
 void CheckMenu(FuncItem* funcItem, bool val);

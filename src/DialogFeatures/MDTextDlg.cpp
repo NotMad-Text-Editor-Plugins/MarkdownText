@@ -1,5 +1,6 @@
 /*
-* Copyright 2020 Encapsulate miniblink, libcef and webview2 in one c++ file.
+* Copyright 2020 KnIfER
+* Encapsulate miniblink, libcef and webview2 in one c++ file.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
@@ -72,12 +73,15 @@ CHAR* MarkDownTextDlg::loadSourceAsset(uptr_t bid, const char* pathA, DWORD & da
 CHAR* MarkDownTextDlg::loadPluginAsset(const char* path, DWORD & dataLen)
 {
 	CHAR ResPath[MAX_PATH];
-#if 1 // debug resource path
-	strcpy(ResPath, "D:\\Code\\FigureOut\\chrome\\extesions\\MarkdownEngines\\");
-#else
-	::GetModuleFileNameA((HINSTANCE)g_hModule, ResPath, MAX_PATH);
-	::PathRemoveFileSpecA(ResPath);
-#endif
+	if(rnd_res)
+	{
+		strcpy(ResPath, rnd_res);
+	}
+	else
+	{
+		::GetModuleFileNameA((HINSTANCE)g_hModule, ResPath, MAX_PATH);
+		::PathRemoveFileSpecA(ResPath);
+	}
 	::PathAppendA(ResPath, path);
 	if(PathFileExistsA(ResPath)) 
 	{
@@ -144,7 +148,7 @@ CHAR* MarkDownTextDlg::GetDocTex(size_t & docLength, LONG_PTR bid, bool * should
 		*shouldDelete = false;
 	}
 
-	if(currentkernelType!=MINILINK_TYPE && bid && false) //  && !legacy
+	if(currentkernelType!=MINILINK_TYPE && bid && !legacy) //  && !legacy
 	{
 		// fast-read the original memory data
 		LONG_PTR DOCUMENTPTR = SendMessage(nppData._nppHandle, NPPM_GETDOCUMENTPTR, bid, bid);
@@ -258,11 +262,11 @@ void MarkDownTextDlg::releaseEnginesMenu()
 	}
 }
 
-bool checkFileExt(vector<char*> ext) { 
+bool checkFileExt(vector<string> ext) { 
 	auto len = lstrlen(last_actived);
 	TCHAR x;
-	for(char* eI:ext) {
-		auto elen = strlen(eI);
+	for(string & eI:ext) {
+		auto elen = eI.length();
 		if(elen==1&&eI[0]=='*') return true;
 		if(len>elen) {
 			int i=elen-1;
@@ -278,21 +282,12 @@ bool checkFileExt(vector<char*> ext) {
 bool MarkDownTextDlg::checkRenderMarkdown() { 
 	if(bForcePreview)
 		return 1;
-	if(markdown_ext.size()==0) {
-		markdown_ext.push_back(".md");
-		markdown_ext.push_back(".md.html");
-		markdown_ext.push_back(".svg");
-		markdown_ext.push_back(".markdown");
-	}
 	return checkFileExt(markdown_ext);
 }
 
 bool MarkDownTextDlg::checkRenderHtml() { 
 	if(bForcePreview)
 		return 1;
-	if(html_ext.size()==0) {
-		html_ext.push_back(".html");
-	}
 	return checkFileExt(html_ext);
 }
 
@@ -377,16 +372,24 @@ void MarkDownTextDlg::OnToolBarRequestToolTip( LPNMHDR nmhdr )
 	int resId = (int)lpttt->hdr.idFrom;
 	int ToolTipIndex = resId - PrivateToolBarIconList[0]._cmdID;
 
+	if (ToolTipIndex<0||ToolTipIndex>ListBoxToolBarSize)
+	{
+		return;
+	}
+
 	auto tooltips=ToolBarToolTips;
 	auto locText = GetLocalText(getLocaliseMap(), ToolBarToolTipsId[ToolTipIndex]);
 
 	auto tips = tooltips[ToolTipIndex];
 	if(locText)
 	{
-		TCHAR tmp[MAX_PATH];
-		int len = MultiByteToWideChar(CP_ACP, 0, locText->c_str(), -1, tmp, MAX_PATH-1);
-		tmp[len] = '\0';
-		tips = tmp;
+		tips=ToolBarToolTipsTranslations[ToolTipIndex];
+		if (!tips)
+		{
+			tips = ToolBarToolTipsTranslations[ToolTipIndex] = new TCHAR[64];
+		}
+		int len = MultiByteToWideChar(CP_ACP, 0, locText->c_str(), -1, tips, 63);
+		tips[len] = '\0';
 	}
 
 	//TCHAR ToolTipText[MAX_PATH];
@@ -667,19 +670,77 @@ void MarkDownTextDlg::readLibPaths(int & max, std::vector<std::string*> & LibPat
 			LibPaths.push_back(val);
 			max++;
 		}
-		else 
+		else if(i<3)
+		{
+			LibPaths.push_back(NULL);
+			max++;
+		}
+		else
 		{
 			break;
-		}
-	}
-	if(max<3) {
-		for(;max<3;max++) {
-			LibPaths.push_back(NULL);
 		}
 	}
 	sel = GetProfInt(selkey, 0);
 	if(sel>=max) sel=max-1;
 	if(sel<=0) sel=0;
+}
+
+void StrToExtArr(std::vector<string> & arr, char* data, int dataLen)
+{
+	arr.clear();
+	int cc=0;
+	for (int pos = dataLen-2; pos>=-1; pos--)
+	{
+		if(data[pos]==' '||pos==-1)
+		{
+			if(pos>0)
+			{
+				data[pos]='\0';
+			}
+			arr.push_back(data+pos+1);
+			if(data[pos+1]!='.')
+			{
+				arr[cc]="."+arr[cc];
+			}
+			cc++;
+		}
+	}
+	for (int i = 0; i < dataLen; i++) 
+		if(data[i]=='\0') data[i]=' ';
+}
+
+void MarkDownTextDlg::readExtensions(int channel, string * ret)
+{
+	if(!extCtx) 
+	{
+		extCtx = new ReadExtContext[] {
+			 {"Ext_MD", NULL, "md md.html svg markdown"}
+			,{"Ext_AD", NULL, "ascii"}
+			,{"Ext_HTML", NULL, "html"}
+		};
+	}
+	std::vector<std::string>* extVectors[]{&markdown_ext, &asciidoc_ext, &html_ext};
+	string tmp;
+	for (int id = 0; id < 3; id++)
+	{
+		if(ret&&channel==id||channel==-1||channel==id) {
+			string* val = GetProfString(extCtx[id].key);
+			if(!val||val->length()==0)
+			{
+				tmp = extCtx[id].defVal;
+				val = &tmp;
+			}
+			if(ret)
+			{
+				*ret = val->data();
+				return;
+			}
+			else
+			{
+				StrToExtArr(*extVectors[id], (char*)val->data(), val->length());
+			}
+		}
+	}
 }
 
 void MarkDownTextDlg::readParameters()
@@ -691,6 +752,10 @@ void MarkDownTextDlg::readParameters()
 		kernelType=-1;
 	}
 	std::string* val;
+	if(val=GetProfString("rnd_res"))
+	{
+		rnd_res = val->data();
+	}
 	if(val=GetProfString("MDEngine"))
 	{
 		strcpy(MDRoutine, val->data());
@@ -712,6 +777,9 @@ void MarkDownTextDlg::readParameters()
 	} else {
 		localeSet=false;
 	}
+
+	readExtensions(-1, NULL);
+
 	UISettings=GetProfInt("UISettings", 0);
 	readLibPaths(maxPathHistory, LibPaths, "LibPath%d", LibCefSel, "LibCef");
 	readLibPaths(maxPathHistory1, WkePaths, "WkePath%d", LibWkeSel, "LibWke");
@@ -938,6 +1006,70 @@ void MarkDownTextDlg::destroyDynamicMenus()
 	}
 }
 
+void MarkDownTextDlg::checkAutoRun()
+{
+	if (!GetUIBoolReverse(5))
+	{
+		// run directly.
+		funcItems[1]._pFunc();
+		return;
+	}
+	// else check and judge whether to run.
+	CHAR* cmd;
+	std::vector<string>* all_exts[]{&html_ext, &markdown_ext};
+	char* ext, * cmdn; 
+	int i,j,k,extl,extsl,all_extsl=2,cmdl;
+	for (int x = 0; x < 2; x++)
+	{
+		if(x==0)
+		{
+			TCHAR*  pszNewPath;
+			if(legacy) {
+				pszNewPath = path_buffer;
+				::SendMessage(nppData._nppHandle, NPPM_GETFULLCURRENTPATH,0,(LPARAM)pszNewPath);
+			} else {
+				pszNewPath = (TCHAR*)::SendMessage(nppData._nppHandle,NPPM_GETRAWFULLCURRENTPATH, 0, 0);
+			}
+			cmdl = lstrlen(pszNewPath);
+			if(cmdl>15)
+			{
+				pszNewPath = pszNewPath + cmdl - 15;
+			}
+			char tmp[32]{};
+			cmdl = WideCharToMultiByte(CP_ACP, 0, pszNewPath, -1, tmp, 31, 0, 0);
+			cmd = tmp;
+		}
+		else
+		{
+			cmd = GetCommandLineA();
+			cmdl = strlen(cmd);
+		}
+		for (i = cmdl-2; i >=0 ; i--)
+		//for (i = 0; i<cmdl; i++)
+		{
+			cmdn = cmd+i;
+			for (j = 0; j < all_extsl; j++)
+			{
+				auto & exts = *all_exts[j];
+				for (k = 0,extsl=exts.size(); k < extsl; k++)
+				{
+					ext = (char*)exts[k].data();
+					extl = strlen(ext);
+					if(cmdl-i>=extl&&strnicmp(cmdn, ext, extl)==0)
+					{
+						char c;
+						//if(i+extl>=cmdl-1||(c=cmd[i+extl])==' '||c=='"'||c=='\'')
+						{
+							funcItems[1]._pFunc();
+							return;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 int funcSz(FuncItem* funcs)
 {
 	int sz=0;
@@ -954,7 +1086,7 @@ void MarkDownTextDlg::setLanguageName(wstring & name, bool init) {
 	if(currentLanguageFile!=name||init)
 	{
 		currentLanguageFile = name;
-		if(init&&(name.length()==0||name==TEXT("english.ini")))
+		if(init&&(name.length()==0)) // ||name==TEXT("english.ini")
 		{
 			return;
 		}
@@ -964,7 +1096,6 @@ void MarkDownTextDlg::setLanguageName(wstring & name, bool init) {
 		PathAppend(path, name.c_str());
 		loadLanguge(path);
 		destroyDynamicMenus();
-		auto & lm = getLocaliseMap();
 		HMENU hMenuPlugin =  GetPluginMenu();
 		if(hMenuPlugin)
 		{

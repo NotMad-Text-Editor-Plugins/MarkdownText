@@ -67,7 +67,7 @@ LRESULT WINAPI testWindowProc1(
 	}
 	case WM_KEYUP:
 	{
-		::MessageBox(NULL, TEXT("111"), TEXT(""), MB_OK);
+		//::MessageBox(NULL, TEXT("111"), TEXT(""), MB_OK);
 		break;
 	}
 	case WM_CHAR:
@@ -184,9 +184,16 @@ void onBrowserPrepared(bwWebView browserPtr)
 	bwInstallJsNativeToWidget(browserPtr, "Scinllo", ScintillaScroll);
 	if (APresenterBWidget* wv = dynamic_cast<APresenterBWidget*>(presentee->mWebView0)) {
 		wv->mWebView = browserPtr;
+		presentee->hBrowser = bwGetHWNDForBrowser(browserPtr);
+		::SendMessage(presentee->getHWND(), WM_SIZE, 0, 0);
+		DefferedLoadingData* parms = defferedLoad;
+		if (parms)
+		{
+			wv->updateArticle(parms->bid, parms->articleType, false, true);
+			defferedLoad = NULL;
+			delete parms;
+		}
 	}
-	presentee->hBrowser = bwGetHWNDForBrowser(browserPtr);
-	::SendMessage(presentee->getHWND(), WM_SIZE, 0, 0);
 	//_MDText.RefreshWebview(); 没有用
 	//SetWindowLongPtr(_MDText.hBrowser, GWLP_WNDPROC, (LONG_PTR)testWindowProc1);
 }
@@ -282,6 +289,11 @@ void APresenterBWidget::ShowWindow()
 
 void APresenterBWidget::updateArticle(LONG_PTR bid, int articleType, bool softUpdate, bool update) 
 {
+	if (!mWebView)
+	{
+		defferedLoad = new DefferedLoadingData{bid, articleType};
+		return;
+	}
 	CHAR* page_id = new CHAR[64];  // LIBCEF 需要拟构网址。 传文件名，只传ID吧。 http://tests/MDT/{bid}/index.html
 	int st,ed;
 	strcpy(page_id, "http://tests/MDT/");

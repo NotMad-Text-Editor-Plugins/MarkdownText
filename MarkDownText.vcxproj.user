@@ -3,4 +3,14 @@
   <PropertyGroup>
     <ShowAllFiles>false</ShowAllFiles>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|x64'">
+    <LocalDebuggerCommand>$(ProjectDir)..\..\PowerEditor\bin64\Textrument.exe</LocalDebuggerCommand>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerCommandArguments>-nosession -multiInst $(ProjectDir)TEST\test.session</LocalDebuggerCommandArguments>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Realeas|x64'">
+    <LocalDebuggerCommand>$(ProjectDir)..\..\PowerEditor\bin64\Textrument.exe</LocalDebuggerCommand>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerCommandArguments>-nosession -multiInst $(ProjectDir)TEST\test.session</LocalDebuggerCommandArguments>
+  </PropertyGroup>
 </Project>

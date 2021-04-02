@@ -9,6 +9,14 @@
 
 class ArticlePresenter;
 
+struct DefferedLoadingData
+{
+	LONG_PTR bid;
+	int articleType;
+};
+
+static DefferedLoadingData* defferedLoad;
+
 class APresentee
 {
 public:

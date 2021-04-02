@@ -49,9 +49,6 @@
     <ClCompile Include="..\..\PowerEditor\src\WinControls\StaticDialog\StaticDialog.cpp">
       <Filter>Source\DialogFeatures</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\PowerEditor\src\WinControls\ToolBar\ToolBar.cpp">
-      <Filter>Source\PluginFeatures</Filter>
-    </ClCompile>
     <ClCompile Include="src\DialogFeatures\OptionsDlg.cpp">
       <Filter>Source\DialogFeatures</Filter>
     </ClCompile>
@@ -60,6 +57,9 @@
     </ClCompile>
     <ClCompile Include="..\DirectUILib\DuiLib\ControlEx\DuiLibTranslator.cpp">
       <Filter>Source\DuiLibFeatures</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\PowerEditor\src\WinControls\ToolBar\ToolBar.cpp">
+      <Filter>Source\PluginFeatures</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
