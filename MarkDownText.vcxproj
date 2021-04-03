@@ -415,6 +415,8 @@
     <ClInclude Include="src\ArticlePresenters\APresenterWebView2.h" />
     <ClInclude Include="src\ArticlePresenters\ArticlePresenter.h" />
     <ClInclude Include="src\ArticlePresenters\CheckFailure.h" />
+    <ClInclude Include="src\ArticlePresenters\Miniblink\mb.h" />
+    <ClInclude Include="src\ArticlePresenters\Miniblink\wke.h" />
     <ClInclude Include="src\DialogFeatures\afxres.h" />
     <ClInclude Include="src\DialogFeatures\Docking.h" />
     <ClInclude Include="src\DialogFeatures\dockingResource.h" />

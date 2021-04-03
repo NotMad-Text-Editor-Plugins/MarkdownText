@@ -2,6 +2,8 @@
 #include "PluginDefinition.h"
 #include "APresentee.h"
 
+#include "shlwapi.h"
+
 
 void WKE_CALL_TYPE onDidCreateScriptContextCallback(wkeWebView webView, void* param, wkeWebFrameHandle frameId, void* context, int extensionGroup, int worldId)
 {
@@ -129,6 +131,7 @@ jsValue WKE_CALL_TYPE ScintillaScroll1(jsExecState es, void* param)
 ////////////////////////////////////////////////
 
 
+extern TCHAR MBPath[MAX_PATH];
 
 APresenterMiniWke::APresenterMiniWke(TCHAR* WKPath, int & error_code, HWND & hBrowser, HWND hwnd) {
 	wkeSetWkeDllPath(WKPath);
@@ -138,6 +141,8 @@ APresenterMiniWke::APresenterMiniWke(TCHAR* WKPath, int & error_code, HWND & hBr
 		mWebView = wkeCreateWebWindow(WKE_WINDOW_TYPE_CONTROL, hwnd , 0, 0, 640, 480); 
 		if (mWebView)
 		{
+			lstrcpy(MBPath, WKPath);
+			::PathRemoveFileSpec(MBPath);
 			hBrowser = wkeGetWindowHandle(mWebView);
 			//setMoveWindowArea(0, 0, 640, 30); // 设置窗口可拖动区域，用于无边框窗体
 			//wkeSetWindowTitleW(mWebView, NPP_PLUGIN_NAME);
@@ -194,7 +199,10 @@ void APresenterMiniWke::ZoomIn() {
 }
 
 void APresenterMiniWke::ShowDevTools(TCHAR *res_path) {
-	wkeShowDevtools(mWebView, res_path, 0, 0);
+	TCHAR tmp[MAX_PATH]{};
+	lstrcpy(tmp, MBPath);
+	::PathAppend(tmp, TEXT("front_end\\inspector.html"));
+	wkeShowDevtools(mWebView, tmp, 0, 0);
 }
 
 void APresenterMiniWke::ShowWindow() {

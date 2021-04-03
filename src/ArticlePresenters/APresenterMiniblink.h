@@ -2,8 +2,8 @@
 #ifndef APRESENTERMINIBLINK_H
 #define APRESENTERMINIBLINK_H
 #include "ArticlePresenter.h"
-#include "wke.h"
-#include "mb.h"
+#include "Miniblink/wke.h"
+#include "Miniblink/mb.h"
 
 
 #define mbzd 0.25

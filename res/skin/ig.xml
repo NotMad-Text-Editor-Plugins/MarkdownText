@@ -1,71 +1,66 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Window mininfo="200,360" size="450,600">
-	<Include source="defaults.xml" />
-	
-	<VerticalLayout inset="10,0,10,0" colorhsl="true" bkcolor="#FFFFFFFF"
-					vscrollbar="true"  valign="center" halign="center"	>
-					
-	<RichEdit font="2" minheight="80"
-		text="MarkdownText 插件本身不包含用于渲染HTML的浏览器组件，需额外下载安装。一共支持三种浏览器组件。" autovscroll="true" 
-		readonly="true" padding="2,2.8,0,0"/>
-		
-			
-<RichEdit font="2"  text=" ◇ 推荐 WebView2 运行时：" autovscroll="true" readonly="true" padding="2,2.8,0,0"/>
-		
+<Window>
+<Include source="defaults.xml" />
+
+<VerticalLayout inset="10,0,10,0" colorhsl="true" bkcolor="#FFFFFFFF" vscrollbar="true"  valign="center" halign="center"	>
+
+<RichEdit font="2" minheight="80" name="ins_hd" text="MarkdownText 插件本身不包含用于渲染HTML的浏览器组件，需额外下载安装。一共支持三种浏览器组件。" autovscroll="true" readonly="true" padding="2,2.8,0,0"/>
+	<RichEdit font="2" name="ins_wv2" text=" ◇ 推荐 WebView2 运行时：" autovscroll="true" readonly="true" padding="2,2.8,0,0"/>
 	<Control height="4"/>
 	<HorizontalLayout minheight="35" maxheight="50" >
 		<Control/>
-		<Button ud="https://developer.microsoft.com/microsoft-edge/webview2" text="{b}下载 WebView2 Runtime{/b}" showhtml="true" width="360"  bkcolor="#0000E000" nativebkcolor="#0000E000"/>
+		<Button name="dwn_wv2" ud="https://developer.microsoft.com/microsoft-edge/webview2" text="{b}下载 WebView2 Runtime{/b}" showhtml="true" width="360" bkcolor="#0000E000" nativebkcolor="#0000E000"/>
 		<Control/>
 	</HorizontalLayout>
 	<Control height="4"/>
 	<HorizontalLayout minheight="35" maxheight="50" >
 		<Control/>
-			<Button ud="https://www.microsoftedgeinsider.com" text="{b}下载 Edge Insider{/b}" showhtml="true" width="360" bkcolor="#0000E000" nativebkcolor="#0000E000"/>
+		<Button name="dwn_edg" ud="https://www.microsoftedgeinsider.com" text="{b}下载 Edge Insider{/b}" showhtml="true" width="360" bkcolor="#0000E000" nativebkcolor="#0000E000"/>
 		<Control/>
 	</HorizontalLayout>
 	
-				
 	<Control height="8"/>
-<RichEdit font="2"  text=" ◇ 可选基于 Libcef 的组件：" autovscroll="true" readonly="true" padding="2,2.8,0,0"/>
-	
+
+
+	<RichEdit font="2" name="ins_cef" text=" ◇ 可选基于 Libcef 的组件：" autovscroll="true" readonly="true" padding="2,2.8,0,0"/>
 	<HorizontalLayout minheight="35" maxheight="50" >
 		<Control/>
-		<Button ud="https://cef-builds.spotifycdn.com/index.html#windows64:85.3.11" text="{b}下载 Libcef {/b}" showhtml="true" width="360"  bkcolor="#0000E000" nativebkcolor="#0000E000"/>
+		<Button name="dwn_cef" ud="https://cef-builds.spotifycdn.com/index.html#windows64:85.3.11" text="{b}下载 Libcef {/b}" showhtml="true" width="360" bkcolor="#0000E000" nativebkcolor="#0000E000"/>
 		<Control/>
 	</HorizontalLayout>
 	<Control height="4"/>
 	<HorizontalLayout minheight="35" maxheight="50" >
 		<Control/>
-		<Button ud="https://cef-builds.spotifycdn.com/index.html#windows64:85.3.11" text="{b}下载组件 {/b}" showhtml="true" width="360"  bkcolor="#0000E000" nativebkcolor="#0000E000"/>
+		<Button name="dwn" ud="https://cef-builds.spotifycdn.com/index.html#windows64:85.3.11" text="{b}下载组件{/b}" td="gitee" showhtml="true" width="360" bkcolor="#0000E000" nativebkcolor="#0000E000"/>
 		<Control/>
 	</HorizontalLayout>
 	<Control height="4"/>
 	<HorizontalLayout minheight="35" maxheight="50" >
 		<Control/>
-			<Button ud="https://www.microsoftedgeinsider.com" text="{b} 安装指导 {/b}" showhtml="true" width="360" bkcolor="#0000E000" nativebkcolor="#0000E000"/>
+			<Button name="ins_gd" ud="https://www.microsoftedgeinsider.com" text="{b} 安装指导 {/b}" td="gitee" showhtml="true" width="360" bkcolor="#0000E000" nativebkcolor="#0000E000"/>
 		<Control/>
 	</HorizontalLayout>
-	
-		<Control height="8"/>
-<RichEdit font="2"  text=" ◇ 可选 MiniBlink 组件：" autovscroll="true" readonly="true" padding="2,2.8,0,0"/>
-
-	<HorizontalLayout minheight="35" maxheight="50" >
-		<Control/>
-			<Button ud="https://www.microsoftedgeinsider.com" text="{b} 下载组件 {/b}" showhtml="true" width="360" bkcolor="#0000E000" nativebkcolor="#0000E000"/>
-		<Control/>
-	</HorizontalLayout>
-	<Control height="4"/>
-	<HorizontalLayout minheight="35" maxheight="50" >
-		<Control/>
-			<Button ud="https://www.microsoftedgeinsider.com" text="{b} 安装指导 {/b}" showhtml="true" width="360" bkcolor="#0000E000" nativebkcolor="#0000E000"/>
-		<Control/>
-	</HorizontalLayout>
-	
-	</VerticalLayout>
-
-
 
 	<Control height="8"/>
+
+
+	<RichEdit font="2" name="ins_mb" text=" ◇ 可选 MiniBlink 组件：" autovscroll="true" readonly="true" padding="2,2.8,0,0"/>
+	<HorizontalLayout minheight="35" maxheight="50" >
+		<Control/>
+		<Button name="dwn" ud="https://github.com/weolar/miniblink49/releases/tag/2021.1.28" td="gitee" text="{b} 下载组件 {/b}" showhtml="true" width="360" bkcolor="#0000E000" nativebkcolor="#0000E000"/>
+		<Control/>
+	</HorizontalLayout>
+	<Control height="4"/>
+	<HorizontalLayout minheight="35" maxheight="50" >
+		<Control/>
+		<Button name="ins_gd" ud="https://www.microsoftedgeinsider.com" text="{b} 安装指导 {/b}" td="gitee" showhtml="true" width="360" bkcolor="#0000E000" nativebkcolor="#0000E000"/>
+		<Control/>
+	</HorizontalLayout>
+
+
+</VerticalLayout>
+
+
+<Control height="8"/>
 
 </Window>

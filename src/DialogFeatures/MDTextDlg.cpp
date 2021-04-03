@@ -228,7 +228,10 @@ void MarkDownTextDlg::display(bool toShow){
 
 	if(toShow && !mWebView0) 
 	{
-		presenter.initWebViewImpl(kernelType, this, true);
+		if(presenter.initWebViewImpl(kernelType, this, true))
+		{
+			displayInstallGuide();
+		}
 	}
 
 	//::SendMessage( _hSelf, SELF_REFRESH, 0, 1);
@@ -492,7 +495,7 @@ INT_PTR CALLBACK MarkDownTextDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 			bool showIGUnit = installGuide;// && WM_SIZE==message;
 			if (showIGUnit)
 			{
-				//::SetWindowPos(installGuide->GetHWND(),HWND_TOP,rc.left, rc.top+toolbarHeight, rc.right-rc.left, rc.bottom-toolbarHeight-rc.top, 0);
+				//::SetWindowPos(installGuide->GetHWND(),HWND_TOP,0, 0, 0, 0, SWP_SHOWWINDOW);
 				::MoveWindow(installGuide->GetHWND(), rc.left, rc.top+toolbarHeight, rc.right, rc.bottom-toolbarHeight,1);
 				if (hBrowser && IsWindowVisible(hBrowser))
 				{
@@ -890,6 +893,11 @@ void MarkDownTextDlg::switchEngineByIndex(int id)
 		ArticlePresenter* mwold = mWebView0;
 		HWND hold = hBrowser;
 
+		if (installGuide)
+		{
+			installGuide->Close();
+		}
+
 		if(presenter.initWebViewImpl(id, this, false)==0)
 		{
 			lastBid=0;
@@ -989,6 +997,7 @@ bool MarkDownTextDlg::FindMarkdownEngines(TCHAR* path) {
 }
 
 std::map<std::string, std::string> & MarkDownTextDlg::getLocaliseMap() {
+	localizationMap = &localizefile;
 	return localizefile;
 }
 
@@ -1244,7 +1253,7 @@ void MarkDownTextDlg::displayInstallGuide()
 		installGuide->Close();
 		return;
 	}
-	if (!_MDText.isVisible())
+	if (!isVisible())
 	{
 		isShowGuidePredateArticle = true;
 		funcItems[0]._pFunc();
@@ -1263,6 +1272,27 @@ void MarkDownTextDlg::displayInstallGuide()
 		ShowWindow(installGuide->GetHWND(), SW_SHOW);
 		::SendMessage(_hSelf, WM_SIZE, 0, 0);
 	}
+}
+
+wstring MarkDownTextDlg::GetLocalWText(char* name, const TCHAR* defVal)
+{
+	if (localizationMap)
+	{
+		std::map<std::string, std::string> & m = getLocaliseMap();
+		if(m.size())
+		{
+			auto idx = m.find(name);
+			if(idx!=m.end())
+			{	
+				TCHAR text[MAX_PATH];
+				auto & value = (*idx).second;
+				int len = MultiByteToWideChar(CP_ACP, 0, value.c_str(), value.size(), text, MAX_PATH-1);
+				text[len]='\0';
+				return text;
+			}
+		}
+	}
+	return defVal;
 }
 
 extern void BoldenText();
@@ -1285,7 +1315,7 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 			{
 				if(mWebView0) {
 					// todo concat the path
-					mWebView0->ShowDevTools(L"C:\\tmp\\miniblink-20200824\\front_end\\inspector.html");
+					mWebView0->ShowDevTools(NULL);
 				}
 			}
 		}
@@ -1370,8 +1400,8 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 				localeTextToBuffer(EngineSwicther.at(0)._itemName, 63, "_sw_bw", TEXT("Switch Browser Kernel :"));
 				EngineSwicther.at(1)={TEXT("Miniblink-wke"), engineToWke, 62, false, 0};
 				EngineSwicther.at(2)={TEXT("Miniblink-mb"), engineToMb, 63, false, 0};
-				EngineSwicther.at(3)={TEXT("Chromium-Embeded ( Recommended )"), engineToChromium, 64, false, 0};
-				EngineSwicther.at(4)={TEXT("Webview2"), engineToWebview2, 65, false, 0};
+				EngineSwicther.at(3)={TEXT("Chromium-Embeded"), engineToChromium, 64, false, 0};
+				EngineSwicther.at(4)={TEXT("Webview2 ( Recommended )"), engineToWebview2, 65, false, 0};
 				EngineSwicther.at(5)={TEXT(""), 0, 0, false, 0};
 				EngineSwicther.at(6)={TEXT(""), (PFUNCPLUGINCMD)SwitchEnginesStatic, 66, false, 0};
 				//lstrcpy(EngineSwicther.at(6)._itemName, ZH_CN?TEXT("切换渲染引擎："):TEXT(" :"));

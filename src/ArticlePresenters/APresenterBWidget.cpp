@@ -238,7 +238,8 @@ APresenterBWidget::APresenterBWidget(TCHAR* WKPath, int & error_code, HWND & hBr
 	}
 	else if(presentee->RequestedSwitch)
 	{
-		::MessageBox(nppData._nppHandle, TEXT("cefclient.dll"), TEXT("Runtime Not Found!"), MB_OK);
+		::MessageBox(nppData._nppHandle, presentee->GetLocalWText("no_rt", TEXT("Runtime Not Found !")).c_str(), TEXT("cefclient.dll"), MB_OK);
+		presentee->RequestedSwitch = false;
 	}
 }
 

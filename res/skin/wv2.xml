@@ -9,25 +9,23 @@
 	
 	<Include source="defaults.xml" />
 	
-	<VerticalLayout inset="10,6,10,6" bkcolor="#FFFFFFFF" colorhsl="true"
-					vscrollbar="true" autovscroll="true" valign="center" halign="center"	>
-					
-		
-       <RichEdit minheight="100" maxwidth="280" name="dwnHint" bkcolor="#0000FFFF" font="2" text="找不到 WebView2 运行时。请选择以下两者之一：" autovscroll="true" readonly="true" padding="2,2.8,0,0"/>
+	<VerticalLayout inset="10,6,10,6" bkcolor="#FFFFFFFF" colorhsl="true" vscrollbar="true" autovscroll="true" valign="center" halign="center"	>
+
+       <RichEdit name="no_wv2" minheight="100" maxwidth="280" bkcolor="#0000FFFF" font="2" text="找不到 WebView2 运行时。请选择以下两者之一：" autovscroll="true" readonly="true" padding="2,2.8,0,0"/>
 
 		<Control height="4"/>
 		<HorizontalLayout minheight="35" maxheight="50" >
 			<Control/>
-			<Button ud="https://developer.microsoft.com/microsoft-edge/webview2" text="{b}下载 WebView2 Runtime{/b}" showhtml="true" width="360"  bkcolor="#0000E000" nativebkcolor="#0000E000"/>
+			<Button name="dwn_wv2" ud="https://developer.microsoft.com/microsoft-edge/webview2" text="{b}下载 WebView2 Runtime{/b}" showhtml="true" width="360"  bkcolor="#0000E000" nativebkcolor="#0000E000"/>
 			<Control/>
 		</HorizontalLayout>
 		<Control height="4"/>
 		<HorizontalLayout minheight="35" maxheight="50" >
 			<Control/>
-				<Button ud="https://www.microsoftedgeinsider.com" text="{b}下载 Edge Insider{/b}" showhtml="true" width="360" bkcolor="#0000E000" nativebkcolor="#0000E000"/>
+				<Button name="dwn_edg" ud="https://www.microsoftedgeinsider.com" text="{b}下载 Edge Insider{/b}" showhtml="true" width="360" bkcolor="#0000E000" nativebkcolor="#0000E000"/>
 			<Control/>
 		</HorizontalLayout>
-		
+
 	</VerticalLayout>
 
 </Window>

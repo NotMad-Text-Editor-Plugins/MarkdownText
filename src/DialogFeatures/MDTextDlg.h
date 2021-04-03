@@ -193,6 +193,8 @@ public :
 	bool bRunRequested = false;
 
 	void displayInstallGuide();
+
+	std::wstring GetLocalWText(char* name, const TCHAR* defVal);
 };
 
 #endif //LNHISTORY_DLG_H

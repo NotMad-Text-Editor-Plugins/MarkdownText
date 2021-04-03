@@ -434,6 +434,7 @@ BOOL regWndClass(LPCTSTR lpcsClassName, DWORD dwStyle)
 
 #define MiniBlinkMBLibName TEXT("mb_x64.dll")
 
+TCHAR MBPath[MAX_PATH]{0};
 
 APresenterMiniblink::APresenterMiniblink(TCHAR* WKPath, const TCHAR* modulePath, int & error_code, HWND & hBrowser, HWND hwnd) 
 {
@@ -441,6 +442,10 @@ APresenterMiniblink::APresenterMiniblink(TCHAR* WKPath, const TCHAR* modulePath,
 	TCHAR WKPath1[MAX_PATH];
 	lstrcpy(WKPath1, WKPath);
 	::PathRemoveFileSpec(WKPath1);
+	//if (MBPath[0]&&lstrcmp(MBPath, WKPath1))
+	{ // if already loaded other libs
+		//mbUninit();
+	}
 	::PathAppend(WKPath1, MiniBlinkMBLibName);
 	if(!PathFileExists(WKPath1))
 	{
@@ -460,6 +465,8 @@ APresenterMiniblink::APresenterMiniblink(TCHAR* WKPath, const TCHAR* modulePath,
 			mWebView = mbCreateWebView();
 			if(mWebView)
 			{
+				lstrcpy(MBPath, WKPath1);
+				::PathRemoveFileSpec(MBPath);
 				error_code = 0;
 				regWndClass(kClassWindow, CS_HREDRAW | CS_VREDRAW);
 				hBrowser = ::CreateWindowEx(0 , kClassWindow , NULL
@@ -520,13 +527,18 @@ void APresenterMiniblink::ZoomIn()
 }
 
 void APresenterMiniblink::ShowDevTools(TCHAR *res_path) {
-#ifdef UNICODE
-	CHAR tmp[MAX_PATH];
-	//int iLength = WideCharToMultiByte(CP_ACP, 0, res_path, -1, NULL, 0, NULL, NULL);  
-	WideCharToMultiByte(CP_ACP, 0, res_path, -1, tmp, 0, NULL, NULL); 
-	res_path = (TCHAR *)tmp;
-#endif
-	mbSetDebugConfig(mWebView, "showDevTools", (char*)res_path);
+	// WTF
+	
+	//TCHAR tmp[MAX_PATH]{};
+	//lstrcpy(tmp, MBPath);
+	//::PathAppend(tmp, TEXT("front_end\\inspector.html"));
+	//
+	//CHAR tmp1[MAX_PATH];
+	////int iLength = WideCharToMultiByte(CP_ACP, 0, res_path, -1, NULL, 0, NULL, NULL);  
+	//WideCharToMultiByte(CP_ACP, 0, res_path, -1, tmp1, 0, NULL, NULL); 
+	//res_path = (TCHAR *)tmp1;
+	//
+	//mbSetDebugConfig(mWebView, "showDevTools", (char*)L"D:\\Downloads\\ChromiumEmbeded\miniblink-20210131\\front_end\\inspector.html");
 }
 
 void APresenterMiniblink::ShowWindow() 

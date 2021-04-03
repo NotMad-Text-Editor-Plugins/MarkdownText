@@ -66,7 +66,7 @@ int APresenter::initWebViewImpl(int kernelType, APresentee * pt, bool fallback)
 		}
 
 		/* Webview2 */ 
-		if(!browser_deferred_creating && kernelType==WEBVIEW2_TYPE)
+		if(!browser_deferred_creating && (kernelType==WEBVIEW2_TYPE||kernelType==AUTO_TYPE))
 		{
 			currentkernelType=WEBVIEW2_TYPE;
 			tmpImpl = new APresenterWebView2(error_code, presentee->hBrowser, presentee->getHWND()); 
@@ -127,7 +127,8 @@ int APresenter::initWebViewImpl(int kernelType, APresentee * pt, bool fallback)
 			}
 			else if(presentee->RequestedSwitch)
 			{
-				::MessageBox(presentee->getHWND(), MiniBlinkMainLibName, TEXT("Runtime Not Found!"), MB_OK);
+				::MessageBox(presentee->getHWND(), presentee->GetLocalWText("no_rt", TEXT("Runtime Not Found !")).c_str(), MiniBlinkMainLibName, MB_OK);
+				presentee->RequestedSwitch = false;
 			}
 			if( SUCCEED ) {
 				newImpl = tmpImpl;

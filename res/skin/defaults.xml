@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Window>
+<Font shared="true" id="0" name="幼圆" size="23" default="true" />
+<Font shared="true" id="1" name="微软雅黑" size="28" />
+<Font shared="true" id="11" name="微软雅黑" size="16" />
 
 <Default shared="true" name="Slider" value="thumbsize=&quot;10,10&quot; bkimage=&quot;file='bg.bmp' corner='6,0,6,0' mask='#FFFF00FF'&quot; foreimage=&quot;file='fg.bmp' corner='6,0,6,0' mask='#FFFF00FF'&quot; thumbimage=&quot;file='thumb.bmp' source='30,0,40,10' mask='#FFDAEBF9'&quot; thumbhotimage=&quot;file='thumb.bmp' source='10,0,20,10' mask='#FFDAEBF9'&quot; " />
 

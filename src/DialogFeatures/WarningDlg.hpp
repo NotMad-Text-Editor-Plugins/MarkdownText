@@ -4,6 +4,8 @@
 
 #include "UIlib.h"
 
+#include "ControlEx/DuiLibTranslator.h"
+
 extern HWND mainAppWnd;
 
 using namespace DuiLib;
@@ -50,6 +52,12 @@ public:
 			m_pm.AttachDialog(pRoot);
 			m_pm.AddNotifier(this);
 			Init();
+
+			if (localizationMap)
+			{
+				TranslateUI(m_pm, *localizationMap);
+			}
+
 			return 0;
 		}
 		else if( isModal && uMsg == WM_DESTROY ) 

@@ -22,7 +22,10 @@ UINT OptionsDlg::GetClassStyle() const
     return UI_CLASSSTYLE_FRAME | CS_DBLCLKS; 
 };
 
+extern OptionsDlg* pFrame;
+
 void OptionsDlg::OnFinalMessage(HWND hWnd) { 
+    pFrame = NULL;
     delete this; 
 };
 
@@ -416,7 +419,8 @@ void OptionsDlg::Notify(TNotifyUI& msg)
 // Window Messages callback
 LRESULT OptionsDlg::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    if( uMsg == WM_CREATE ) {
+    if( uMsg == WM_CREATE ) 
+    {
         m_pm.Init(m_hWnd);
         CDialogBuilder builder;
 
@@ -430,6 +434,9 @@ LRESULT OptionsDlg::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         //m_pm.SetDPI(100);  // Set the new DPI, retrieved from the wParam
         return 0;
+    }
+    if( uMsg == WM_GETICON ) {
+        return NULL;
     }
     LRESULT lRes = 0;
     if( m_pm.MessageHandler(uMsg, wParam, lParam, lRes) ) return lRes;

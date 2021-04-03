@@ -60,6 +60,8 @@ public:
 	virtual void syncWebToline(bool force=false)=0;
 
 	virtual void RefreshWebview(int source=0)=0;
+
+	virtual std::wstring GetLocalWText(char* name, const TCHAR* defVal)=0;
 };
 
 #endif

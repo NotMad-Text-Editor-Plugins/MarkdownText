@@ -269,30 +269,17 @@ HWND handle;
 
 void Settings()
 {
-	if (0)
-	{
-		_MDText.checkAutoRun();
-		return;
-	}
-	//::SendMessage(nppData._nppHandle, NPPM_SETSTATUSBAR, STATUSBAR_DOC_TYPE, (LPARAM)TEXT("Not implemented yet……"));
-
-
-	//HRESULT Hr = ::CoInitialize(NULL);
-	//if( FAILED(Hr) ) return 0;
-
-
-	//if(!pFrame) 
+	if(!pFrame) 
 	{
 		pFrame = new OptionsDlg();
 		pFrame->Create(nppData._nppHandle
-			, _T("MarkdownText - Settings")
-			, UI_WNDSTYLE_FRAME|WS_CLIPCHILDREN, WS_EX_WINDOWEDGE);
-		//pFrame->Create(_MDText.getHSelf(), _T("这是一个最简单的测试用exe，修改test1.xml就可以看到效果"), UI_WNDSTYLE_FRAME|WS_CLIPCHILDREN, WS_EX_WINDOWEDGE);
+			, TEXT("MarkdownText")
+			, WS_POPUP|WS_CLIPSIBLINGS|WS_CAPTION|WS_SYSMENU|WS_THICKFRAME|WS_MAXIMIZEBOX|WS_MINIMIZEBOX
+			, WS_EX_CONTROLPARENT|WS_EX_WINDOWEDGE|WS_EX_DLGMODALFRAME);
+		// WS_EX_DLGMODALFRAME WS_EX_CONTROLPARENT|WS_EX_WINDOWEDGE
 		pFrame->CenterWindow();
 		pFrame->ShowWindow(true);
 	}
-
-
 }
 
 void commandMenuInit()
@@ -358,4 +345,6 @@ void commandMenuInit()
 	lstrcpy(tmpPath, CPaintManagerUI::GetInstancePath());
 	PathAppend(tmpPath, TEXT("..\\..\\..\\..\\plugins\\MarkdownText\\res\\skin"));
 	CPaintManagerUI::SetResourcePath(tmpPath);
+
+	_MDText.getLocaliseMap();
 }

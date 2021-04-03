@@ -141,6 +141,12 @@
     <ClInclude Include="..\DirectUILib\DuiLib\ControlEx\DuiLibTranslator.h">
       <Filter>Source\DuiLibFeatures</Filter>
     </ClInclude>
+    <ClInclude Include="src\ArticlePresenters\Miniblink\mb.h">
+      <Filter>Source\ArticlePresenters\Miniblink</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ArticlePresenters\Miniblink\wke.h">
+      <Filter>Source\ArticlePresenters\Miniblink</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\icon1.ico">
@@ -279,6 +285,9 @@
     </Filter>
     <Filter Include="resource\skin\button">
       <UniqueIdentifier>{7e3f3e8c-a82b-4b64-8f20-584c919abeed}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\ArticlePresenters\Miniblink">
+      <UniqueIdentifier>{944ef1d0-f130-461c-89a3-ef0873037e3b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
