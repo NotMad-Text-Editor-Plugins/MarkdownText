@@ -12,8 +12,6 @@ class WarnDlg : public CWindowWnd, public INotifyUI
 {
 public:
 	WarnDlg(TCHAR* _resourcePath) {
-		CPaintManagerUI::SetInstance((HINSTANCE)g_hModule);
-		CPaintManagerUI::SetResourcePath(CPaintManagerUI::GetInstancePath());
 		resourcePath = _resourcePath;
 	}
 	LPCTSTR GetWindowClassName() const { 
@@ -54,13 +52,24 @@ public:
 			Init();
 			return 0;
 		}
-		else if( uMsg == WM_DESTROY ) 
+		else if( isModal && uMsg == WM_DESTROY ) 
 		{
 			EnableWindow(mainAppWnd, true);
 			ShowWindow(false);
 		}
 		else if( uMsg == WM_CLOSE  ) {
-			EnableWindow(mainAppWnd, true);
+			if (isModal)
+			{
+				EnableWindow(mainAppWnd, true);
+			}
+			if (m_hParent) 
+			{
+				NMHDR nmh;
+				nmh.code = -1;
+				nmh.idFrom = -1;
+				nmh.hwndFrom = m_hWnd;
+				::SendMessage(m_hParent, WM_NOTIFY, nmh.idFrom, (LPARAM)&nmh);
+			}
 		}
 		else if( uMsg == WM_NCACTIVATE ) {
 			//if( !::IsIconic(*this) ) return (wParam == 0) ? TRUE : FALSE;
@@ -94,6 +103,7 @@ public:
 	bool active;
 	bool exit_requested=false;
 	CPaintManagerUI m_pm;
+
 };
 
 #endif

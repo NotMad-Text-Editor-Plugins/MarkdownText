@@ -251,6 +251,9 @@
     <None Include="res\skin\Button\btn.png">
       <Filter>resource\skin\button</Filter>
     </None>
+    <None Include="res\skin\ig.xml">
+      <Filter>resource\skin</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">

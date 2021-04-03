@@ -32,6 +32,8 @@
 
 class ArticlePresenter;
 
+class WarnDlg;
+
 #define SELF_REFRESH WM_USER+9
 
 using namespace std;
@@ -133,6 +135,9 @@ protected :
 	void readLibPaths(int & max, std::vector<std::string*> & LibPaths, char* key, int & sel, char* selkey);
 	
 	const char* rnd_res;
+
+	WarnDlg* installGuide = NULL;
+	bool isShowGuidePredateArticle = false;
 public :
 	APresenter presenter;
 	int kernelType=-1; // -1_auto 0_wke 1_mb 2_bw 3_WV2
@@ -186,6 +191,8 @@ public :
 	ReadExtContext* extCtx = NULL;
 
 	bool bRunRequested = false;
+
+	void displayInstallGuide();
 };
 
 #endif //LNHISTORY_DLG_H

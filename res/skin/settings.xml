@@ -6,6 +6,8 @@
 	 
 	<Include source="scrollbar.xml" />
 	
+	<Include source="defaults.xml" />
+	
 	<VerticalLayout inset="20,15,20,6" bkcolor="#FFFFFFFF" colorhsl="true" vscrollbar="true" autovscroll="true" 	>
 	
 	
@@ -138,7 +140,7 @@
 		
 		<HorizontalLayout minheight="35" maxheight="50" >
 			<Control/>
-			<Button text="[  显示帮助…  ]"  textcolor="#FF757575"  name="help" hottextcolor="#FF111111" width="360"  bkcolor="#0000E000" nativebkcolor="#0000E000"/>
+			<Button text="显示帮助…"  textcolor="#FFFFFFFF"  name="help" width="360"  bkcolor="#0000E000" nativebkcolor="#0000E000"/>
 			<Control/>
 		</HorizontalLayout>
 	</VerticalLayout>

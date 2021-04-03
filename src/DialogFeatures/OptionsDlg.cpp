@@ -15,7 +15,6 @@ using namespace DuiLib;
 OptionsDlg::OptionsDlg()
 { 
     CControlFactory::GetInstance()->RegistControl(TEXT("CBSwitchUI"), CBSwitchUI::CreateControl);
-
 };
 
 UINT OptionsDlg::GetClassStyle() const 
@@ -402,6 +401,13 @@ void OptionsDlg::Notify(TNotifyUI& msg)
                 //    PutHotTextToIni(msg.pSender);
                 //}
             }
+            return;
+        }
+
+        CButtonUI* btn = dynamic_cast<CButtonUI*>(msg.pSender);
+        if (btn && msg.sType==_T("click"))
+        {
+            _MDText.displayInstallGuide();
             return;
         }
     }

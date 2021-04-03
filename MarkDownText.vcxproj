@@ -474,6 +474,9 @@
     <None Include="res\skin\settings.xml" />
     <None Include="res\skin\wv2.xml" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="res\skin\ig.xml" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="packages\Microsoft.Web.WebView2.1.0.774.44\build\native\Microsoft.Web.WebView2.targets" Condition="Exists('packages\Microsoft.Web.WebView2.1.0.774.44\build\native\Microsoft.Web.WebView2.targets')" />

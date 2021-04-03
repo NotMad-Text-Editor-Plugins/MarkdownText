@@ -24,6 +24,7 @@
 #include <ProfileStd.h>
 #include "ArticlePresenter.h"
 #include "MDTextToolbar.h"
+#include "WarningDlg.hpp"
 #include "SU.h"
 
 const TCHAR* configFileName = TEXT("MarkDownText.ini");
@@ -331,6 +332,10 @@ void MarkDownTextDlg::RefreshWebview(int source) {
 		//CustomRoutine = "MDViewer";
 		bool fromEditor = source==1;
 		char b1=fromEditor&&lastBid==bid, b2=lastBid!=bid;
+		if (source==3)
+		{
+			b2 = true;
+		}
 		//bool autoSwitch = bAutoSwitchEngines&&!fromEditor;
 		bool autoSwitch = 1&&source==0;
 		if(autoSwitch)
@@ -484,6 +489,16 @@ INT_PTR CALLBACK MarkDownTextDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 			RECT rc;
 			getClientRect(rc);
 			int toolbarHeight=toolBar.getHeight();//28;
+			bool showIGUnit = installGuide;// && WM_SIZE==message;
+			if (showIGUnit)
+			{
+				//::SetWindowPos(installGuide->GetHWND(),HWND_TOP,rc.left, rc.top+toolbarHeight, rc.right-rc.left, rc.bottom-toolbarHeight-rc.top, 0);
+				::MoveWindow(installGuide->GetHWND(), rc.left, rc.top+toolbarHeight, rc.right, rc.bottom-toolbarHeight,1);
+				if (hBrowser && IsWindowVisible(hBrowser))
+				{
+					ShowWindow(hBrowser, SW_HIDE);
+				}
+			}
 			if(hBrowser)
 			{
 				if (currentkernelType==WEBVIEW2_TYPE) {
@@ -530,6 +545,19 @@ INT_PTR CALLBACK MarkDownTextDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 					return TRUE;
 				}
 				break;
+			}
+			else if ( nmhdr->code == -1 && installGuide )
+			{
+				installGuide = nullptr;
+				if (hBrowser) // && IsWindowVisible(hBrowser)
+				{
+					ShowWindow(hBrowser, SW_SHOW);
+					if (isShowGuidePredateArticle)
+					{
+						RefreshWebview(3);
+					}
+				}
+				return TRUE;
 			}
 			break;
 		}
@@ -1209,6 +1237,34 @@ void ResetZoom(){
 	}
 }
 
+void MarkDownTextDlg::displayInstallGuide()
+{
+	if (installGuide)
+	{
+		installGuide->Close();
+		return;
+	}
+	if (!_MDText.isVisible())
+	{
+		isShowGuidePredateArticle = true;
+		funcItems[0]._pFunc();
+	}
+	else
+	{
+		isShowGuidePredateArticle = false;
+	}
+	if (!installGuide)
+	{
+		installGuide = new WarnDlg(TEXT("ig.xml"));
+		installGuide->Create(_hSelf, _T("embed")
+			, WS_CHILD | WS_VISIBLE
+			, 0
+		);
+		ShowWindow(installGuide->GetHWND(), SW_SHOW);
+		::SendMessage(_hSelf, WM_SIZE, 0, 0);
+	}
+}
+
 extern void BoldenText();
 extern void TiltText();
 extern void UnderlineText();
@@ -1246,7 +1302,11 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 		}
 		return;
 		case IDM_EX_DOWN:
-			if(source==0&&mWebView0){
+			if (installGuide)
+			{
+				installGuide->Close();
+			}
+			else if(source==0&&mWebView0){
 				mWebView0->GoBack();
 			}
 		return;
@@ -1256,9 +1316,13 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 			}
 		return;
 		case IDM_EX_REFRESH:
-			if(source==0 && mWebView0)
+			if (installGuide)
 			{
-				RefreshWebview();
+				installGuide->Close();
+			}
+			else if(source==0 && mWebView0)
+			{
+				RefreshWebview(3);
 			}
 		return;
 		case IDM_EX_ZOO:

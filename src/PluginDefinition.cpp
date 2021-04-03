@@ -276,12 +276,6 @@ void Settings()
 	}
 	//::SendMessage(nppData._nppHandle, NPPM_SETSTATUSBAR, STATUSBAR_DOC_TYPE, (LPARAM)TEXT("Not implemented yet……"));
 
-	CPaintManagerUI::SetInstance((HINSTANCE)g_hModule);
-	TCHAR tmpPath[MAX_PATH];
-	lstrcpy(tmpPath, CPaintManagerUI::GetInstancePath());
-	PathAppend(tmpPath, TEXT("..\\..\\..\\..\\plugins\\MarkdownText\\res\\skin"));
-	CPaintManagerUI::SetResourcePath(tmpPath);
-
 
 	//HRESULT Hr = ::CoInitialize(NULL);
 	//if( FAILED(Hr) ) return 0;
@@ -358,4 +352,10 @@ void commandMenuInit()
 	funcMenu=&funcItems[1];
 	funcUpdate=&funcItems[7];
 	funcSync=&funcItems[8];
+
+	CPaintManagerUI::SetInstance((HINSTANCE)g_hModule);
+	TCHAR tmpPath[MAX_PATH];
+	lstrcpy(tmpPath, CPaintManagerUI::GetInstancePath());
+	PathAppend(tmpPath, TEXT("..\\..\\..\\..\\plugins\\MarkdownText\\res\\skin"));
+	CPaintManagerUI::SetResourcePath(tmpPath);
 }
