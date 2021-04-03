@@ -1199,6 +1199,8 @@
 #define ID_UGO_STATIC                   2505
 #define ID_UGO_STATIC2                  2506
 
+#define IDR_ZIPRES		130
+
 #define IDI_ICON1                       112
 
 #define IDI_ICON5                113

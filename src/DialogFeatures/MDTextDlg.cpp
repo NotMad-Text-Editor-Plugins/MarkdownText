@@ -73,8 +73,19 @@ CHAR* MarkDownTextDlg::loadSourceAsset(uptr_t bid, const char* pathA, DWORD & da
 
 CHAR* MarkDownTextDlg::loadPluginAsset(const char* path, DWORD & dataLen)
 {
+	//if(false)
+	if (!strcmp("main.js", path))
+	{
+		CHAR* data;
+		DWORD len=0;
+		if (CPaintManagerUI::ExtractItem(TEXT("main.js"), &data, len)&&len)
+		{
+			dataLen = len;
+			return data;
+		}
+	}
 	CHAR ResPath[MAX_PATH];
-	if(rnd_res)
+	if(rnd_res && PathFileExistsA(rnd_res))
 	{
 		strcpy(ResPath, rnd_res);
 	}
@@ -84,6 +95,7 @@ CHAR* MarkDownTextDlg::loadPluginAsset(const char* path, DWORD & dataLen)
 		::PathRemoveFileSpecA(ResPath);
 	}
 	::PathAppendA(ResPath, path);
+	//::MessageBoxA(NULL, ResPath, (""), MB_OK);
 	if(PathFileExistsA(ResPath)) 
 	{
 		HANDLE hFile = CreateFileA(ResPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);

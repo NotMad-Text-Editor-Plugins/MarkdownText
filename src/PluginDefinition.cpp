@@ -282,6 +282,45 @@ void Settings()
 	}
 }
 
+// Initialize Duilib UI Resources.
+void InitResource()
+{	
+	CDuiString strResourcePath = CPaintManagerUI::GetInstancePath();
+	switch(CPaintManagerUI::GetResourceType())
+	{
+		case UILIB_FILE:
+		case UILIB_ZIP:
+		{
+			// debug only, peeking into the source folder.
+			strResourcePath += _T("..\\..\\..\\..\\plugins\\MarkdownText\\res\\skin\\");
+			CPaintManagerUI::SetResourcePath(strResourcePath.GetData());
+			if (CPaintManagerUI::GetResourceType()==UILIB_ZIP)
+			{
+				CPaintManagerUI::SetResourceZip(_T("MDRes.zip"), true);
+			}
+			break;
+		}
+		case UILIB_ZIPRESOURCE:
+		{
+			// read from embedded zip resource in the dll.
+			CPaintManagerUI::SetResourcePath(strResourcePath.GetData());
+			HRSRC hResource = ::FindResource(CPaintManagerUI::GetResourceDll(), MAKEINTRESOURCE(IDR_ZIPRES), _T("ZIPRES"));
+			if( hResource != NULL ) {
+				DWORD dwSize = 0;
+				HGLOBAL hGlobal = ::LoadResource(CPaintManagerUI::GetResourceDll(), hResource);
+				if( hGlobal != NULL ) {
+					dwSize = ::SizeofResource(CPaintManagerUI::GetResourceDll(), hResource);
+					if( dwSize > 0 ) {
+						CPaintManagerUI::SetResourceZip((LPBYTE)::LockResource(hGlobal), dwSize);
+					}
+				}
+				::FreeResource(hResource);
+			}
+		}
+		break;
+	}
+}
+
 void commandMenuInit()
 {
 	// Initialization of your plugin commands
@@ -341,10 +380,13 @@ void commandMenuInit()
 	funcSync=&funcItems[8];
 
 	CPaintManagerUI::SetInstance((HINSTANCE)g_hModule);
-	TCHAR tmpPath[MAX_PATH];
-	lstrcpy(tmpPath, CPaintManagerUI::GetInstancePath());
-	PathAppend(tmpPath, TEXT("..\\..\\..\\..\\plugins\\MarkdownText\\res\\skin"));
-	CPaintManagerUI::SetResourcePath(tmpPath);
+	CPaintManagerUI::SetResourceDll((HINSTANCE)g_hModule);
+
+	CPaintManagerUI::SetResourceType(UILIB_ZIPRESOURCE);
+	//CPaintManagerUI::SetResourceType(UILIB_ZIP);
+	//CPaintManagerUI::SetResourceType(UILIB_FILE);
+
+	InitResource();
 
 	_MDText.getLocaliseMap();
 }
