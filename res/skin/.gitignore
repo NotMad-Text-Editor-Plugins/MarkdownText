@@ -1,6 +1,9 @@
 # md.html
 main.js
 
+# markdown general ui handler
+ui.js
+
 # Decently sized resource package to be embedded in the dll.
 MDRes.zip
 

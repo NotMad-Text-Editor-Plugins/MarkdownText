@@ -149,8 +149,16 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 		}
 		break;
 		case NPPN_FILEOPENED:
+		{
+			_MDText.buffersMap.insert(notifyCode->nmhdr.idFrom);
+		}
+		break;
 		case NPPN_FILECLOSED:
 		{
+			if(NPPRunning)
+			{
+				_MDText.buffersMap.erase(notifyCode->nmhdr.idFrom);
+			}
 		}
 		break;
 		// 页面切换

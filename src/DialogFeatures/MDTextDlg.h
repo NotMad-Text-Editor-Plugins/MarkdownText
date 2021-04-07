@@ -30,6 +30,8 @@
 
 #include "APresenter.h"
 
+#include <set>
+
 class ArticlePresenter;
 
 class WarnDlg;
@@ -89,11 +91,12 @@ public :
 	void destroyWebViews(bool exit=false);
 	void switchEngineByIndex(int id);
 
-	// 0=MD; 1=HTML; 2=ASCII
-	char CustomRoutine[MAX_PATH_HALF]={0};
+	// empty=use internal md renderer;
 	char MDRoutine[MAX_PATH_HALF]={0};
-	char HTMLRoutine[MAX_PATH_HALF]={0};
+	//char HTMLRoutine[MAX_PATH_HALF]={0};
 	char ADRoutine[MAX_PATH_HALF]={0};
+	// 0=MD; 1=HTML; 2=ASCII
+	char* RendererNames[3]={MDRoutine, "", ADRoutine};
 
 	ToolBar toolBar;
 
@@ -108,6 +111,8 @@ public :
 	bool checkRenderMarkdown();
 
 	bool checkRenderHtml();
+
+	bool checkRenderAscii();
 
 	std::string* setLibPathAt(std::vector<std::string*> & paths, int idx, char* newpath, char * key);
 protected :
@@ -195,6 +200,8 @@ public :
 	void displayInstallGuide();
 
 	std::wstring GetLocalWText(char* name, const TCHAR* defVal);
+
+	std::set<LONG_PTR> buffersMap;
 };
 
 #endif //LNHISTORY_DLG_H

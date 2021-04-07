@@ -8,9 +8,9 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerCommandArguments>-nosession -multiInst $(ProjectDir)TEST\test.session</LocalDebuggerCommandArguments>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Realeas|x64'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">
     <LocalDebuggerCommand>$(ProjectDir)..\..\PowerEditor\bin64\Textrument.exe</LocalDebuggerCommand>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>-nosession -multiInst $(ProjectDir)TEST\test.session</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"D:\Code\FigureOut\chrome\extesions\MarkdownEngines\md.html\maidfile.md" -multiInst -nosession </LocalDebuggerCommandArguments>
   </PropertyGroup>
 </Project>

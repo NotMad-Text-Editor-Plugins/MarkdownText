@@ -548,7 +548,7 @@ void APresenterMiniblink::ShowWindow()
 
 void APresenterMiniblink::updateArticle(LONG_PTR bid, int articleType, bool softUpdate, bool update) 
 {
-	if(presentee->CustomRoutineIdx==1) {
+	if(presentee->RendererTypeIdx==1) {
 		//mbLoadURL(mWebView, "http://mdbr/doc.html");
 		mbLoadURL(mWebView, "http://mdbr/doc/index.html");
 		return;

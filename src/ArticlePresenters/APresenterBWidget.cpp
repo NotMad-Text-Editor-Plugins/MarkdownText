@@ -300,7 +300,7 @@ void APresenterBWidget::updateArticle(LONG_PTR bid, int articleType, bool softUp
 	strcpy(page_id, "http://tests/MDT/");
 	LONGPTR2STR(page_id+(st=strlen(page_id)), bid);
 	if(articleType==1) {
-		if(softUpdate||update&&presentee->checkRenderHtml()) {
+		if(softUpdate||update) {
 			strcpy(page_id+(ed=strlen(page_id)), "/doc.html");
 			size_t len;
 			bwLoadStrData(mWebView, page_id+13, presentee->GetDocTex(len, bid, 0), 0);
@@ -318,24 +318,19 @@ void APresenterBWidget::updateArticle(LONG_PTR bid, int articleType, bool softUp
 	}
 	else if(update)
 	{
-		if(presentee->checkRenderMarkdown()) {
-			CHAR* page_content = new CHAR[512];
-			strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/ui.js\"></script><script>window.update=function(){window.APMD(GetDocText1('");
+		CHAR* page_content = new CHAR[512];
+		strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/ui.js\"></script><script>window.update=function(){window.APMD(GetDocText1('");
 
-			auto nxt_st=page_content+136;
-			strncpy(nxt_st, page_id+st, ed-st);
-			nxt_st+=ed-st;
+		auto nxt_st=page_content+136;
+		strncpy(nxt_st, page_id+st, ed-st);
+		nxt_st+=ed-st;
 
-			strcpy(nxt_st, "'));}</script><body><script src=\"http://mdbr/");
+		strcpy(nxt_st, "'));}</script><body><script src=\"http://mdbr/");
 
-			presentee->AppendPageResidue(nxt_st+45); // 加载bw
-			bwLoadStrData(mWebView, page_id+13, page_content, 0);
-			presentee->lastBid=bid;
-			lstrcpy(last_updated, last_actived);
-		}// else if(!legacy && checkRenderHtml()){
-
-		 //lastBid=0;
-		 //}
+		presentee->AppendPageResidue(nxt_st+45); // 加载bw
+		bwLoadStrData(mWebView, page_id+13, page_content, 0);
+		presentee->lastBid=bid;
+		lstrcpy(last_updated, last_actived);
 	}
 	delete[] page_id;
 	//bwLoadStrData(mWebView, url_, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/main.js\"></script><body><script>window.APMD(GetDocText1(0));</script></body>", 0);

@@ -20,7 +20,8 @@ static DefferedLoadingData* defferedLoad;
 class APresentee
 {
 public:
-	int CustomRoutineIdx=-1;
+	// 0=MD; 1=HTML; 2=ASCII
+	int RendererTypeIdx=0;
 
 	int currentkernelType=0; // 0_wke 1_mb 2_bw 3_WV2
 

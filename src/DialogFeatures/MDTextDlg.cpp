@@ -34,7 +34,13 @@ void MarkDownTextDlg::doScintillaScroll(int ln)
 	int curScintilla;
 	SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&curScintilla);
 	auto currrentSc = curScintilla?nppData._scintillaSecondHandle:nppData._scintillaMainHandle;
-	SendMessage(currrentSc, SCI_SETFIRSTVISIBLELINE, lastSyncLn=ln, 0);
+	if (ln<0)
+	{
+		int totalLns = SendMessage(currrentSc, SCI_GETLINECOUNT, 0, 0);
+		ln = -ln/1000.f*totalLns;
+	}
+	ln = SendMessage(currrentSc, SCI_VISIBLEFROMDOCLINE, lastSyncLn=ln, 0);
+	SendMessage(currrentSc, SCI_SETFIRSTVISIBLELINE, ln, 0);
 }
 
 CHAR* MarkDownTextDlg::loadSourceAsset(uptr_t bid, const char* pathA, DWORD & dataLen)
@@ -79,6 +85,16 @@ CHAR* MarkDownTextDlg::loadPluginAsset(const char* path, DWORD & dataLen)
 		CHAR* data;
 		DWORD len=0;
 		if (CPaintManagerUI::ExtractItem(TEXT("main.js"), &data, len)&&len)
+		{
+			dataLen = len;
+			return data;
+		}
+	}
+	else if (!strcmp("ui.js", path))
+	{
+		CHAR* data;
+		DWORD len=0;
+		if (CPaintManagerUI::ExtractItem(TEXT("ui.js"), &data, len)&&len)
 		{
 			dataLen = len;
 			return data;
@@ -163,18 +179,24 @@ CHAR* MarkDownTextDlg::GetDocTex(size_t & docLength, LONG_PTR bid, bool * should
 
 	if(currentkernelType!=MINILINK_TYPE && bid && !legacy) //  && !legacy
 	{
-		// fast-read the original memory data
-		LONG_PTR DOCUMENTPTR = SendMessage(nppData._nppHandle, NPPM_GETDOCUMENTPTR, bid, bid);
-		docLength = SendMessage(currrentSc, SCI_GETTEXTLENGTH, DOCUMENTPTR, DOCUMENTPTR);
-		auto raw_data = (CHAR*)SendMessage(currrentSc, SCI_GETRAWTEXT, DOCUMENTPTR, DOCUMENTPTR);
-		if(raw_data)
-		if(docLength)
+		if (_MDText.buffersMap.find(bid)!=_MDText.buffersMap.end())
 		{
-			return raw_data;
-		}
-		else 
-		{
-			return " ";
+			// fast-read the original memory data
+			LONG_PTR DOCUMENTPTR = SendMessage(nppData._nppHandle, NPPM_GETDOCUMENTPTR, bid, bid);
+			if (DOCUMENTPTR)
+			{
+				docLength = SendMessage(currrentSc, SCI_GETTEXTLENGTH, DOCUMENTPTR, DOCUMENTPTR);
+				if(docLength)
+				{
+					auto raw_data = (CHAR*)SendMessage(currrentSc, SCI_GETRAWTEXT, DOCUMENTPTR, DOCUMENTPTR);
+					if(raw_data)
+						return raw_data;
+				}
+				else 
+				{
+					return " ";
+				}
+			}
 		}
 	}
 	// slow copy-read
@@ -220,11 +242,15 @@ void MarkDownTextDlg::syncWebToline(bool force)
 		SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&curScintilla);
 		auto currrentSc = curScintilla?nppData._scintillaSecondHandle:nppData._scintillaMainHandle;
 		int line = SendMessage(currrentSc, SCI_GETFIRSTVISIBLELINE, 0, 0);
+		line = SendMessage(currrentSc, SCI_DOCLINEFROMVISIBLE, line, 0);
 		if(!force && lastSyncLn==line)
 			return;
+		int totalLns = SendMessage(currrentSc, SCI_GETLINECOUNT, 0, 0);
+		float percetage=totalLns==0?-1:line*1.f/totalLns;
 		CHAR jsSync[64]="syncLn(";
-		itoa(line, jsSync+7, 10);
-		strcpy(jsSync+strlen(jsSync), ")");
+		//itoa(line, jsSync+7, 10);
+		//strcpy(jsSync+strlen(jsSync), ")");
+		sprintf(jsSync, "syncLn(%d,%.2f)", line, percetage);
 		if(mWebView0) {
 			mWebView0->EvaluateJavascript(jsSync);
 		}
@@ -255,10 +281,10 @@ void MarkDownTextDlg::setClosed(bool toClose) {
 }
 
 void MarkDownTextDlg::AppendPageResidue(char* nxt_st) {
-	if(CustomRoutine[0])
+	if(RendererTypeIdx>=0&&RendererTypeIdx<=2&&RendererNames[RendererTypeIdx][0])
 	{
-		strcpy(nxt_st, CustomRoutine);
-		nxt_st+=strlen(CustomRoutine);
+		strcpy(nxt_st, RendererNames[RendererTypeIdx]);
+		nxt_st+=strlen(RendererNames[RendererTypeIdx]);
 		strcpy(nxt_st, "/");
 		nxt_st+=1;
 	}
@@ -278,7 +304,7 @@ void MarkDownTextDlg::releaseEnginesMenu()
 	}
 }
 
-bool checkFileExt(vector<string> ext) { 
+bool checkFileExt(vector<string> & ext) { 
 	auto len = lstrlen(last_actived);
 	TCHAR x;
 	for(string & eI:ext) {
@@ -307,6 +333,12 @@ bool MarkDownTextDlg::checkRenderHtml() {
 	return checkFileExt(html_ext);
 }
 
+bool MarkDownTextDlg::checkRenderAscii() { 
+	if(bForcePreview)
+		return 1;
+	return checkFileExt(asciidoc_ext);
+}
+
 std::string* MarkDownTextDlg::setLibPathAt(std::vector<std::string*> & paths, int idx, char* newpath, char * key)
 {
 	char TmpLibPath[MAX_PATH];
@@ -318,28 +350,24 @@ std::string* MarkDownTextDlg::setLibPathAt(std::vector<std::string*> & paths, in
 	return val;
 }
 
-bool checkRenderAscii() { 
-	return false;
-}
-
 bool isMDEngineActive() 
 {
-	return _MDText.CustomRoutineIdx==0;
+	return _MDText.RendererTypeIdx==0;
 }
 
 bool isHTMLEngineActive() 
 {
-	return _MDText.CustomRoutineIdx==1;
+	return _MDText.RendererTypeIdx==1;
 }
 
 bool isAsciiEngineActive() 
 {
-	return _MDText.CustomRoutineIdx==2;
+	return _MDText.RendererTypeIdx==2;
 }
 
 void MarkDownTextDlg::RefreshWebview(int source) {
 	//TCHAR buffer[256]={0};
-	//wsprintf(buffer,TEXT("RefreshWebview source=%d"), source, _MDText.CustomRoutineIdx);
+	//wsprintf(buffer,TEXT("RefreshWebview source=%d"), source, _MDText.RendererTypeIdx);
 	//::SendMessage(nppData._nppHandle, NPPM_SETSTATUSBAR, STATUSBAR_DOC_TYPE, (LPARAM)buffer);
 	if(mWebView0&&NPPRunning)
 	{
@@ -353,19 +381,35 @@ void MarkDownTextDlg::RefreshWebview(int source) {
 		}
 		//bool autoSwitch = bAutoSwitchEngines&&!fromEditor;
 		bool autoSwitch = 1&&source==0;
+		bool bShouldCheck=true;
+		std::vector<string>* all_exts[]{&markdown_ext, &html_ext, &asciidoc_ext};
 		if(autoSwitch)
 		{
-			int toIdx = checkRenderMarkdown()?0:checkRenderHtml()?1:checkRenderAscii()?2:-1;
-			if(toIdx>=0&&toIdx!=CustomRoutineIdx)
+			// auto switch render type according to current actived document's file name extension
+			// and extensions preset.
+			for (size_t toIdx = 0; toIdx < 3; toIdx++)
 			{
-				CustomRoutineIdx=toIdx;
-				releaseEnginesMenu();
+				if (checkFileExt(*all_exts[toIdx]))
+				{
+					if(toIdx!=RendererTypeIdx)
+					{
+						RendererTypeIdx=toIdx;
+						releaseEnginesMenu();
+					}
+					bShouldCheck = false;
+					break;
+				}
 			}
+		}
+		if(bShouldCheck && b2 && !bForcePreview)
+		{
+			// perform the check again if needed.
+			b2 = checkFileExt(*all_exts[RendererTypeIdx]);
 		}
 		bool isMarkdown = isMDEngineActive();
 		bool isHtml = isHTMLEngineActive();
 		//bool isAscii = isAsciiActive();
-		mWebView0->updateArticle(bid, CustomRoutineIdx, b1, b2);
+		mWebView0->updateArticle(bid, RendererTypeIdx, b1, b2);
 	}
 }
 
@@ -686,10 +730,9 @@ void happy(){}
 void MarkDownTextDlg::saveParameters()
 {
 	int core=requestedInvalidSwitch>0?requestedInvalidSwitch-1:kernelType;
-	PutProfInt("BrowserKernel", core);
-	PutProfInt("EngineType", CustomRoutineIdx);
+	PutProfInt("BrowserType", core);
+	PutProfInt("RenderType", RendererTypeIdx);
 	PutProfString("MDEngine", MDRoutine);
-	PutProfString("HTMLEngine", HTMLRoutine);
 	PutProfString("ADEngine", ADRoutine);
 	PutProfInt("UISettings", UISettings);
 	PutProfInt("LibCef", LibCefSel);
@@ -758,11 +801,11 @@ void MarkDownTextDlg::readExtensions(int channel, string * ret)
 	{
 		extCtx = new ReadExtContext[] {
 			 {"Ext_MD", NULL, "md md.html svg markdown"}
-			,{"Ext_AD", NULL, "ascii"}
 			,{"Ext_HTML", NULL, "html"}
+			,{"Ext_AD", NULL, "ascii"}
 		};
 	}
-	std::vector<std::string>* extVectors[]{&markdown_ext, &asciidoc_ext, &html_ext};
+	std::vector<std::string>* extVectors[]{&markdown_ext, &html_ext, &asciidoc_ext};
 	string tmp;
 	for (int id = 0; id < 3; id++)
 	{
@@ -789,7 +832,7 @@ void MarkDownTextDlg::readExtensions(int channel, string * ret)
 void MarkDownTextDlg::readParameters()
 {
 	loadProf(g_ModulePath, configFileName);
-	kernelType=GetProfInt("BrowserKernel", -1);
+	kernelType=GetProfInt("BrowserType", -1);
 	if(kernelType<0||kernelType>3)
 	{
 		kernelType=-1;
@@ -802,10 +845,6 @@ void MarkDownTextDlg::readParameters()
 	if(val=GetProfString("MDEngine"))
 	{
 		strcpy(MDRoutine, val->data());
-	}
-	if(val=GetProfString("HTMLEngine"))
-	{
-		strcpy(HTMLRoutine, val->data());
 	}
 	if(val=GetProfString("ADEngine"))
 	{
@@ -828,14 +867,11 @@ void MarkDownTextDlg::readParameters()
 	readLibPaths(maxPathHistory1, WkePaths, "WkePath%d", LibWkeSel, "LibWke");
 	readLibPaths(maxPathHistory2, MbPaths, "MbPath%d", LibMbSel, "LibMb");
 
-	int inval=GetProfInt("EngineType", -1);
+	int inval=GetProfInt("RenderType", -1);
 	if(inval>2||inval<-1) {
 		inval=-1;
-	} else {
-		char* srt2cp = inval==0?MDRoutine:inval==1?HTMLRoutine:ADRoutine;
-		strcpy(CustomRoutine, srt2cp);
 	}
-	CustomRoutineIdx=inval;
+	RendererTypeIdx=inval;
 }
 
 BOOL CALLBACK removeAllChildren(HWND hwndChild, LPARAM lParam)
@@ -966,8 +1002,20 @@ HMENU GetPluginMenu() {
 	return hMenuPlugin;
 }
 
+// find any folder that contains main.js
 bool MarkDownTextDlg::FindMarkdownEngines(TCHAR* path) {
 	//see https://stackoverflow.com/questions/67273/how-do-you-iterate-through-every-file-directory-recursively-in-standard-c#answer-67336
+	TCHAR scriptPath[MAX_PATH];
+	GetModuleFileName((HMODULE)g_hModule, scriptPath, MAX_PATH);
+	PathRemoveFileSpec(scriptPath);
+
+	// |rnd_res| is the debug path pointing to the local repo of MarkdownEngins. It overrides the plugin path.
+	path = scriptPath;
+	if(rnd_res && PathFileExistsA(rnd_res))
+	{
+		MultiByteToWideChar(CP_ACP, 0, rnd_res, -1, path, MAX_PATH-1);
+	}
+
 	MDEngines.clear();
 	HANDLE hFind = INVALID_HANDLE_VALUE;
 	WIN32_FIND_DATA ffd;
@@ -1065,10 +1113,10 @@ void MarkDownTextDlg::checkAutoRun()
 	}
 	// else check and judge whether to run.
 	CHAR* cmd;
-	std::vector<string>* all_exts[]{&html_ext, &markdown_ext};
+	std::vector<string>* all_exts[]{&markdown_ext, &html_ext, &asciidoc_ext};
 	char* ext, * cmdn; 
-	int i,j,k,extl,extsl,all_extsl=2,cmdl;
-	for (int x = 0; x < 2; x++)
+	int i,j,k,extl,extsl,all_extsl=3,cmdl;
+	for (int x = 0; x < 3; x++)
 	{
 		if(x==0)
 		{
@@ -1218,28 +1266,27 @@ void MarkDownTextDlg::SwitchEngines(int idx) {
 	}
 	else if(idx==-2) // to use internal HTML engine
 	{
-		CustomRoutineIdx=1;
-		CustomRoutine[0]='\0';
+		RendererTypeIdx=1;
 	}
 	else if(idx==-1) // to use internal Markdown engine
 	{
-		CustomRoutineIdx=0;
-		CustomRoutine[0]='\0';
+		RendererTypeIdx=0;
 		MDRoutine[0]='\0';
 	}
 	else if(idx>=0&&idx<MDEngines.size()) // to use custom engines
 	{
-		auto data2set = CustomRoutine;
-		WideCharToMultiByte(CP_ACP, 0, MDEngines[idx].data(), -1, data2set, MAX_PATH, NULL, NULL);
-		if(strncmp_casei(CustomRoutine, "ASCII", 5)) {
+		char* data2set;
+		auto data = MDEngines[idx].data();
+		if(!_tcsnicmp(data, TEXT("ASCII"), 5)) {
 			// to treat as AsciiDoc engine.
-			CustomRoutineIdx=2;
-			strcpy(ADRoutine, data2set);
+			RendererTypeIdx=2;
+			data2set = ADRoutine;
 		} else {
 			// to treat as Markdown engine.
-			CustomRoutineIdx=0;
-			strcpy(MDRoutine, data2set);
+			data2set = MDRoutine;
+			RendererTypeIdx=0;
 		}
+		WideCharToMultiByte(CP_ACP, 0, data, -1, data2set, MAX_PATH_HALF-1, NULL, NULL);
 	}
 	// update menu checks
 	for(int i=-2,len=MDEngines.size();i<len;i++)
@@ -1428,10 +1475,7 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 			}
 			if(!MDEngineScanned)
 			{
-				TCHAR scriptPath[MAX_PATH];
-				GetModuleFileName((HMODULE)g_hModule, scriptPath, MAX_PATH);
-				PathRemoveFileSpec(scriptPath);
-				FindMarkdownEngines(scriptPath);
+				FindMarkdownEngines(NULL);
 				MDEngineScanned=1;
 			}
 			if(rebuildMenu)
@@ -1440,9 +1484,10 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 				while(GetMenuItemCount(hMenuEngines)>MDCRST)
 					RemoveMenu(hMenuEngines, MDCRST, MF_BYPOSITION);
 				int foundCheck=0;
-				if(CustomRoutine[0])
+				bool isUserDefinedRenderer = RendererTypeIdx>=0&&RendererTypeIdx<=2&&RendererNames[RendererTypeIdx][0];
+				if(isUserDefinedRenderer)
 				{
-					MultiByteToWideChar(CP_ACP, 0, CustomRoutine, -1, path_buffer, MAX_PATH);
+					MultiByteToWideChar(CP_ACP, 0, RendererNames[RendererTypeIdx], -1, path_buffer, MAX_PATH);
 				}
 				else if(isHTMLEngineActive()) {
 					CheckMenuItem(hMenuEngines, MDCRST-2, MF_BYPOSITION|MF_CHECKED);
@@ -1458,7 +1503,7 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 					auto data=MDEngines[i].data();
 					lstrcpy(EngineSwicther.at(ii)._itemName, data);
 					::InsertMenu(hMenuEngines, ii, MF_BYPOSITION, EngineSwicther.at(ii)._cmdID, data);
-					if(CustomRoutine[0]&&!foundCheck&&lstrcmp(path_buffer, data)==0)
+					if(isUserDefinedRenderer&&!foundCheck&&lstrcmp(path_buffer, data)==0)
 					{
 						foundCheck=ii;
 					}
