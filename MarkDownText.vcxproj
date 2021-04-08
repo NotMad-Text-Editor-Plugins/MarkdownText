@@ -107,7 +107,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>.\DockingFeature;.\;$(PowerEditor)/../plugins/CPPCommon;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(BW);$(MINIBL);.\src;.\src\ArticlePresenters;.\src\DialogFeatures;.\PanelFeature;$(DUPA);.\;$(PowerEditor)/../plugins/CPPCommon;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;UILIB_STATIC;NDEBUG;_WINDOWS;_USRDLL;PluginToolbar;TIXMLA_USE_STL;MarkDownText_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader />
@@ -156,7 +156,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>.\DockingFeature;.\;$(PowerEditor)/../plugins/CPPCommon;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(BW);$(MINIBL);.\src;.\src\ArticlePresenters;.\src\DialogFeatures;.\PanelFeature;$(DUPA);.\;$(PowerEditor)/../plugins/CPPCommon;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;UILIB_STATIC;_DEBUG;_WINDOWS;_USRDLL;PluginToolbar;TIXMLA_USE_STL;MarkDownText_EXPORTS;PluginToolbar;TIXMLA_USE_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -203,6 +203,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\PowerEditor\src\WinControls\ImageListSet\ImageListSet.cpp" />
+    <ClCompile Include="..\..\PowerEditor\src\WinControls\InsituDebug.cpp" />
     <ClCompile Include="..\..\PowerEditor\src\WinControls\StaticDialog\StaticDialog.cpp" />
     <ClCompile Include="..\..\PowerEditor\src\WinControls\ToolBar\ToolBar.cpp" />
     <ClCompile Include="..\CPPCommon\common_patch.cpp" />
@@ -225,6 +226,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\PowerEditor\src\MISC\PluginsManager\PluginInterface.h" />
+    <ClInclude Include="..\..\PowerEditor\src\WinControls\InsituDebug.h" />
     <ClInclude Include="..\..\PowerEditor\src\WinControls\ToolBar\ToolBar.h" />
     <ClInclude Include="..\CPPCommon\ProfileStd.h" />
     <ClInclude Include="..\CPPCommon\ToolbarPanel.h" />

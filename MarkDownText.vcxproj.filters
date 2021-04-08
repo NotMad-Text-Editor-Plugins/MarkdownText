@@ -61,6 +61,9 @@
     <ClCompile Include="..\..\PowerEditor\src\WinControls\ToolBar\ToolBar.cpp">
       <Filter>Source\PluginFeatures</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\PowerEditor\src\WinControls\InsituDebug.cpp">
+      <Filter>Source\PluginFeatures</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\ArticlePresenters\APresenterMiniblink.h">
@@ -146,6 +149,9 @@
     </ClInclude>
     <ClInclude Include="src\ArticlePresenters\Miniblink\wke.h">
       <Filter>Source\ArticlePresenters\Miniblink</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\PowerEditor\src\WinControls\InsituDebug.h">
+      <Filter>Source\PluginFeatures</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

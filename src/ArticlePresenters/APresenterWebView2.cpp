@@ -50,6 +50,7 @@ BOOL unregWndClass(LPCTSTR lpcsClassName)
 	return TRUE;
 }
 
+#include "InsituDebug.h"
 
 APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND hParent) 
 {
@@ -72,7 +73,7 @@ APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND h
 				webviewController = controller;
 				webviewController->get_CoreWebView2(&mWebView);
 			}
-
+			
 			ICoreWebView2Settings* Settings;
 			mWebView->get_Settings(&Settings);
 			Settings->put_IsScriptEnabled(TRUE);
@@ -89,7 +90,6 @@ APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND h
 					ICoreWebView2WebResourceRequestedEventArgs* args) {
 				COREWEBVIEW2_WEB_RESOURCE_CONTEXT resourceContext;
 				CHECK_FAILURE(args->get_ResourceContext(&resourceContext));
-				// Ensure that the type is image
 				wil::com_ptr<ICoreWebView2WebResourceRequest> req;
 				args->get_Request(&req);
 				wil::unique_cotaskmem_string navigationTargetUri;
@@ -98,24 +98,26 @@ APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND h
 
 				if(wcsncmp(uriTarget, TEXT("http://tests/MDT/"), 17)==0)
 				{ // constuct page here
-				  //::MessageBox(NULL, TEXT("来了"), TEXT(""), MB_OK);
-					auto end=uriTarget+wcslen(uriTarget);
+					TCHAR* end=uriTarget+wcslen(uriTarget);
 					uriTarget+=17;
-					auto PageId=uriTarget;
+					TCHAR* PageId=uriTarget;
+					TCHAR* page_type=NULL;
 					for(;uriTarget<end;uriTarget++)
 					{
 						if(*uriTarget=='/') 
 						{
 							*uriTarget++='\0';
+							page_type=uriTarget;
 							break;
 						}
 					}
 					LONG_PTR bid=0;
 					STR2LONGPTR(PageId, bid);
-					if(bid)
+					if(page_type && bid)
 					{
-						if (resourceContext == COREWEBVIEW2_WEB_RESOURCE_CONTEXT_DOCUMENT)
+						if (!lstrcmp(page_type, TEXT("index.html")))
 						{
+							// text2html index page.
 							CHAR* page_content = new CHAR[1024];
 							//post message
 							//strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script>var w=window,wv=w.chrome.webview;wv.addEventListener(\'message\', event => APMD(event.data));w.update=function(){wv.postMessage('");
@@ -126,8 +128,8 @@ APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND h
 							//xhr http
 							strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/ui.js\"></script><script>var w=window;w.update=function(){var R=new XMLHttpRequest();R.open('POST','");
 							auto nxt_st=page_content+strlen(page_content);
-							nxt_st+=LONGPTR2STR(nxt_st, bid);
-							strcpy(nxt_st, ".text',true);R.onreadystatechange=function(){APMD(R.responseText)};R.send()}</script><body><script src=\"http://mdbr/");
+							//nxt_st+=LONGPTR2STR(nxt_st, bid);
+							strcpy(nxt_st, "text',true);R.onreadystatechange=function(){APMD(R.responseText)};R.send()}</script><body><script src=\"http://mdbr/");
 
 							nxt_st+=strlen(nxt_st);
 							presentee->AppendPageResidue(nxt_st); // 加载WV2
@@ -143,7 +145,7 @@ APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND h
 
 							CHECK_FAILURE(args->put_Response(response.get()));
 						}
-						else
+						else if (!lstrcmp(page_type, TEXT("text"))||!lstrcmp(page_type, TEXT("doc.html")))
 						{
 							size_t docLength=0;
 							auto str = presentee->GetDocTex(docLength, bid, 0);
@@ -154,7 +156,25 @@ APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND h
 								CHECK_FAILURE(m_webViewEnvironment->CreateWebResourceResponse(stream.get(), 200, L"OK", L"charset=utf-8", &response));
 								wil::com_ptr<ICoreWebView2HttpResponseHeaders> headers;
 								CHECK_FAILURE(response->get_Headers(&headers));
-								headers->AppendHeader(L"Content-Type", L"text/*; charset=utf-8");
+								//headers->AppendHeader(L"Content-Type", L"text/*; charset=utf-8");
+								CHECK_FAILURE(args->put_Response(response.get()));
+							}
+						}
+						else
+						{
+							// load assets in the document folder.
+							char decodedUrl[MAX_PATH];
+							UrlDecode(decodedUrl, page_type);
+							DWORD dataLen;
+							auto data = presentee->loadSourceAsset(bid, decodedUrl, dataLen);
+							if(data) {
+								wil::com_ptr<ICoreWebView2WebResourceResponse> response;
+								wil::com_ptr<IStream> stream = SHCreateMemStream((const BYTE*)data, dataLen);
+								CHECK_FAILURE(m_webViewEnvironment->CreateWebResourceResponse(stream.get(), 200, L"OK", L"charset=utf-8", &response));
+								wil::com_ptr<ICoreWebView2HttpResponseHeaders> headers;
+								CHECK_FAILURE(response->get_Headers(&headers));
+								//MIME=text/css workaround
+								headers->AppendHeader(L"Content-Type", L"text/css; charset=utf-8");
 								CHECK_FAILURE(args->put_Response(response.get()));
 							}
 						}
@@ -162,10 +182,11 @@ APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND h
 					return S_OK;
 				}
 				else if(wcsncmp(uriTarget, TEXT("http://mdbr/"), 12)==0)
-				{
+				{ // build resource response
 					auto path = uriTarget+12;
 					if(path)
 					{
+						// COREWEBVIEW2_WEB_RESOURCE_CONTEXT
 						if(wcsstr(path, L"..")) // security check
 						{
 							return E_INVALIDARG;
@@ -174,6 +195,19 @@ APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND h
 						{
 							char decodedUrl[MAX_PATH];
 							UrlDecode(decodedUrl, path);
+
+
+							wil::com_ptr<ICoreWebView2HttpRequestHeaders> headers;
+							req->get_Headers(&headers);
+
+							//BOOL val=false;
+							//headers->Contains(L"Content-Type", &val);
+							//if (val)
+							//{
+							//	wil::unique_cotaskmem_string header;
+							//	headers->GetHeader(L"Content-Type", &header);
+							//	LogIs(1, header.get());
+							//}
 
 							DWORD dataLen;
 							auto buffer = presentee->loadPluginAsset(decodedUrl, dataLen);
@@ -185,7 +219,11 @@ APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND h
 								CHECK_FAILURE(m_webViewEnvironment->CreateWebResourceResponse(stream.get(), 200, L"OK", L"charset=utf-8", &response));
 								wil::com_ptr<ICoreWebView2HttpResponseHeaders> headers;
 								CHECK_FAILURE(response->get_Headers(&headers));
-								headers->AppendHeader(L"Content-Type", L"*/*; charset=utf-8");
+								// MIME=text/css workaround
+								headers->AppendHeader(L"Content-Type", L"text/css; charset=utf-8");
+								headers->AppendHeader(L"Access-Control-Allow-Origin", L"*");
+								//headers->AppendHeader(L"Content-Charset", L"utf-8");
+								//headers->AppendHeader(L"charset", L"utf-8");
 								CHECK_FAILURE(args->put_Response(response.get()));
 							}
 						}
@@ -339,6 +377,18 @@ void APresenterWebView2::updateArticle(LONG_PTR bid, int articleType, bool softU
 	new_st+=LONGPTR2STR(new_st, bid);
 	lstrcpy(new_st, TEXT("/index.html"));
 
+	if(articleType==1) {
+		if(softUpdate||update) {
+			lstrcpy(new_st, TEXT("/doc.html"));
+			mWebView->Navigate(page_id);
+			if(update) {
+				presentee->lastBid=bid;
+				lstrcpy(last_updated, last_actived);
+			}
+		}
+		return;
+	}
+
 	wil::unique_cotaskmem_string uri;
 	mWebView->get_Source(&uri);
 	if(softUpdate && STRSTARTWITH(uri.get(), page_id))
@@ -347,14 +397,9 @@ void APresenterWebView2::updateArticle(LONG_PTR bid, int articleType, bool softU
 	}
 	else if(update)
 	{
-		if(presentee->checkRenderMarkdown()) {
-			mWebView->Navigate(page_id);
-			presentee->lastBid=bid;
-			lstrcpy(last_updated, last_actived);
-		}// else if(!legacy && checkRenderHtml()){
-
-		 //lastBid=0;
-		 //}
+		mWebView->Navigate(page_id);
+		presentee->lastBid=bid;
+		lstrcpy(last_updated, last_actived);
 	}
 }
 

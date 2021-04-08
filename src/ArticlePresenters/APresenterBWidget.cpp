@@ -295,7 +295,7 @@ void APresenterBWidget::updateArticle(LONG_PTR bid, int articleType, bool softUp
 		defferedLoad = new DefferedLoadingData{bid, articleType};
 		return;
 	}
-	CHAR* page_id = new CHAR[64];  // LIBCEF 需要拟构网址。 传文件名，只传ID吧。 http://tests/MDT/{bid}/index.html
+	CHAR* page_id = new CHAR[64];  // LIBCEF 需要拟构网址。 传文件名，只传ID吧。 http://tests/MDT/{bid}/text.html
 	int st,ed;
 	strcpy(page_id, "http://tests/MDT/");
 	LONGPTR2STR(page_id+(st=strlen(page_id)), bid);
@@ -311,7 +311,7 @@ void APresenterBWidget::updateArticle(LONG_PTR bid, int articleType, bool softUp
 		}
 		return;
 	}
-	strcpy(page_id+(ed=strlen(page_id)), "/index.html");
+	strcpy(page_id+(ed=strlen(page_id)), "/text.html");
 	if(softUpdate && STRSTARTWITH(bwGetUrl(mWebView), page_id))
 	{
 		bwExecuteJavaScript(mWebView, "update()"); // bw soft update

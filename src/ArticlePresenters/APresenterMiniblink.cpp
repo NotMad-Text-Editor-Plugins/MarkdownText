@@ -3,6 +3,9 @@
 #include "APresentee.h"
 #include "shlwapi.h"
 
+#include "SU.h"
+#include "InsituDebug.h"
+
 
 #define kClassWindow L"TestMbWindow"
 
@@ -66,47 +69,52 @@ void MB_CALL_TYPE onRunJs(mbWebView webView, void* param, mbJsExecState es, mbJs
 
 BOOL MB_CALL_TYPE handleLoadUrlBegin(mbWebView webView, void* param, const char* url, void *job)
 {
-	if(strncmp(url, InternalResHead1, 12)==0)
+	if(strncmp(url, InternalTESTSResHead1, 17)==0)
 	{
-		auto path = url+12;
-		//const utf8* decodeURL = wkeUtilDecodeURLEscape(path);
-		const utf8* decodeURL = mbUtilDecodeURLEscape(path);
-		if(decodeURL)
+		LONG_PTR bid=0;
+		int from = STR2LONGPTRA((CHAR*)url+17, bid);
+		if(from&&bid)
 		{
-			if(strncmp(decodeURL, "doc/", 4)==0)
+			char decodedUrl[MAX_PATH];
+			auto path = url+18+from;
+
+			if(!strcmp(path, "text")||!strcmp(path, "doc.html"))
 			{
-				decodeURL += 4;
-				if(strncmp(decodeURL, "index.html", 5)==0)
-				{
-					size_t len;
-					auto res=presentee->GetDocTex(len, 0, 0);
-					mbNetSetData(job, res, len);
-					//delete[] res;
-					return true;
-				}
-				else {
-					DWORD dataLen;
-					auto buffer = presentee->loadSourceAsset(0, decodeURL, dataLen);
-					if(buffer)
-					{
-						mbNetSetData(job, buffer, dataLen);
-						//delete[] buffer;
-						return true;
-					}
-				}
-				return false;
+				size_t len;
+				auto res=presentee->GetDocTex(len, 0, 0);
+				mbNetSetData(job, res, len);
+				return true;
 			}
-			if(strstr(decodeURL, "..")) // security check
+			else if(!strcmp(path, "text.html"))
 			{
-				return false;
+				LONGPTR2STR(decodedUrl, bid);
+				CHAR* page_content = new CHAR[512];
+				int len = sprintf(page_content, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/ui.js\"></script><script>function onNative(msg,rsp){if(msg==0x666)window.APMD(rsp)};window.update=function(){window.mbQuery(0x666,\"%s\",onNative)}</script><body><script src=\"http://mdbr/", decodedUrl);
+				presentee->AppendPageResidue(page_content+len); // 加载mb
+				mbNetSetData(job, page_content, strlen(page_content));
+				return true;
 			}
+			UrlDecode(decodedUrl, path);
 			DWORD dataLen;
-			auto buffer = presentee->loadPluginAsset(path, dataLen);
+			auto buffer = presentee->loadSourceAsset(0, decodedUrl, dataLen);
 			if(buffer)
 			{
 				mbNetSetData(job, buffer, dataLen);
+				//delete[] buffer;
 				return true;
 			}
+		}
+	}
+	if(strncmp(url, InternalResHead1, 12)==0)
+	{
+		auto path = url+12;
+		const utf8* decodeURL = mbUtilDecodeURLEscape(path);
+		DWORD dataLen;
+		auto buffer = presentee->loadPluginAsset(decodeURL, dataLen);
+		if(buffer)
+		{
+			mbNetSetData(job, buffer, dataLen);
+			return true;
 		}
 	}
 	return false;
@@ -123,7 +131,7 @@ void MB_CALL_TYPE handleLoadingFinish(mbWebView webView, void* param, mbWebFrame
 {
 	//if(result == MB_LOADING_SUCCEEDED)
 	//::mbNetGetFavicon(webView, HandleFaviconReceived, param);
-	OutputDebugStringA("handleLoadingFinish \n");
+	//OutputDebugStringA("handleLoadingFinish \n");
 }
 
 mbWebView MB_CALL_TYPE handleCreateView(mbWebView webView, void* param, mbNavigationType navigationType, const utf8* url, const mbWindowFeatures* windowFeatures)
@@ -527,18 +535,10 @@ void APresenterMiniblink::ZoomIn()
 }
 
 void APresenterMiniblink::ShowDevTools(TCHAR *res_path) {
-	// WTF
-	
-	//TCHAR tmp[MAX_PATH]{};
-	//lstrcpy(tmp, MBPath);
-	//::PathAppend(tmp, TEXT("front_end\\inspector.html"));
-	//
-	//CHAR tmp1[MAX_PATH];
-	////int iLength = WideCharToMultiByte(CP_ACP, 0, res_path, -1, NULL, 0, NULL, NULL);  
-	//WideCharToMultiByte(CP_ACP, 0, res_path, -1, tmp1, 0, NULL, NULL); 
-	//res_path = (TCHAR *)tmp1;
-	//
-	//mbSetDebugConfig(mWebView, "showDevTools", (char*)L"D:\\Downloads\\ChromiumEmbeded\miniblink-20210131\\front_end\\inspector.html");
+	CHAR tmp[MAX_PATH]{};
+	WideCharToMultiByte(CP_ACP, 0, MBPath, -1, tmp, MAX_PATH-1, NULL, NULL);  
+	::PathAppendA(tmp, ("\\front_end\\inspector.html"));
+	mbSetDebugConfig(mWebView, "showDevTools", tmp);
 }
 
 void APresenterMiniblink::ShowWindow() 
@@ -548,26 +548,34 @@ void APresenterMiniblink::ShowWindow()
 
 void APresenterMiniblink::updateArticle(LONG_PTR bid, int articleType, bool softUpdate, bool update) 
 {
-	if(presentee->RendererTypeIdx==1) {
-		//mbLoadURL(mWebView, "http://mdbr/doc.html");
-		mbLoadURL(mWebView, "http://mdbr/doc/index.html");
-		return;
-	}
-	if(softUpdate)
+	if (softUpdate&&articleType!=1&&presentee->lastBid==bid)
 	{
 		mbRunJs(mWebView, mbWebFrameGetMainFrame(mWebView), "update()", false, 0,0,0); // mb soft update
+		return;
+	}
+	CHAR page_content[128]{"http://tests/MDT/"};
+	if(presentee->RendererTypeIdx==1) {
+		//mbLoadURL(mWebView, "http://mdbr/doc/text.html");
+		if (softUpdate||update)
+		{
+			int to = LONGPTR2STR(page_content+17, bid);
+			strcpy(page_content+17+to, "/doc.html");
+			mbLoadURL(mWebView, page_content);
+			if (update)
+			{
+				presentee->lastBid=bid;
+				lstrcpy(last_updated, last_actived);
+			}
+		}
+		return;
 	}
 	else if(update)
 	{
-		if(presentee->checkRenderMarkdown()) {
-			CHAR* page_content = new CHAR[512];
-			strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/ui.js\"></script><script>function onNative(msg,rsp){if(msg==0x666)window.APMD(rsp)};window.update=function(){window.mbQuery(0x666,\"\",onNative)}</script><body><script src=\"http://mdbr/");
-			presentee->AppendPageResidue(page_content+244); // 加载mb
-			mbLoadHtmlWithBaseUrl(mWebView, page_content, "file://");
-			presentee->lastBid=bid;
-			lstrcpy(last_updated, last_actived);
-			//mbLoadHtmlWithBaseUrl(mWebView, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/main.js\"></script><body><script>function onNative(msg,rsp){if(msg==0x666)window.APMD(rsp)}window.mbQuery(0x666,\"\",onNative);</script></body>", "file://");
-		}
+		int to = LONGPTR2STR(page_content+17, bid);
+		strcpy(page_content+17+to, "/text.html");
+		mbLoadURL(mWebView, page_content);
+		presentee->lastBid=bid;
+		lstrcpy(last_updated, last_actived);
 	}
 }
 

@@ -4,6 +4,8 @@
 
 #include "shlwapi.h"
 
+#include "SU.h"
+#include "InsituDebug.h"
 
 void WKE_CALL_TYPE onDidCreateScriptContextCallback(wkeWebView webView, void* param, wkeWebFrameHandle frameId, void* context, int extensionGroup, int worldId)
 {
@@ -45,18 +47,50 @@ wkeWebView onCreateView(wkeWebView webWindow, void* param, wkeNavigationType nav
 
 bool onLoadUrlBegin(wkeWebView webView, void* param, const char* url, void *job)
 {
+	if(strncmp(url, InternalTESTSResHead1, 17)==0)
+	{
+		LONG_PTR bid=0;
+		int from = STR2LONGPTRA((CHAR*)url+17, bid);
+		if(from&&bid) {
+			char decodedUrl[MAX_PATH];
+			auto path = url+18+from;
+			if (strcmp(path, "text.html")==0)
+			{
+				LONGPTR2STR(decodedUrl, bid);
+				CHAR* page_content = new CHAR[512];
+				int len = sprintf(page_content, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/ui.js\"></script><script>window.update=function(){APMD(GetDocText('%s'))}</script><body><script src=\"http://mdbr/", decodedUrl);
+				presentee->AppendPageResidue(page_content+len); // 加载wke
+				wkeNetSetData(job, page_content, strlen(page_content));
+				return true;
+			}
+			else if (strcmp(path, "doc.html")==0)
+			{
+				size_t len;
+				char* data = presentee->GetDocTex(len, bid, 0);
+				wkeNetSetData(job, data, len);
+				return true;
+			}
+			UrlDecode(decodedUrl, path);
+			DWORD dataLen;
+			auto data = presentee->loadSourceAsset(bid, decodedUrl, dataLen);
+			if(data) {
+				wkeNetSetData(job, data, dataLen);
+				return true;
+			}
+		}
+	}
 	if(strncmp(url, InternalResHead1, 12)==0)
 	{
 		auto path = url+12;
 		const utf8* decodeURL = wkeUtilDecodeURLEscape(path);
 		if(decodeURL)
 		{
-			if(strstr(decodeURL, "..")) // security check
-			{
-				return false;
-			}
 			DWORD dataLen;
 			auto buffer = presentee->loadPluginAsset(path, dataLen);
+			if (!buffer)
+			{
+				buffer = presentee->loadSourceAsset(presentee->lastBid, path, dataLen);
+			}
 			if(buffer)
 			{
 				wkeNetSetData(job, buffer, dataLen);
@@ -92,19 +126,28 @@ jsValue WKE_CALL_TYPE GetDocText(jsExecState es, void* param)
 	//
 	//path += "\n";
 	//OutputDebugStringA(path.c_str());
+	if (1 == jsArgCount(es))
+	{
+		jsValue arg0 = jsArg(es, 0);
+		if (jsIsString(arg0))
+		{
+			std::string path;
+			path = jsToTempString(es, arg0);
+			LONG_PTR bid=0;
+			int from = STR2LONGPTRA((CHAR*)path.data(), bid);
+			size_t len;
+			auto ret=jsString(es, presentee->GetDocTex(len, bid, 0));
 
-	size_t len;
-	auto ret=jsString(es, presentee->GetDocTex(len, 0, 0));
-	//::MessageBox(NULL, TEXT("111"), TEXT(""), MB_OK);
-	return ret;
-	//return jsString(es, "# Hello `md.html` World!");
+			//::MessageBox(NULL, TEXT("111"), TEXT(""), MB_OK);
+			return ret;
+		}
+	}
+	return jsString(es, "# Hello `md.html` World!");
 }
 
 jsValue WKE_CALL_TYPE ScintillaScroll1(jsExecState es, void* param)
 {
-	TCHAR buffer[256]={0};
-	wsprintf(buffer,TEXT("position=%s"), 0);
-	::SendMessage(nppData._nppHandle, NPPM_SETSTATUSBAR, STATUSBAR_DOC_TYPE, (LPARAM)buffer);
+	//LogIs(3, L"position=%s", 0);
 
 	if(GetUIBoolReverse(0) && GetUIBoolReverse(2) || jsArgCount(es)>1)
 	{
@@ -209,22 +252,35 @@ void APresenterMiniWke::ShowWindow() {
 	wkeShowWindow(mWebView, TRUE);
 }
 
-void APresenterMiniWke::updateArticle(LONG_PTR bid, int articleType, bool softUpdate, bool update) {
-
-	if(softUpdate)
+void APresenterMiniWke::updateArticle(LONG_PTR bid, int articleType, bool softUpdate, bool update) 
+{
+	if (softUpdate&&articleType!=1&&presentee->lastBid==bid)
 	{
 		wkeRunJS(mWebView, "update()"); // wke soft update
+		return;
+	}
+	CHAR page_content[128]{"http://tests/MDT/"};
+	if (articleType==1)
+	{
+		if (softUpdate||update)
+		{
+			int to = LONGPTR2STR(page_content+17, bid);
+			strcpy(page_content+17+to, "/doc.html");
+			wkeLoadURL(mWebView, page_content);
+			if (update)
+			{
+				presentee->lastBid=bid;
+				lstrcpy(last_updated, last_actived);
+			}
+		}
+		return;
 	}
 	else if(update)
 	{
-		if(presentee->checkRenderMarkdown()) {
-			CHAR* page_content = new CHAR[512];
-			strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/ui.js\"></script><script>window.update=function(){APMD(GetDocText(''))}</script><body><script src=\"http://mdbr/");	
-			presentee->AppendPageResidue(page_content+172); // 加载wke
-			wkeLoadHTML(mWebView, page_content);
-			presentee->lastBid=bid;
-			lstrcpy(last_updated, last_actived);
-			//wkeLoadHTML(mWebView, "<!doctype html><meta charset=\"utf-8\"> <script src=\"http://mdbr/main.js\"></script><body><script>window.update=function(){APMD(GetDocText(''))};update();</script></body>");
-		}
+		int to = LONGPTR2STR(page_content+17, bid);
+		strcpy(page_content+17+to, "/text.html");
+		wkeLoadURL(mWebView, page_content);
+		presentee->lastBid=bid;
+		lstrcpy(last_updated, last_actived);
 	}
 }
