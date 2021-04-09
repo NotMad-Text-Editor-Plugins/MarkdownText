@@ -1,1 +1,0 @@
-video::Tests/WebglClouds/CloudAtlas.mp4[width=100%,start=60,end=140,opts=autoplay]
