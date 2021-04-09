@@ -40,6 +40,8 @@ public:
     CComboUI*   wkpath;
     CControlUI* wkedit;
 
+    CComboUI*   rndType;
+
     CComboUI*   rdnType;
     CComboUI*   language;
 

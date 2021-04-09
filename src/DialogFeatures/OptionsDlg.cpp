@@ -11,6 +11,10 @@
 using namespace DuiLib;
 
 // Building the settings dialog using Duilib.
+int remapRndType(int type)
+{
+    return type==1?2:type==2?1:type;
+}
 
 OptionsDlg::OptionsDlg()
 { 
@@ -116,7 +120,8 @@ void OptionsDlg::OnPrepare()
     wkpath = static_cast<CComboUI*>(  m_pm.FindControl(_T("wkpath")));
     wkedit = static_cast<CControlUI*>(m_pm.FindControl(_T("wkedit")));
 
-    //rdnType = static_cast<CComboUI*>(  m_pm.FindControl(_T("rndType")));  // default render types
+    rndType = static_cast<CComboUI*>(m_pm.FindControl(_T("rndType")));  // default render types
+
     language = static_cast<CComboUI*>(  m_pm.FindControl(_T("language")));// languages
 
     drawComboEditUI(bwpath, bwedit, _MDText.LibCefSel, _MDText.LibPaths, "Pick LibCef folder: ( contains cefclient.dll )", "LibPath%d");
@@ -130,6 +135,8 @@ void OptionsDlg::OnPrepare()
     drawExtEdit(m_pm, TEXT("mddt"), 0);
     drawExtEdit(m_pm, TEXT("addt"), 1);
     drawExtEdit(m_pm, TEXT("htdt"), 2);
+
+    rndType->SelectItem(remapRndType(_MDText.defaultRenderer));
 
     HandleMessage(2, NULL); // localize
 }
@@ -355,6 +362,10 @@ void OptionsDlg::Notify(TNotifyUI& msg)
     else if( msg.pSender == bwpath || msg.pSender == wkpath || msg.pSender == mbpath ) 
     {
         HandleMessage(0, &msg);
+    }
+    else if( msg.pSender == rndType ) 
+    {
+        _MDText.defaultRenderer = remapRndType(rndType->GetCurSel());
     }
     // notify :: return on the edit control
     else if( msg.pSender == bwedit || msg.pSender == wkedit || msg.pSender == mbedit ) {

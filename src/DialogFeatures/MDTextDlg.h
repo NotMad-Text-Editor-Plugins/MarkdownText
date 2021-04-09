@@ -108,12 +108,6 @@ public :
 
 	CHAR* GetDocTex(size_t & docLength, LONG_PTR bid, bool * shouldDelete);
 
-	bool checkRenderMarkdown();
-
-	bool checkRenderHtml();
-
-	bool checkRenderAscii();
-
 	std::string* setLibPathAt(std::vector<std::string*> & paths, int idx, char* newpath, char * key);
 protected :
 	virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam);
@@ -126,6 +120,8 @@ protected :
 	bool bAutoSwitchEngines=0;
 
 	void releaseEnginesMenu();
+
+	bool checkFileExt(int type);
 
 	std::vector<FuncItem> ZOOMER;
 	std::vector<FuncItem> EngineSwicther;
@@ -143,6 +139,8 @@ protected :
 
 	WarnDlg* installGuide = NULL;
 	bool isShowGuidePredateArticle = false;
+
+	std::map<LONG_PTR, int> prefRndTyps;
 public :
 	APresenter presenter;
 	int kernelType=-1; // -1_auto 0_wke 1_mb 2_bw 3_WV2
@@ -191,6 +189,8 @@ public :
 
 	std::vector<std::string> html_ext;
 
+	std::vector<std::string>* all_exts[3]{&markdown_ext, &html_ext, &asciidoc_ext};
+
 	void checkAutoRun();
 
 	ReadExtContext* extCtx = NULL;
@@ -202,6 +202,9 @@ public :
 	std::wstring GetLocalWText(char* name, const TCHAR* defVal);
 
 	std::set<LONG_PTR> buffersMap;
+
+	int defaultRenderer;
+	int lastPickedRenderer;
 };
 
 #endif //LNHISTORY_DLG_H

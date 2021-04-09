@@ -52,9 +52,9 @@ public:
 
 	virtual CHAR* GetDocTex(size_t & docLength, LONG_PTR bid, bool * shouldDelete)=0;
 
-	virtual bool checkRenderMarkdown()=0;
+	//virtual bool checkRenderMarkdown()=0;
 
-	virtual bool checkRenderHtml()=0;
+	//virtual bool checkRenderHtml()=0;
 
 	virtual void AppendPageResidue(char* appendSt)=0;
 

@@ -27,6 +27,8 @@
 #include "WarningDlg.hpp"
 #include "SU.h"
 
+#include "InsituDebug.h"
+
 const TCHAR* configFileName = TEXT("MarkDownText.ini");
 
 void MarkDownTextDlg::doScintillaScroll(int ln)
@@ -259,7 +261,8 @@ void MarkDownTextDlg::syncWebToline(bool force)
 }
 
 // Initize various browser controls here.
-void MarkDownTextDlg::display(bool toShow){
+void MarkDownTextDlg::display(bool toShow)
+{
 	DockingDlgInterface::display(toShow);
 
 	setClosed(!toShow);
@@ -275,12 +278,14 @@ void MarkDownTextDlg::display(bool toShow){
 	//::SendMessage( _hSelf, SELF_REFRESH, 0, 1);
 };
 
-void MarkDownTextDlg::setClosed(bool toClose) {
+void MarkDownTextDlg::setClosed(bool toClose) 
+{
 	_isClosed = toClose;
 	::SendMessage(nppData._nppHandle, NPPM_SETMENUITEMCHECK, funcMenu->_cmdID, !toClose);
 }
 
-void MarkDownTextDlg::AppendPageResidue(char* nxt_st) {
+void MarkDownTextDlg::AppendPageResidue(char* nxt_st) 
+{
 	if(RendererTypeIdx>=0&&RendererTypeIdx<=2&&RendererNames[RendererTypeIdx][0])
 	{
 		strcpy(nxt_st, RendererNames[RendererTypeIdx]);
@@ -304,7 +309,8 @@ void MarkDownTextDlg::releaseEnginesMenu()
 	}
 }
 
-bool checkFileExt(vector<string> & ext) { 
+bool checkFileForExt(vector<string> & ext) 
+{ 
 	auto len = lstrlen(last_actived);
 	TCHAR x;
 	for(string & eI:ext) {
@@ -321,22 +327,9 @@ bool checkFileExt(vector<string> & ext) {
 	return false;
 }
 
-bool MarkDownTextDlg::checkRenderMarkdown() { 
-	if(bForcePreview)
-		return 1;
-	return checkFileExt(markdown_ext);
-}
-
-bool MarkDownTextDlg::checkRenderHtml() { 
-	if(bForcePreview)
-		return 1;
-	return checkFileExt(html_ext);
-}
-
-bool MarkDownTextDlg::checkRenderAscii() { 
-	if(bForcePreview)
-		return 1;
-	return checkFileExt(asciidoc_ext);
+bool MarkDownTextDlg::checkFileExt(int type) 
+{ 
+	return checkFileForExt(*all_exts[type]);
 }
 
 std::string* MarkDownTextDlg::setLibPathAt(std::vector<std::string*> & paths, int idx, char* newpath, char * key)
@@ -350,22 +343,8 @@ std::string* MarkDownTextDlg::setLibPathAt(std::vector<std::string*> & paths, in
 	return val;
 }
 
-bool isMDEngineActive() 
+void MarkDownTextDlg::RefreshWebview(int source) 
 {
-	return _MDText.RendererTypeIdx==0;
-}
-
-bool isHTMLEngineActive() 
-{
-	return _MDText.RendererTypeIdx==1;
-}
-
-bool isAsciiEngineActive() 
-{
-	return _MDText.RendererTypeIdx==2;
-}
-
-void MarkDownTextDlg::RefreshWebview(int source) {
 	//TCHAR buffer[256]={0};
 	//wsprintf(buffer,TEXT("RefreshWebview source=%d"), source, _MDText.RendererTypeIdx);
 	//::SendMessage(nppData._nppHandle, NPPM_SETSTATUSBAR, STATUSBAR_DOC_TYPE, (LPARAM)buffer);
@@ -375,40 +354,83 @@ void MarkDownTextDlg::RefreshWebview(int source) {
 		//CustomRoutine = "MDViewer";
 		bool fromEditor = source==1;
 		char b1=fromEditor&&lastBid==bid, b2=lastBid!=bid;
+		b2 = lastBid!=bid&&!fromEditor;
 		if (source==3)
 		{
 			b2 = true;
 		}
+		bool bNeedUpdate = b2;
 		//bool autoSwitch = bAutoSwitchEngines&&!fromEditor;
-		bool autoSwitch = 1&&source==0;
+		bool autoSwitch = GetUIBoolReverse(7)&&source==0;
 		bool bShouldCheck=true;
-		std::vector<string>* all_exts[]{&markdown_ext, &html_ext, &asciidoc_ext};
-		if(autoSwitch)
+
+		if(!fromEditor && !checkFileExt(RendererTypeIdx))
 		{
+			// 1st priority, auto-switch
 			// auto switch render type according to current actived document's file name extension
 			// and extensions preset.
-			for (size_t toIdx = 0; toIdx < 3; toIdx++)
+			if (autoSwitch)
 			{
-				if (checkFileExt(*all_exts[toIdx]))
+				for (size_t toIdx = 0; toIdx < 3; toIdx++)
 				{
-					if(toIdx!=RendererTypeIdx)
+					if (toIdx!=RendererTypeIdx && checkFileExt(toIdx))
 					{
 						RendererTypeIdx=toIdx;
 						releaseEnginesMenu();
+						bShouldCheck = false;
+						break;
 					}
-					bShouldCheck = false;
-					break;
 				}
 			}
+			// 2nd priority, mannual-switch memory
+			if (bShouldCheck)
+			{
+				auto prefIdx = prefRndTyps.find(bid);
+				if (prefIdx!=prefRndTyps.end())
+				{
+					bool hmRndTyp = RendererTypeIdx==prefIdx->second;
+					//if (autoSwitch||hmRndTyp)
+					{
+						if (!hmRndTyp)
+						{
+							RendererTypeIdx=prefIdx->second;
+							releaseEnginesMenu();
+						}
+						b2=true;
+						bShouldCheck = false;
+					}
+				}
+			}
+			if (bShouldCheck)
+			{
+				b2=false;
+			}
+			else
+			{
+				b2=true;
+			}
 		}
-		if(bShouldCheck && b2 && !bForcePreview)
+		if(b2 && bShouldCheck)
 		{
 			// perform the check again if needed.
-			b2 = checkFileExt(*all_exts[RendererTypeIdx]);
+			b2 = checkFileExt(RendererTypeIdx);
 		}
-		bool isMarkdown = isMDEngineActive();
-		bool isHtml = isHTMLEngineActive();
-		//bool isAscii = isAsciiActive();
+		//if(false)
+		if (bNeedUpdate&&!b2)
+		{
+			if (bForcePreview)
+			{
+				if (RendererTypeIdx!=defaultRenderer) // &&GetUIBoolReverse(7)
+				{
+					// apply default renderer type
+					RendererTypeIdx = defaultRenderer;
+					releaseEnginesMenu();
+				}
+				prefRndTyps[bid] = RendererTypeIdx;
+				LogIs("RendererTypeIdx %d, %d", RendererTypeIdx, prefRndTyps[bid]);
+				b2=true;
+			}
+		}
 		mWebView0->updateArticle(bid, RendererTypeIdx, b1, b2);
 	}
 }
@@ -468,7 +490,8 @@ void MarkDownTextDlg::OnToolBarRequestToolTip( LPNMHDR nmhdr )
 	//}
 }
 
-int MarkDownTextDlg::getToolbarCommand(POINT &pointer) {
+int MarkDownTextDlg::getToolbarCommand(POINT &pointer) 
+{
 	TBBUTTON tempBtn;
 	RECT rect;
 	ScreenToClient(toolBar.getHSelf(), &pointer);
@@ -624,7 +647,8 @@ INT_PTR CALLBACK MarkDownTextDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 	return DockingDlgInterface::run_dlgProc(message, wParam, lParam);
 }
 
-bool getMenuItemNeedsKeep(int mid) {
+bool getMenuItemNeedsKeep(int mid) 
+{
 	switch(mid) {
 		case menuBolden:
 		case menuPause:
@@ -636,7 +660,8 @@ bool getMenuItemNeedsKeep(int mid) {
 	return false;
 }
 
-bool getMenuItemChecked(int mid) {
+bool getMenuItemChecked(int mid) 
+{
 	switch(mid) {
 		case menuPause:
 			return GetUIBool(3);
@@ -652,11 +677,13 @@ void SwitchEnginesStatic(int idx) {
 	_MDText.SwitchEngines(idx);
 }
 
-void GlobalOnPvMnCheckedStatic(HMENU hMenu, int idx){
+void GlobalOnPvMnCheckedStatic(HMENU hMenu, int idx)
+{
 	_MDText.GlobalOnPvMnChecked(hMenu, idx);
 }
 
-void simulToolbarMenu(HMENU pluginMenu, RECT *rc, HWND _hSelf, FuncItem* items){
+void simulToolbarMenu(HMENU pluginMenu, RECT *rc, HWND _hSelf, FuncItem* items)
+{
 	int cmd = TrackPopupMenu(pluginMenu, TPM_RETURNCMD, rc->left,  rc->top, 0, _hSelf, NULL);
 
 	if(cmd) {
@@ -732,6 +759,7 @@ void MarkDownTextDlg::saveParameters()
 	int core=requestedInvalidSwitch>0?requestedInvalidSwitch-1:kernelType;
 	PutProfInt("BrowserType", core);
 	PutProfInt("RenderType", RendererTypeIdx);
+	PutProfInt("DefaultType", defaultRenderer);
 	PutProfString("MDEngine", MDRoutine);
 	PutProfString("ADEngine", ADRoutine);
 	PutProfInt("UISettings", UISettings);
@@ -805,7 +833,6 @@ void MarkDownTextDlg::readExtensions(int channel, string * ret)
 			,{"Ext_AD", NULL, "ascii"}
 		};
 	}
-	std::vector<std::string>* extVectors[]{&markdown_ext, &html_ext, &asciidoc_ext};
 	string tmp;
 	for (int id = 0; id < 3; id++)
 	{
@@ -823,7 +850,7 @@ void MarkDownTextDlg::readExtensions(int channel, string * ret)
 			}
 			else
 			{
-				StrToExtArr(*extVectors[id], (char*)val->data(), val->length());
+				StrToExtArr(*all_exts[id], (char*)val->data(), val->length());
 			}
 		}
 	}
@@ -867,11 +894,17 @@ void MarkDownTextDlg::readParameters()
 	readLibPaths(maxPathHistory1, WkePaths, "WkePath%d", LibWkeSel, "LibWke");
 	readLibPaths(maxPathHistory2, MbPaths, "MbPath%d", LibMbSel, "LibMb");
 
-	int inval=GetProfInt("RenderType", -1);
-	if(inval>2||inval<-1) {
-		inval=-1;
+	int inval=GetProfInt("RenderType", 0);
+	if(inval>2||inval<0) {
+		inval=0;
 	}
-	RendererTypeIdx=inval;
+	lastPickedRenderer=RendererTypeIdx=inval;
+
+	inval=GetProfInt("DefaultType", 0);
+	if(inval>2||inval<0) {
+		inval=0;
+	}
+	defaultRenderer = inval;
 }
 
 BOOL CALLBACK removeAllChildren(HWND hwndChild, LPARAM lParam)
@@ -889,7 +922,8 @@ BOOL CALLBACK removeAllChildren(HWND hwndChild, LPARAM lParam)
 	return 1;
 }
 
-void removeAllChildExceptOne(HWND hwnd, HWND ex) {
+void removeAllChildExceptOne(HWND hwnd, HWND ex) 
+{
 	EnumChildWindows(hwnd, removeAllChildren, (LPARAM)ex);
 }
 
@@ -977,7 +1011,8 @@ void engineToChromium(){ _MDText.switchEngineByIndex(2); }
 
 void engineToWebview2(){ _MDText.switchEngineByIndex(3); }
 
-HMENU GetLegacyPluginMenu() {
+HMENU GetLegacyPluginMenu() 
+{
 	HMENU pluginMenu = (HMENU)::SendMessage(nppData._nppHandle, NPPM_GETMENUHANDLE, NPPPLUGINMENU , (LPARAM)0);
 	int cc = GetMenuItemCount(pluginMenu);
 	int targetLen = lstrlen(NPP_PLUGIN_NAME);
@@ -1003,7 +1038,8 @@ HMENU GetPluginMenu() {
 }
 
 // find any folder that contains main.js
-bool MarkDownTextDlg::FindMarkdownEngines(TCHAR* path) {
+bool MarkDownTextDlg::FindMarkdownEngines(TCHAR* path) 
+{
 	//see https://stackoverflow.com/questions/67273/how-do-you-iterate-through-every-file-directory-recursively-in-standard-c#answer-67336
 	TCHAR scriptPath[MAX_PATH];
 	GetModuleFileName((HMODULE)g_hModule, scriptPath, MAX_PATH);
@@ -1056,12 +1092,14 @@ bool MarkDownTextDlg::FindMarkdownEngines(TCHAR* path) {
 	return true;
 }
 
-std::map<std::string, std::string> & MarkDownTextDlg::getLocaliseMap() {
+std::map<std::string, std::string> & MarkDownTextDlg::getLocaliseMap() 
+{
 	localizationMap = &localizefile;
 	return localizefile;
 }
 
-std::string * MarkDownTextDlg::getLocalString(char* name) {
+std::string * MarkDownTextDlg::getLocalString(char* name) 
+{
 	return name?GetLocalText(getLocaliseMap(), name):NULL;
 }
 
@@ -1113,7 +1151,6 @@ void MarkDownTextDlg::checkAutoRun()
 	}
 	// else check and judge whether to run.
 	CHAR* cmd;
-	std::vector<string>* all_exts[]{&markdown_ext, &html_ext, &asciidoc_ext};
 	char* ext, * cmdn; 
 	int i,j,k,extl,extsl,all_extsl=3,cmdl;
 	for (int x = 0; x < 3; x++)
@@ -1179,7 +1216,8 @@ int funcSz(FuncItem* funcs)
 	return sz;
 }
 
-void MarkDownTextDlg::setLanguageName(wstring & name, bool init) {
+void MarkDownTextDlg::setLanguageName(wstring & name, bool init) 
+{
 	if(currentLanguageFile!=name||init)
 	{
 		currentLanguageFile = name;
@@ -1220,7 +1258,8 @@ void MarkDownTextDlg::setLanguageName(wstring & name, bool init) {
 	}
 }
 
-void MarkDownTextDlg::GlobalOnPvMnChecked(HMENU hMenu, int idx) {
+void MarkDownTextDlg::GlobalOnPvMnChecked(HMENU hMenu, int idx) 
+{
 	switch(idx) {
 		// IDM_EX_LOCATE
 		case 260:
@@ -1257,7 +1296,8 @@ void MarkDownTextDlg::GlobalOnPvMnChecked(HMENU hMenu, int idx) {
 
 // Switch internal or custom Markdown/HMTL/ASCIIDoc renderer.
 
-void MarkDownTextDlg::SwitchEngines(int idx) {
+void MarkDownTextDlg::SwitchEngines(int idx) 
+{
 	if(idx<-2) // reset custom engines.
 	{
 		MDEngineScanned=false;
@@ -1279,8 +1319,8 @@ void MarkDownTextDlg::SwitchEngines(int idx) {
 		auto data = MDEngines[idx].data();
 		if(!_tcsnicmp(data, TEXT("ASCII"), 5)) {
 			// to treat as AsciiDoc engine.
-			RendererTypeIdx=2;
 			data2set = ADRoutine;
+			RendererTypeIdx=2;
 		} else {
 			// to treat as Markdown engine.
 			data2set = MDRoutine;
@@ -1293,13 +1333,20 @@ void MarkDownTextDlg::SwitchEngines(int idx) {
 	{
 		CheckMenuItem(hMenuEngines, i+MDCRST, MF_BYPOSITION|(i==idx?MF_CHECKED:MF_UNCHECKED));
 	}
+	//if (!checkFileExt(RendererTypeIdx))
+	{
+		// mannual-switch memory
+		prefRndTyps[::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0)] = RendererTypeIdx;
+	}
+	lastPickedRenderer = RendererTypeIdx;
 	lastBid=0;
 	bForcePreview=1;
 	RefreshWebview(2);
 	bForcePreview=0;
 }
 
-void ResetZoom(){
+void ResetZoom()
+{
 	if(_MDText.mWebView0) {
 		_MDText.mWebView0->ResetZoom();
 	}
@@ -1489,7 +1536,7 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 				{
 					MultiByteToWideChar(CP_ACP, 0, RendererNames[RendererTypeIdx], -1, path_buffer, MAX_PATH);
 				}
-				else if(isHTMLEngineActive()) {
+				else if(_MDText.RendererTypeIdx==1) {
 					CheckMenuItem(hMenuEngines, MDCRST-2, MF_BYPOSITION|MF_CHECKED);
 				}
 				else // 默认引擎 md.html

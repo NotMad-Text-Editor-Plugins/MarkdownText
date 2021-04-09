@@ -109,8 +109,8 @@
 			<Container bkcolor="#FF00FFFF" >
 				<Combo name="rndType"  itemmenu="true" normalimage="file='Combo_nor.bmp' corner='2,2,24,2'" hotimage="file='Combo_over.bmp' corner='2,2,24,2'" pushedimage="file='Combo_over.bmp' corner='2,2,24,2'" textpadding="1,1,1,1" font="12" >
 					<ListLabelElement text="  Markdown" selected="true"/>
-					<ListLabelElement text="  AsciiDoc"/>
-					<ListLabelElement text="  HTML"/>
+          <ListLabelElement text="  AsciiDoc"/>
+          <ListLabelElement text="  HTML"/>
 				</Combo>
 			</Container>
 		</HorizontalLayout>
