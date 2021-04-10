@@ -15,7 +15,6 @@
 
 [How to build a custom renderer](https://github.com/KnIfER/Extesions/tree/master/MarkdownEngines/HtmlDemo)
 
-[Download](release)
+[Download](../../releases)
 
-![](Tests/WebglClouds/CloudAtlas.webp)
-
+<img width="50%" height="auto" src="Tests/WebglClouds/CloudAtlas.webp"/>
