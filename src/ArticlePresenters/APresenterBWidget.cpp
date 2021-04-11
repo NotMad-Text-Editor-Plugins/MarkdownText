@@ -35,7 +35,7 @@ BJSCV* GetDocText1(LONG_PTR funcName, int argc, LONG_PTR argv, int sizeofBJSCV)
 		}
 	}
 	size_t len;
-	bool del;
+	bool del = false;
 	auto ret = new BJSCV{typeString, 0, presentee->GetDocTex(len, bid, &del)};
 	ret->delete_internal = del;
 	return ret;
@@ -48,8 +48,6 @@ LRESULT WINAPI testWindowProc1(
 	__in WPARAM wParam,
 	__in LPARAM lParam)
 {
-	LRESULT result = 0;
-
 	switch (msg) {
 	case WM_NCDESTROY:
 		return 0;
@@ -166,10 +164,11 @@ url_intercept_result* InterceptBrowserWidget(const char* url, const url_intercep
 			char decodedUrl[MAX_PATH];
 			UrlDecode(decodedUrl, path);
 			DWORD dataLen;
-			auto data = presentee->loadSourceAsset(bid, decodedUrl, dataLen);
+			bool shouldDel = false;
+			auto data = presentee->loadSourceAsset(bid, decodedUrl, dataLen, &shouldDel);
 			if(data) {
 				url_intercept_result* result = new url_intercept_result{data, dataLen, 200, (CHAR*)"OK"};
-				result->delete_internal = 1;
+				result->delete_internal = shouldDel;
 				return result;
 			}
 		}
@@ -249,6 +248,11 @@ void APresenterBWidget::GoBack()
 	bwGoBack(mWebView);
 }
 
+void APresenterBWidget::Refresh() 
+{
+	bwRefresh(mWebView);
+}
+
 void APresenterBWidget::GoForward() 
 {
 	//if(bwCanGoForward(mWebView))
@@ -298,10 +302,10 @@ void APresenterBWidget::updateArticle(LONG_PTR bid, int articleType, bool softUp
 	CHAR* page_id = new CHAR[64];  // LIBCEF 需要拟构网址。 传文件名，只传ID吧。 http://tests/MDT/{bid}/text.html
 	int st,ed;
 	strcpy(page_id, "http://tests/MDT/");
-	LONGPTR2STR(page_id+(st=strlen(page_id)), bid);
+	LONGPTR2STR(page_id+(st=(int)strlen(page_id)), bid);
 	if(articleType==1) {
 		if(softUpdate||update) {
-			strcpy(page_id+(ed=strlen(page_id)), "/doc.html");
+			strcpy(page_id+(ed=(int)strlen(page_id)), "/doc.html");
 			size_t len;
 			bwLoadStrData(mWebView, page_id+13, presentee->GetDocTex(len, bid, 0), 0);
 			if(update) {
@@ -311,7 +315,7 @@ void APresenterBWidget::updateArticle(LONG_PTR bid, int articleType, bool softUp
 		}
 		return;
 	}
-	strcpy(page_id+(ed=strlen(page_id)), "/text.html");
+	strcpy(page_id+(ed=(int)strlen(page_id)), "/text.html");
 	if(softUpdate && STRSTARTWITH(bwGetUrl(mWebView), page_id))
 	{
 		bwExecuteJavaScript(mWebView, "update()"); // bw soft update

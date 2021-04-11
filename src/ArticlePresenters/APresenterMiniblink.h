@@ -6,12 +6,13 @@
 #include "Miniblink/mb.h"
 
 
-#define mbzd 0.25
+#define mbzd 0.25f
 
 class APresenterMiniWke : public ArticlePresenter
 {
 public:
 	APresenterMiniWke(TCHAR* WKPath, int & error_code, HWND & hBrowser, HWND hwnd);
+	void Refresh() override;
 	void GoBack() override;
 	void GoForward() override;
 	void DestroyWebView(bool exit = false) override;
@@ -31,6 +32,7 @@ class APresenterMiniblink : public ArticlePresenter
 {
 public:
 	APresenterMiniblink(TCHAR* WKPath, const TCHAR* modulePath, int & error_code, HWND & hBrowser, HWND hwnd);
+	void Refresh() override;
 	void GoBack() override;
 	void GoForward() override;
 	void DestroyWebView(bool exit = false) override;

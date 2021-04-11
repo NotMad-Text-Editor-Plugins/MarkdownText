@@ -50,8 +50,6 @@ BOOL unregWndClass(LPCTSTR lpcsClassName)
 	return TRUE;
 }
 
-#include "InsituDebug.h"
-
 APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND hParent) 
 {
 	error_code=1;
@@ -266,8 +264,8 @@ APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND h
 				if(wcsncmp(message, L"scinllo", 7)==0)
 				{
 					auto number = message+7;
-					bool force;
-					if(force=number[0]==L'_')
+					bool force=number[0]==L'_';
+					if(force)
 						number++;
 					if(GetUIBoolReverse(0) && GetUIBoolReverse(2) || force)
 					{
@@ -309,6 +307,11 @@ APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND h
 			wdlg->ShowModal(nppData._nppHandle);
 		}
 	}
+}
+
+void APresenterWebView2::Refresh() 
+{
+	mWebView->Reload();
 }
 
 void APresenterWebView2::GoBack() 

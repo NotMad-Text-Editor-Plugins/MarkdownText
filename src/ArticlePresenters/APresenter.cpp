@@ -9,7 +9,11 @@
 
 APresentee* presentee;
 
+#ifdef _WIN64
 #define MiniBlinkMainLibName TEXT("miniblink_x64.dll")
+#else
+#define MiniBlinkMainLibName TEXT("miniblink.dll")
+#endif
 
 TCHAR* getLibPath(int sel, std::vector<std::string*> & lp
 	, TCHAR* dllName, TCHAR* defPath

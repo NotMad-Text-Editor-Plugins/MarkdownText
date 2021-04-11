@@ -43,9 +43,6 @@
     <ClCompile Include="src\DialogFeatures\MDTextDlg.cpp">
       <Filter>Source\DialogFeatures</Filter>
     </ClCompile>
-    <ClCompile Include="src\DialogFeatures\SelfCtrl.cpp">
-      <Filter>Source\DialogFeatures</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\PowerEditor\src\WinControls\StaticDialog\StaticDialog.cpp">
       <Filter>Source\DialogFeatures</Filter>
     </ClCompile>
@@ -106,9 +103,6 @@
       <Filter>Source\DialogFeatures</Filter>
     </ClInclude>
     <ClInclude Include="src\DialogFeatures\resource.h">
-      <Filter>Source\DialogFeatures</Filter>
-    </ClInclude>
-    <ClInclude Include="src\DialogFeatures\SelfCtrl.h">
       <Filter>Source\DialogFeatures</Filter>
     </ClInclude>
     <ClInclude Include="src\DialogFeatures\afxres.h">

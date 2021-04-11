@@ -126,11 +126,12 @@ void OptionsDlg::OnPrepare()
 
     drawComboEditUI(bwpath, bwedit, _MDText.LibCefSel, _MDText.LibPaths, "Pick LibCef folder: ( contains cefclient.dll )", "LibPath%d");
     drawComboEditUI(mbpath, mbedit, _MDText.LibMbSel, _MDText.MbPaths, "Pick Miniblink folder: ( contains miniblink_x64.dll )", "MbPath%d");
-    drawComboEditUI(wkpath, wkedit, _MDText.LibWkeSel, _MDText.WkePaths, "Pick WKE Path: ( wke.dll )", "WkePath%d");
+    //drawComboEditUI(wkpath, wkedit, _MDText.LibWkeSel, _MDText.WkePaths, "Pick WKE Path: ( wke.dll )", "WkePath%d");
     
     drawSwitcherUI(m_pm, TEXT("sw1"), GetUIBoolReverse(5)); // auto run
     drawSwitcherUI(m_pm, TEXT("sw2"), GetUIBool(6));        // auto close
     drawSwitcherUI(m_pm, TEXT("sw3"), GetUIBoolReverse(7)); // auto switch
+    drawSwitcherUI(m_pm, TEXT("sw4"), GetUIBool(9));        // save update
 
     drawExtEdit(m_pm, TEXT("mddt"), 0);
     drawExtEdit(m_pm, TEXT("addt"), 1);

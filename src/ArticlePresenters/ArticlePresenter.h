@@ -3,6 +3,8 @@
 #define ARTICLEPRESENTER_H
 #include <windows.h>
 
+#pragma warning(disable:4100)
+
 const char InternalResHead1[] = "http://mdbr/";
 const char InternalTESTSResHead1[] = "http://tests/MDT/";
 
@@ -13,6 +15,7 @@ extern APresentee* presentee;
 class ArticlePresenter
 {
 public:
+    virtual void Refresh() = 0;
     virtual void GoBack() = 0;
     virtual void GoForward() = 0;
     virtual void DestroyWebView(bool exit = false) = 0;

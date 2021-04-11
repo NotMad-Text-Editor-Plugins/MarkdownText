@@ -34,7 +34,7 @@ public:
 	int LibWkeSel;
 	int LibMbSel;
 	std::vector<std::string*> LibPaths;
-	std::vector<std::string*> WkePaths;
+	//std::vector<std::string*> WkePaths;
 	std::vector<std::string*> MbPaths;
 
 	bool RequestedSwitch=false;
@@ -46,7 +46,7 @@ public:
 
 	virtual void doScintillaScroll(int ln)=0;
 
-	virtual CHAR* loadSourceAsset(uptr_t bid, const char* pathA, DWORD & dataLen)=0;
+	virtual CHAR* loadSourceAsset(uptr_t bid, const char* pathA, DWORD & dataLen, bool * shouldDelete=NULL)=0;
 
 	virtual CHAR* loadPluginAsset(const char* path, DWORD & dataLen)=0;
 

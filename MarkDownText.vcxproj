@@ -97,6 +97,9 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Release|x64'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
+  <PropertyGroup>
+    <MSBuildWarningsAsMessages>MSB8012</MSBuildWarningsAsMessages>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Unicode Debug|Win32'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
@@ -219,7 +222,6 @@
     <ClCompile Include="src\ArticlePresenters\CheckFailure.cpp" />
     <ClCompile Include="src\DialogFeatures\MDTextDlg.cpp" />
     <ClCompile Include="src\DialogFeatures\OptionsDlg.cpp" />
-    <ClCompile Include="src\DialogFeatures\SelfCtrl.cpp" />
     <ClCompile Include="src\MarkdownText.cpp" />
     <ClCompile Include="src\PluginDefinition.cpp" />
     <ClCompile Include="src\SU.cpp" />
@@ -248,7 +250,6 @@
     <ClInclude Include="src\DialogFeatures\MDTextToolbar.h" />
     <ClInclude Include="src\DialogFeatures\OptionsDlg.h" />
     <ClInclude Include="src\DialogFeatures\resource.h" />
-    <ClInclude Include="src\DialogFeatures\SelfCtrl.h" />
     <ClInclude Include="src\DialogFeatures\WarningDlg.hpp" />
     <ClInclude Include="src\menuCmdID.h" />
     <ClInclude Include="src\PluginDefinition.h" />

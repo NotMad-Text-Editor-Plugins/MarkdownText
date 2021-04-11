@@ -18,10 +18,8 @@
 #ifndef PLUGINDEFINITION_H
 #define PLUGINDEFINITION_H
 
-//
-// All difinitions of plugin interface
-//
 #include "PluginInterface.h"
+#include "InsituDebug.h"
 #include <vector>
 
 class MarkDownTextDlg;
@@ -52,6 +50,7 @@ enum menuList
 
 	//menuSeparator2,
 	menuPause,
+	menuChained,
 	menuSync,
 	menuSettings,
 
@@ -118,5 +117,4 @@ extern bool GetUIBoolReverse(int pos);
 void CheckMenu(FuncItem* funcItem, bool val);
 
 #define MAX_PATH_HALF 128
-#define MDCRST 9
 #endif //PLUGINDEFINITION_H

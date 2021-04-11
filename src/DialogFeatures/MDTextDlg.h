@@ -1,5 +1,4 @@
-/*
-* Copyright 2020 Encapsulate miniblink, libcef and webview2 in one c++ file.
+/* Copyright 2021 KnIfER
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
@@ -12,22 +11,15 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+// Use miniblink, libcef and webview2 to preview HTML, Markdown and Asciidoc documents.
 #pragma once
 #ifndef _MDTEXT_DLG_H_
 #define _MDTEXT_DLG_H_
-
 #include "DockingDlgInterface.h"
 #include "PluginDefinition.h"
-#include "SelfCtrl.h"
 #include "resource.h"
-#include <deque>
 #include "menuCmdID.h"
 #include "ToolbarPanel.h"
-
-#include "stdafx.h"
-#include "CheckFailure.h"
-#include <shlwapi.h>
-
 #include "APresenter.h"
 
 #include <set>
@@ -47,25 +39,18 @@ const TCHAR strSaveColor[] = TEXT("SaveColor");
 extern bool legacy ;
 
 extern HWND curScintilla;
-//extern CRITICAL_SECTION criCounter;
 
-extern void ClearLocationList();
-
-bool SetPosByIndex(int delta, bool doit=true);
-void EnableTBButton(menuList flagIndex, bool state, bool force=false);
-#define TB_ENABLEBUTTON         (WM_USER + 1)
-
+//#define TB_ENABLEBUTTON         (WM_USER + 1)
 
 struct ReadExtContext{
 	char* key;
-	char* hotVal;
 	const char* defVal;
 };
 
 class MarkDownTextDlg : public DockingDlgInterface, public APresentee
 {
 public :
-	MarkDownTextDlg() : DockingDlgInterface(IDD_LOCATIONNAVIGATE) {};
+	MarkDownTextDlg() : DockingDlgInterface(IDD_MARKDOWNTEXT) {};
 
     virtual void display(bool toShow = true); 
 
@@ -102,7 +87,7 @@ public :
 
 	void doScintillaScroll(int ln);
 
-	CHAR* loadSourceAsset(uptr_t bid, const char* pathA, DWORD & dataLen);
+	CHAR* loadSourceAsset(uptr_t bid, const char* pathA, DWORD & dataLen, bool * shouldDelete=NULL);
 
 	CHAR* loadPluginAsset(const char* path, DWORD & dataLen);
 
@@ -111,8 +96,6 @@ public :
 	std::string* setLibPathAt(std::vector<std::string*> & paths, int idx, char* newpath, char * key);
 protected :
 	virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam);
-	SelfCtrl _color,_savecolor;
-
 	HMENU hMenuEngines=0;
 
 	HMENU hMenuZoom=0;
@@ -199,9 +182,14 @@ public :
 
 	void displayInstallGuide();
 
+	void CheckChaninedUpdate(LONG_PTR BID);
+
 	std::wstring GetLocalWText(char* name, const TCHAR* defVal);
 
 	std::set<LONG_PTR> buffersMap;
+
+	std::set<LONG_PTR> chainedBuffersMap;
+	std::set<std::wstring> chainedBuffersPath;
 
 	int defaultRenderer;
 	int lastPickedRenderer;

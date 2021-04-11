@@ -4,10 +4,8 @@
 #include "shlwapi.h"
 
 #include "SU.h"
-#include "InsituDebug.h"
 
-
-#define kClassWindow L"TestMbWindow"
+#define kClassWindow L"MiniblinkWebs"
 
 void MB_CALL_TYPE handlePaintUpdatedCallback(mbWebView webView, void* param, const HDC hdc, int x, int y, int cx, int cy)
 {
@@ -81,8 +79,8 @@ BOOL MB_CALL_TYPE handleLoadUrlBegin(mbWebView webView, void* param, const char*
 			if(!strcmp(path, "text")||!strcmp(path, "doc.html"))
 			{
 				size_t len;
-				auto res=presentee->GetDocTex(len, 0, 0);
-				mbNetSetData(job, res, len);
+				auto res=presentee->GetDocTex(len, bid, 0);
+				mbNetSetData(job, res, (int)len);
 				return true;
 			}
 			else if(!strcmp(path, "text.html"))
@@ -91,7 +89,7 @@ BOOL MB_CALL_TYPE handleLoadUrlBegin(mbWebView webView, void* param, const char*
 				CHAR* page_content = new CHAR[512];
 				int len = sprintf(page_content, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/ui.js\"></script><script>function onNative(msg,rsp){if(msg==0x666)window.APMD(rsp)};window.update=function(){window.mbQuery(0x666,\"%s\",onNative)}</script><body><script src=\"http://mdbr/", decodedUrl);
 				presentee->AppendPageResidue(page_content+len); // 加载mb
-				mbNetSetData(job, page_content, strlen(page_content));
+				mbNetSetData(job, page_content, (int)strlen(page_content));
 				return true;
 			}
 			UrlDecode(decodedUrl, path);
@@ -123,7 +121,6 @@ BOOL MB_CALL_TYPE handleLoadUrlBegin(mbWebView webView, void* param, const char*
 void MB_CALL_TYPE handleDocumentReady(mbWebView webView, void* param, mbWebFrameHandle frameId)
 {
 	OutputDebugStringA("HandleDocumentReady\n");
-	mbShowWindow(webView, TRUE);
 	mbRunJs(webView, mbWebFrameGetMainFrame(webView), "return window.onNativeRunjs('I am runjs');", TRUE, onRunJs, nullptr, nullptr);
 }
 
@@ -175,8 +172,8 @@ void MB_CALL_TYPE onJsQuery(mbWebView webView, void* param, mbJsExecState es, in
 		if(strncmp(request, "scinllo", 7)==0)
 		{
 			auto number = request+7;
-			bool force;
-			if(force=number[0]==L'_')
+			bool force=number[0]==L'_';
+			if(force)
 				number++;
 			if(GetUIBoolReverse(0) && GetUIBoolReverse(2) || force)
 			{
@@ -260,7 +257,7 @@ LRESULT WINAPI testWindowProc(
 	}
 	case WM_KEYDOWN:
 	{
-		unsigned int virtualKeyCode = wParam;
+		unsigned int virtualKeyCode = (int)wParam;
 		unsigned int flags = 0;
 		if (HIWORD(lParam) & KF_REPEAT)
 			flags |= MB_REPEAT;
@@ -273,7 +270,7 @@ LRESULT WINAPI testWindowProc(
 	}
 	case WM_KEYUP:
 	{
-		unsigned int virtualKeyCode = wParam;
+		unsigned int virtualKeyCode = (int)wParam;
 		unsigned int flags = 0;
 		if (HIWORD(lParam) & KF_REPEAT)
 			flags |= MB_REPEAT;
@@ -286,7 +283,7 @@ LRESULT WINAPI testWindowProc(
 	}
 	case WM_CHAR:
 	{
-		unsigned int charCode = wParam;
+		unsigned int charCode = (int)wParam;
 		unsigned int flags = 0;
 		if (HIWORD(lParam) & KF_REPEAT)
 			flags |= MB_REPEAT;
@@ -440,7 +437,11 @@ BOOL regWndClass(LPCTSTR lpcsClassName, DWORD dwStyle)
 ////// class definition starts here       //////
 ////////////////////////////////////////////////
 
+#ifdef _WIN64
 #define MiniBlinkMBLibName TEXT("mb_x64.dll")
+#else
+#define MiniBlinkMBLibName TEXT("mb.dll")
+#endif
 
 TCHAR MBPath[MAX_PATH]{0};
 
@@ -495,6 +496,11 @@ APresenterMiniblink::APresenterMiniblink(TCHAR* WKPath, const TCHAR* modulePath,
 	}
 }
 
+void APresenterMiniblink::Refresh() 
+{
+	mbReload(mWebView);
+}
+
 void APresenterMiniblink::GoBack() 
 {
 	mbGoBack(mWebView);
@@ -523,14 +529,14 @@ void APresenterMiniblink::ResetZoom()
 void APresenterMiniblink::ZoomOut() 
 {
 	float zoom=mbGetZoomFactor(mWebView)-mbzd;
-	if(zoom<0.25) zoom=0.25;
+	if(zoom<0.25) zoom=0.25f;
 	mbSetZoomFactor(mWebView, zoom);
 }
 
 void APresenterMiniblink::ZoomIn() 
 {
 	float zoom=mbGetZoomFactor(mWebView)+mbzd;
-	if(zoom>5) zoom=5;
+	if(zoom>5) zoom=5.f;
 	mbSetZoomFactor(mWebView, zoom);
 }
 

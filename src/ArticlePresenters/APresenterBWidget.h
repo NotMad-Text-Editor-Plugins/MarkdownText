@@ -9,6 +9,7 @@ class APresenterBWidget : public ArticlePresenter
 {
 public:
 	APresenterBWidget(TCHAR* WKPath, int & error_code, HWND & hBrowser, HWND hwnd);
+	void Refresh() override;
 	void GoBack() override;
 	void GoForward() override;
 	void DestroyWebView(bool exit = false) override;

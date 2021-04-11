@@ -9,6 +9,8 @@
 #include <map>  
 #include "Scintilla.h"
 
+#pragma warning(disable:4100)
+
 TCHAR currFile[MAX_PATH]={0};
 
 typedef const TBBUTTON *LPCTBBUTTON;
@@ -62,7 +64,7 @@ extern "C" __declspec(dllexport) const TCHAR * getName()
 // export functions
 extern "C" __declspec(dllexport) FuncItem * getFuncsArray(int *nbF)
 {
-	*nbF = 10;
+	*nbF = 11;
 	return funcItems;
 }
 
@@ -73,7 +75,6 @@ bool autoRunChecking=false;
 // export the listener
 extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 {
-	int ModifyType = notifyCode->modificationType;
 	int code = notifyCode->nmhdr.code;
 	int NeedUpdate=0;
 	switch (code) 
@@ -82,8 +83,6 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 			if(notifyCode->nmhdr.hwndFrom == nppData._nppHandle) {
 				/* add toolbar icon */
 				auto HRO = (HINSTANCE)g_hModule;
-
-				long filecount2 = ::SendMessage(nppData._nppHandle, NPPM_GETNBOPENFILES, 0, (LPARAM)PRIMARY_VIEW);
 
 				long version = ::SendMessage(nppData._nppHandle, NPPM_GETNOTMADVERSION, 0, 0);
 
@@ -134,7 +133,6 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 			NPPRunning=true;
 		}
 		break;
-		// mark setting remove to SCN_SAVEPOINTREACHED
 		case NPPN_FILESAVED:
 		{
 		}
@@ -173,7 +171,9 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 		case SCN_MODIFIED:
 		{
 			if(NPPRunning && notifyCode->length>0 
-				&& notifyCode->modificationType & (SC_MOD_DELETETEXT | SC_MOD_INSERTTEXT))
+				&& notifyCode->modificationType & (SC_MOD_DELETETEXT | SC_MOD_INSERTTEXT)
+				&& !GetUIBool(9)
+				)
 			{
 				NeedUpdate=2;
 			}
@@ -203,13 +203,19 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 		break;
 		case SCN_SAVEPOINTREACHED:
 		{
-			//DoSavedColor();
+			if (_MDText.lastBid==(LONG_PTR)notifyCode->nmhdr.idFrom)
+			{
+				_MDText.refreshDlg(false, true);
+			}
+			else if (GetUIBool(8))
+			{
+				_MDText.CheckChaninedUpdate(notifyCode->nmhdr.idFrom);
+			}
 		}
 		break;
 		default:
 		break;
 	}
-	//processNavActions();
 	if(NeedUpdate)
 	{
 		if(NeedUpdate==1)
@@ -238,8 +244,19 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 			LONG_PTR bid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
 			doUpdate = _MDText.lastBid==bid;
 		}
-		if(doUpdate)
+		if(doUpdate) {
 			_MDText.refreshDlg(false, NeedUpdate==2);
+		}
+		// _MDText.RendererTypeIdx==1&&
+		if (NeedUpdate==2&&GetUIBool(8))
+		{
+			// check chanined update
+			LONG_PTR bid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
+			if (_MDText.lastBid!=bid)
+			{
+				_MDText.CheckChaninedUpdate(bid);
+			}
+		}
 	}
 }
 

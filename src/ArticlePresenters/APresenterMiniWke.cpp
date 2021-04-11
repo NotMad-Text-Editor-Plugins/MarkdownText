@@ -5,7 +5,6 @@
 #include "shlwapi.h"
 
 #include "SU.h"
-#include "InsituDebug.h"
 
 void WKE_CALL_TYPE onDidCreateScriptContextCallback(wkeWebView webView, void* param, wkeWebFrameHandle frameId, void* context, int extensionGroup, int worldId)
 {
@@ -60,14 +59,14 @@ bool onLoadUrlBegin(wkeWebView webView, void* param, const char* url, void *job)
 				CHAR* page_content = new CHAR[512];
 				int len = sprintf(page_content, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/ui.js\"></script><script>window.update=function(){APMD(GetDocText('%s'))}</script><body><script src=\"http://mdbr/", decodedUrl);
 				presentee->AppendPageResidue(page_content+len); // 加载wke
-				wkeNetSetData(job, page_content, strlen(page_content));
+				wkeNetSetData(job, page_content, (int)strlen(page_content));
 				return true;
 			}
 			else if (strcmp(path, "doc.html")==0)
 			{
 				size_t len;
 				char* data = presentee->GetDocTex(len, bid, 0);
-				wkeNetSetData(job, data, len);
+				wkeNetSetData(job, data, (int)len);
 				return true;
 			}
 			UrlDecode(decodedUrl, path);
@@ -110,22 +109,6 @@ void onLoadUrlEnd(wkeWebView webView, void* param, const char *url, void *job, v
 //synchronous callback
 jsValue WKE_CALL_TYPE GetDocText(jsExecState es, void* param)
 {
-	//if (0 == jsArgCount(es))
-	//	return jsUndefined();
-	//jsValue arg0 = jsArg(es, 0);
-	//if (!jsIsString(arg0))
-	//	return jsUndefined();
-	//
-	//std::string path;
-	//path = jsToTempString(es, arg0);
-	//if ("runEchars" == path) {
-	//	createECharsTest();
-	//} else if ("wkeBrowser" == path) {
-	//	wkeBrowserMain(nullptr, nullptr, nullptr, TRUE);
-	//}
-	//
-	//path += "\n";
-	//OutputDebugStringA(path.c_str());
 	if (1 == jsArgCount(es))
 	{
 		jsValue arg0 = jsArg(es, 0);
@@ -134,15 +117,13 @@ jsValue WKE_CALL_TYPE GetDocText(jsExecState es, void* param)
 			std::string path;
 			path = jsToTempString(es, arg0);
 			LONG_PTR bid=0;
-			int from = STR2LONGPTRA((CHAR*)path.data(), bid);
+			STR2LONGPTRA((CHAR*)path.data(), bid);
 			size_t len;
 			auto ret=jsString(es, presentee->GetDocTex(len, bid, 0));
-
-			//::MessageBox(NULL, TEXT("111"), TEXT(""), MB_OK);
 			return ret;
 		}
 	}
-	return jsString(es, "# Hello `md.html` World!");
+	return jsString(es, "# Hello World!");
 }
 
 jsValue WKE_CALL_TYPE ScintillaScroll1(jsExecState es, void* param)
@@ -208,6 +189,12 @@ APresenterMiniWke::APresenterMiniWke(TCHAR* WKPath, int & error_code, HWND & hBr
 		error_code = 100;
 	}
 }
+
+void APresenterMiniWke::Refresh() 
+{
+	wkeReload(mWebView);
+}
+
 
 void APresenterMiniWke::GoBack() {
 	wkeGoBack(mWebView);

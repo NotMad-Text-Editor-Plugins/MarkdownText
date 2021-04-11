@@ -16,39 +16,45 @@
 
 // entry : see readme
 
-#include "windowsx.h"
 #include "MDTextDlg.h"
 #include "PluginDefinition.h"
-#include "time.h"
-#include "../../NativeLang/src/NativeLang_def.h"
 #include <ProfileStd.h>
 #include "ArticlePresenter.h"
 #include "MDTextToolbar.h"
 #include "WarningDlg.hpp"
 #include "SU.h"
 
-#include "InsituDebug.h"
-
 const TCHAR* configFileName = TEXT("MarkDownText.ini");
+
+#define MDCRST 9
+
+UINT ScintillaGetText(HWND hWnd, char *text, INT start, INT end)
+{
+	Sci_TextRange tr;
+	tr.chrg.cpMin = start;
+	tr.chrg.cpMax = end;
+	tr.lpstrText  = text;
+	return (UINT)::SendMessage(hWnd, SCI_GETTEXTRANGE, 0, reinterpret_cast<LPARAM>(&tr));
+}
 
 void MarkDownTextDlg::doScintillaScroll(int ln)
 {
-	int curScintilla;
-	SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&curScintilla);
-	auto currrentSc = curScintilla?nppData._scintillaSecondHandle:nppData._scintillaMainHandle;
+	int currrentSc;
+	SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&currrentSc);
+	curScintilla = currrentSc?nppData._scintillaSecondHandle:nppData._scintillaMainHandle;
 	if (ln<0)
 	{
-		int totalLns = SendMessage(currrentSc, SCI_GETLINECOUNT, 0, 0);
-		ln = -ln/1000.f*totalLns;
+		int totalLns = SendMessage(curScintilla, SCI_GETLINECOUNT, 0, 0);
+		ln = -ln/100000.f*totalLns;
 	}
-	ln = SendMessage(currrentSc, SCI_VISIBLEFROMDOCLINE, lastSyncLn=ln, 0);
-	SendMessage(currrentSc, SCI_SETFIRSTVISIBLELINE, ln, 0);
+	ln = SendMessage(curScintilla, SCI_VISIBLEFROMDOCLINE, lastSyncLn=ln, 0);
+	SendMessage(curScintilla, SCI_SETFIRSTVISIBLELINE, ln, 0);
 }
 
-CHAR* MarkDownTextDlg::loadSourceAsset(uptr_t bid, const char* pathA, DWORD & dataLen)
+CHAR* MarkDownTextDlg::loadSourceAsset(uptr_t bid, const char* pathA, DWORD & dataLen, bool * shouldDelete)
 {
 	TCHAR path[MAX_PATH];
-	MultiByteToWideChar (CP_ACP, 0, pathA, strlen (pathA) + 1, path, 256) ;
+	MultiByteToWideChar (CP_ACP, 0, pathA, strlen (pathA) + 1, path, MAX_PATH-1) ;
 	TCHAR SrcPath[MAX_PATH]={0};
 	if(!bid) {
 		bid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
@@ -57,10 +63,61 @@ CHAR* MarkDownTextDlg::loadSourceAsset(uptr_t bid, const char* pathA, DWORD & da
 		::SendMessage(nppData._nppHandle, NPPM_GETFULLPATHFROMBUFFERID, (WPARAM)bid, (LPARAM)SrcPath);
 		::PathRemoveFileSpec(SrcPath);
 		::PathAppend(SrcPath, path);
+		::PathCanonicalize(path, SrcPath);
+		TCHAR* AssetPath = path;
 
-		if(PathFileExists(SrcPath)) 
+		if(PathFileExists(AssetPath)) 
 		{
-			HANDLE hFile = CreateFile(SrcPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+			if (GetUIBool(8))
+			{
+				// try to read in-memory buffer.
+				if(!legacy)
+				{
+					LONG_PTR membid = SendMessage(nppData._nppHandle, NPPM_GETBUFFERIDFROMPATH, (WPARAM)AssetPath, 0);
+					if (membid && buffersMap.find(membid)!=buffersMap.end())
+					{
+						// emplace holder.
+						chainedBuffersMap.emplace(membid);
+						LONG_PTR DOCUMENTPTR = SendMessage(nppData._nppHandle, NPPM_GETDOCUMENTPTR, membid, membid);
+						if (DOCUMENTPTR)
+						{
+							dataLen = SendMessage(nppData._scintillaMainHandle, SCI_GETTEXTLENGTH, DOCUMENTPTR, DOCUMENTPTR);
+							CHAR* raw_data;
+							if(dataLen)
+							{
+								raw_data = (CHAR*)SendMessage(nppData._scintillaMainHandle, SCI_GETRAWTEXT, DOCUMENTPTR, DOCUMENTPTR);
+							}
+							else 
+							{
+								dataLen = 1;
+								raw_data = " ";
+							}
+							if (raw_data)
+							{
+								if(currentkernelType==MINILINK_TYPE)
+								{
+									CHAR* buffer = new CHAR[dataLen];
+									memcpy(buffer, raw_data, dataLen);
+									return buffer;
+								}
+								return raw_data;
+							}
+						}
+					}
+				}
+				else
+				{
+					// no fallback. In legacy mode, only the current buffer is available
+					//	, which makes chained updating pointless.
+				}
+			}
+
+			if(shouldDelete) 
+			{
+				*shouldDelete = true;
+			}
+
+			HANDLE hFile = CreateFile(AssetPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 			if (INVALID_HANDLE_VALUE == hFile) { 
 				return NULL;
 			}
@@ -134,15 +191,6 @@ CHAR* MarkDownTextDlg::loadPluginAsset(const char* path, DWORD & dataLen)
 	return NULL;
 }
 
-UINT ScintillaGetText(HWND hWnd, char *text, INT start, INT end)
-{
-	Sci_TextRange tr;
-	tr.chrg.cpMin = start;
-	tr.chrg.cpMax = end;
-	tr.lpstrText  = text;
-	return (UINT)::SendMessage(hWnd, SCI_GETTEXTRANGE, 0, reinterpret_cast<LPARAM>(&tr));
-}
-
 
 CHAR*	universal_buffer = new CHAR[4];
 int buffer_cap=4;
@@ -171,15 +219,15 @@ LONG_PTR nextPowerOfTwo(size_t v)
 
 CHAR* MarkDownTextDlg::GetDocTex(size_t & docLength, LONG_PTR bid, bool * shouldDelete)
 {
-	int curScintilla;
-	SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&curScintilla);
-	auto currrentSc = curScintilla?nppData._scintillaSecondHandle:nppData._scintillaMainHandle;
+	int currrentSc;
+	SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&currrentSc);
+	curScintilla = currrentSc?nppData._scintillaSecondHandle:nppData._scintillaMainHandle;
 
 	if(shouldDelete) {
 		*shouldDelete = false;
 	}
 
-	if(currentkernelType!=MINILINK_TYPE && bid && !legacy) //  && !legacy
+	if(bid && !legacy) //  && !legacy
 	{
 		if (_MDText.buffersMap.find(bid)!=_MDText.buffersMap.end())
 		{
@@ -187,23 +235,33 @@ CHAR* MarkDownTextDlg::GetDocTex(size_t & docLength, LONG_PTR bid, bool * should
 			LONG_PTR DOCUMENTPTR = SendMessage(nppData._nppHandle, NPPM_GETDOCUMENTPTR, bid, bid);
 			if (DOCUMENTPTR)
 			{
-				docLength = SendMessage(currrentSc, SCI_GETTEXTLENGTH, DOCUMENTPTR, DOCUMENTPTR);
+				docLength = SendMessage(nppData._scintillaMainHandle, SCI_GETTEXTLENGTH, DOCUMENTPTR, DOCUMENTPTR);
+				CHAR* raw_data;
 				if(docLength)
 				{
-					auto raw_data = (CHAR*)SendMessage(currrentSc, SCI_GETRAWTEXT, DOCUMENTPTR, DOCUMENTPTR);
-					if(raw_data)
-						return raw_data;
+					raw_data = (CHAR*)SendMessage(nppData._scintillaMainHandle, SCI_GETRAWTEXT, DOCUMENTPTR, DOCUMENTPTR);
 				}
 				else 
 				{
-					return " ";
+					docLength = 1;
+					raw_data = " ";
+				}
+				if (raw_data)
+				{
+					if(currentkernelType==MINILINK_TYPE)
+					{
+						CHAR* buffer = new CHAR[docLength];
+						memcpy(buffer, raw_data, docLength);
+						return buffer;
+					}
+					return raw_data;
 				}
 			}
 		}
 	}
 	// slow copy-read
 	
-	docLength = SendMessage(currrentSc, SCI_GETTEXTLENGTH, 0, 0);
+	docLength = SendMessage(curScintilla, SCI_GETTEXTLENGTH, 0, 0);
 	if(!docLength) {
 		if(currentkernelType==MINILINK_TYPE) {
 			return new CHAR[4]{' ', '0'};
@@ -224,13 +282,14 @@ CHAR* MarkDownTextDlg::GetDocTex(size_t & docLength, LONG_PTR bid, bool * should
 		buffer_cap = cap;
 	}
 #else
-	if(shouldDelete) {
+	if(shouldDelete) 
+	{
 		*shouldDelete = true;
 	}
 	buffer = new CHAR[docLength+1];
 	//buffer = (char*)HeapAlloc(GetProcessHeap(), 0, docLength+1);
 #endif
-	ScintillaGetText(currrentSc, buffer, 0, docLength);
+	ScintillaGetText(curScintilla, buffer, 0, docLength);
 	buffer[docLength] = '\0';
 	//return 0;
 	return buffer;
@@ -240,14 +299,14 @@ void MarkDownTextDlg::syncWebToline(bool force)
 {
 	if(force || GetUIBoolReverse(0) && GetUIBoolReverse(1))
 	{
-		int curScintilla;
-		SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&curScintilla);
-		auto currrentSc = curScintilla?nppData._scintillaSecondHandle:nppData._scintillaMainHandle;
-		int line = SendMessage(currrentSc, SCI_GETFIRSTVISIBLELINE, 0, 0);
-		line = SendMessage(currrentSc, SCI_DOCLINEFROMVISIBLE, line, 0);
+		int currrentSc;
+		SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&currrentSc);
+		curScintilla = currrentSc?nppData._scintillaSecondHandle:nppData._scintillaMainHandle;
+		int line = SendMessage(curScintilla, SCI_GETFIRSTVISIBLELINE, 0, 0);
+		line = SendMessage(curScintilla, SCI_DOCLINEFROMVISIBLE, line, 0);
 		if(!force && lastSyncLn==line)
 			return;
-		int totalLns = SendMessage(currrentSc, SCI_GETLINECOUNT, 0, 0);
+		int totalLns = SendMessage(curScintilla, SCI_GETLINECOUNT, 0, 0);
 		float percetage=totalLns==0?-1:line*1.f/totalLns;
 		CHAR jsSync[64]="syncLn(";
 		//itoa(line, jsSync+7, 10);
@@ -350,6 +409,7 @@ void MarkDownTextDlg::RefreshWebview(int source)
 	//::SendMessage(nppData._nppHandle, NPPM_SETSTATUSBAR, STATUSBAR_DOC_TYPE, (LPARAM)buffer);
 	if(mWebView0&&NPPRunning)
 	{
+		LONG_PTR bidBk = lastBid;
 		LONG_PTR bid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
 		//CustomRoutine = "MDViewer";
 		bool fromEditor = source==1;
@@ -371,7 +431,7 @@ void MarkDownTextDlg::RefreshWebview(int source)
 			// and extensions preset.
 			if (autoSwitch)
 			{
-				for (size_t toIdx = 0; toIdx < 3; toIdx++)
+				for (int toIdx = 0; toIdx < 3; toIdx++)
 				{
 					if (toIdx!=RendererTypeIdx && checkFileExt(toIdx))
 					{
@@ -432,10 +492,24 @@ void MarkDownTextDlg::RefreshWebview(int source)
 			}
 		}
 		mWebView0->updateArticle(bid, RendererTypeIdx, b1, b2);
+		if (lastBid!=bidBk)
+		{
+			chainedBuffersMap.clear();
+		}
 	}
 }
 
-void MarkDownTextDlg::refreshDlg(bool updateList, bool fromEditor) {
+void MarkDownTextDlg::CheckChaninedUpdate(LONG_PTR BID) 
+{
+	if (mWebView0 
+		&& chainedBuffersMap.find(BID)!=chainedBuffersMap.end())
+	{
+		mWebView0->updateArticle(lastBid, RendererTypeIdx, false, true);
+	}
+}
+
+void MarkDownTextDlg::refreshDlg(bool updateList, bool fromEditor) 
+{
 	if (isCreated() && isVisible())
 	{
 		RefreshWebview(fromEditor);
@@ -495,7 +569,7 @@ int MarkDownTextDlg::getToolbarCommand(POINT &pointer)
 	TBBUTTON tempBtn;
 	RECT rect;
 	ScreenToClient(toolBar.getHSelf(), &pointer);
-
+	
 	int size = ::SendMessage(toolBar.getHSelf(), TB_BUTTONCOUNT, 0, 0);
 	int tc=-1;
 	for(int i=0;i<size;i++) {
@@ -523,14 +597,6 @@ INT_PTR CALLBACK MarkDownTextDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 			{
 				OnToolBarCommand( LOWORD(wParam) );
 				return 0;
-			}
-			switch (wParam)
-			{
-				case MAKELONG(IDC_BUTTON_CLEAR,BN_CLICKED):
-				{
-				}
-				break;
-			break;
 			}
 			return DockingDlgInterface::run_dlgProc(message, wParam, lParam);
 		}
@@ -665,6 +731,8 @@ bool getMenuItemChecked(int mid)
 	switch(mid) {
 		case menuPause:
 			return GetUIBool(3);
+		case menuChained:
+			return GetUIBool(8);
 		case menuSync:
 			return GetUIBoolReverse(0);
 		case menuOption:
@@ -711,7 +779,7 @@ void simulToolbarMenu(HMENU pluginMenu, RECT *rc, HWND _hSelf, FuncItem* items)
 void PrivateTrackPopup(HWND _hSelf, HMENU pluginMenu, FuncItem* items, int CMDID) 
 {
 	if(pluginMenu) {
-		RECT rc, rcImg;
+		RECT rc;
 		GetWindowRect(_hSelf, &rc);
 		POINT pt;
 		GetCursorPos(&pt);
@@ -828,9 +896,9 @@ void MarkDownTextDlg::readExtensions(int channel, string * ret)
 	if(!extCtx) 
 	{
 		extCtx = new ReadExtContext[] {
-			 {"Ext_MD", NULL, "md md.html svg markdown"}
-			,{"Ext_HTML", NULL, "html"}
-			,{"Ext_AD", NULL, "ascii"}
+			 {"Ext_MD", "md md.html svg markdown"}
+			,{"Ext_HTML", "html"}
+			,{"Ext_AD", "ascii"}
 		};
 	}
 	string tmp;
@@ -891,7 +959,7 @@ void MarkDownTextDlg::readParameters()
 
 	UISettings=GetProfInt("UISettings", 0);
 	readLibPaths(maxPathHistory, LibPaths, "LibPath%d", LibCefSel, "LibCef");
-	readLibPaths(maxPathHistory1, WkePaths, "WkePath%d", LibWkeSel, "LibWke");
+	//readLibPaths(maxPathHistory1, WkePaths, "WkePath%d", LibWkeSel, "LibWke");
 	readLibPaths(maxPathHistory2, MbPaths, "MbPath%d", LibMbSel, "LibMb");
 
 	int inval=GetProfInt("RenderType", 0);
@@ -1025,6 +1093,7 @@ HMENU GetLegacyPluginMenu()
 			return GetSubMenu(pluginMenu, i);
 		}
 	}
+	return 0;
 }
 
 HMENU GetPluginMenu() {
@@ -1458,7 +1527,8 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 			}
 			else if(source==0 && mWebView0)
 			{
-				RefreshWebview(3);
+				//RefreshWebview(3);
+				mWebView0->Refresh();
 			}
 		return;
 		case IDM_EX_ZOO:
@@ -1496,8 +1566,6 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 		return;
 		case IDM_EX_DELTA:
 		{
-			TCHAR* text;
-			//todo localize
 			if(EngineSwicther.size()==0)
 			{
 				EngineSwicther.resize(MDCRST);

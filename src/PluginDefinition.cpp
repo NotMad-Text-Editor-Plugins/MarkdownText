@@ -18,9 +18,6 @@
 #include "PluginDefinition.h"
 #include "menuCmdID.h"
 
-//
-// put the headers you need here
-//
 #include <stdlib.h>
 #include <time.h>
 #include <shlwapi.h>
@@ -33,15 +30,6 @@ MarkDownTextDlg _MDText;
 extern bool WindowOpaqueMsg;
 
 bool pinMenu = false;
-
-long MarkColor = DefaultColor;
-long SaveColor = DefaultSaveColor;
-
-#ifdef UNICODE 
-	#define generic_itoa _itow
-#else
-	#define generic_itoa itoa
-#endif
 
 // toggle the UI configuration boolean. |pos| flag position. |reverse| if set, then default to true.
 int ToggleUIBool(int pos, bool reverse)
@@ -255,6 +243,11 @@ void PauseUpdate()
 	}
 }
 
+void ChainedUpdate()
+{
+	CheckMenu(&funcItems[8], ToggleUIBool(8, false));
+}
+
 void SyncScroll()
 {
 	_MDText.GlobalOnPvMnChecked(0, 260);
@@ -338,15 +331,6 @@ void commandMenuInit()
 	//            bool check0nInit                // optional. Make this menu item be checked visually
 	//            );
 	#define VK_OEM_MINUS      0xBD
-	ShortcutKey *PreviousKey = new ShortcutKey{1,0,0,VK_OEM_MINUS};
-	ShortcutKey *NextKey = new ShortcutKey{1,0,1,VK_OEM_MINUS};
-	ShortcutKey *PreChgKey = new ShortcutKey{1,1,0,0x5A};//VK_Z
-	ShortcutKey *NextChgKey = new ShortcutKey{1,1,0,0x59};//VK_Y
-	ShortcutKey *AutoKey = new ShortcutKey{1,0,1,VK_F9};
-	ShortcutKey *ManualKey = new ShortcutKey{0,0,0,VK_F9};
-	ShortcutKey *ClearRecordsKey = new ShortcutKey{1,1,1,VK_F9};
-	ShortcutKey *incurrKey = new ShortcutKey{0,1,0,VK_OEM_MINUS};
-	ShortcutKey *markKey = new ShortcutKey{1,1,0,0x4D};// VK_M
 
 	PluginMenuStrIds = new CHAR*[]{
 		"_vcf",
@@ -357,6 +341,7 @@ void commandMenuInit()
 		"_u",
 		NULL,
 		"_pp",
+		"_cp",
 		"_ss",
 		"_opt",
 		NULL,
@@ -371,6 +356,7 @@ void commandMenuInit()
 		,{TEXT("Underline"), UnderlineText, menuUnderLine, false, new ShortcutKey{0,0,0,NULL}} 
 		,{TEXT("-SEPARATOR-"), NULL, NULL, false} 
 		,{TEXT("Pause Update"), PauseUpdate, menuPause, GetUIBool(3), new ShortcutKey{0,0,0,NULL}} 
+		,{TEXT("Chained Update"), ChainedUpdate, menuChained, GetUIBool(8), new ShortcutKey{0,0,0,NULL}} 
 		,{TEXT("Sync Scroll"), SyncScroll, menuSync, GetUIBoolReverse(0), new ShortcutKey{0,0,0,NULL}} 
 		,{TEXT("Options…"), Settings, menuSettings, false, new ShortcutKey{0,0,0,NULL}} 
 		,NULL
@@ -384,7 +370,7 @@ void commandMenuInit()
 
 	CPaintManagerUI::SetResourceType(UILIB_ZIPRESOURCE);
 	//CPaintManagerUI::SetResourceType(UILIB_ZIP);
-	//CPaintManagerUI::SetResourceType(UILIB_FILE);
+	CPaintManagerUI::SetResourceType(UILIB_FILE);
 
 	InitResource();
 
