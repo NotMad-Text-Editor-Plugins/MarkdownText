@@ -236,6 +236,9 @@
     <Image Include="res\down.ico">
       <Filter>resource</Filter>
     </Image>
+    <Image Include="res\markdown.bmp">
+      <Filter>resource</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -294,5 +297,10 @@
     <ResourceCompile Include="src\DialogFeatures\MDText.rc">
       <Filter>Source\DialogFeatures</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="res\skin\txt.xml">
+      <Filter>resource\skin</Filter>
+    </Xml>
   </ItemGroup>
 </Project>

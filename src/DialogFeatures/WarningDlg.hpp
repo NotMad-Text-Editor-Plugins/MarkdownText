@@ -1,6 +1,6 @@
 #pragma once
-#ifndef _OPTIONS_DLG_H_
-#define _OPTIONS_DLG_H_
+#ifndef _WARNING_DLG_H_
+#define _WARNING_DLG_H_
 
 #include "UIlib.h"
 

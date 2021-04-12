@@ -24,6 +24,11 @@
 #include "MDTextDlg.h"
 #include "Scintilla.h"
 
+#include "OptionsDlg.h"
+
+#include "WarningDlg.hpp"
+
+OptionsDlg* pFrame;
 
 MarkDownTextDlg _MDText;
 
@@ -245,6 +250,15 @@ void PauseUpdate()
 
 void ChainedUpdate()
 {
+	if (legacy&&GetUIBool(8))
+	{
+		WarnDlg* wdlg = new WarnDlg(TEXT("txt.xml"));
+		wdlg->Create(nppData._nppHandle
+			, _MDText.GetLocalWText("not_sup", TEXT("Not supported !")).c_str()
+			, WS_OVERLAPPED | WS_SYSMENU | WS_CAPTION , WS_EX_DLGMODALFRAME );
+		wdlg->CenterWindow();
+		wdlg->ShowModal(nppData._nppHandle);
+	}
 	CheckMenu(&funcItems[8], ToggleUIBool(8, false));
 }
 
@@ -252,11 +266,6 @@ void SyncScroll()
 {
 	_MDText.GlobalOnPvMnChecked(0, 260);
 }
-
-
-#include "OptionsDlg.h"
-
-OptionsDlg* pFrame;
 
 HWND handle;
 

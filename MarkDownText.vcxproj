@@ -268,6 +268,7 @@
     <Image Include="res\italic.ico" />
     <Image Include="res\loc.ico" />
     <Image Include="res\markdown-toolbar-icons.ico" />
+    <Image Include="res\markdown.bmp" />
     <Image Include="res\markdown.ico" />
     <Image Include="res\next.ico" />
     <Image Include="res\next1.ico" />
@@ -303,6 +304,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="res\skin\ig.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="res\skin\txt.xml" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

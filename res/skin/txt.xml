@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Window mininfo="200,260" size="450,320">
+	<Include source="scrollbar.xml" />
+	<Include source="defaults.xml" />
+	
+	<VerticalLayout inset="10,6,10,6" bkcolor="#FFFFFFFF" colorhsl="true" vscrollbar="true" autovscroll="true" valign="center" halign="center"	>
+
+    <RichEdit name="no_npp" minheight="100" maxwidth="280" bkcolor="#0000FFFF" font="2" text="Notepad++ 不支持“链式更新”，请下载分支版本：" autovscroll="true" readonly="true" padding="2,2.8,0,0"/>
+       
+		<Control height="4"/>
+    
+		<HorizontalLayout minheight="35" maxheight="50" >
+			<Control/>
+			<Button name="dwn_txt" ud="https://github.com/KnIfER/Textrument/releases" td="TTE" text="{b}下载 Textrument (图创文本){/b}" showhtml="true" width="360"  bkcolor="#0000E000" nativebkcolor="#0000E000"/>
+			<Control/>
+		</HorizontalLayout>
+
+	</VerticalLayout>
+
+</Window>
