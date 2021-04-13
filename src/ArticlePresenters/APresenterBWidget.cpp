@@ -185,15 +185,7 @@ void onBrowserPrepared(bwWebView browserPtr)
 		wv->mWebView = browserPtr;
 		presentee->hBrowser = bwGetHWNDForBrowser(browserPtr);
 		::SendMessage(presentee->getHWND(), WM_SIZE, 0, 0);
-		DefferedLoadingData* parms = defferedLoad;
-		if (parms)
-		{
-			wv->updateArticle(parms->bid, parms->articleType, false, true);
-			defferedLoad = NULL;
-			delete parms;
-		}
 	}
-	//_MDText.RefreshWebview(); 没有用
 	//SetWindowLongPtr(_MDText.hBrowser, GWLP_WNDPROC, (LONG_PTR)testWindowProc1);
 }
 
@@ -262,6 +254,7 @@ void APresenterBWidget::GoForward()
 void APresenterBWidget::DestroyWebView(bool exit) 
 {
 	bwDestroyWebview(mWebView, exit);
+	mWebView = 0;
 }
 
 void APresenterBWidget::EvaluateJavascript(char * JS) 
@@ -296,7 +289,7 @@ void APresenterBWidget::updateArticle(LONG_PTR bid, int articleType, bool softUp
 {
 	if (!mWebView)
 	{
-		defferedLoad = new DefferedLoadingData{bid, articleType};
+		//defferedLoad = new DefferedLoadingData{bid, articleType};
 		return;
 	}
 	CHAR* page_id = new CHAR[64];  // LIBCEF 需要拟构网址。 传文件名，只传ID吧。 http://tests/MDT/{bid}/text.html

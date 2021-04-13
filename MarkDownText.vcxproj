@@ -306,7 +306,8 @@
     <None Include="res\skin\ig.xml" />
   </ItemGroup>
   <ItemGroup>
-    <Xml Include="res\skin\txt.xml" />
+    <None Include="res\skin\defaults.xml" />
+    <None Include="res\skin\txt.xml" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

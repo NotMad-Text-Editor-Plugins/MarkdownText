@@ -118,7 +118,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 			NeedUpdate=NPPRunning=true;
 			// auto run according to the command line arguments and current active file.
 			if(!GetUIBool(6)&&(_MDText.bRunRequested || GetUIBoolReverse(5))) 
-			{
+			{// if never-run is not checked and bRunRequested or auto-run is checked
 				autoRunChecking = true;
 			}
 		}
@@ -183,7 +183,6 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 		{
 			if(NPPRunning)
 			{
-				//::MessageBox(NULL, TEXT("SCN_PAINTED"), TEXT(""), MB_OK);
 				LONG_PTR bid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
 				if(_MDText.lastBid==bid)
 				{

@@ -1214,8 +1214,16 @@ void MarkDownTextDlg::checkAutoRun()
 {
 	if (!GetUIBoolReverse(5))
 	{
-		// run directly.
+		// if auto-run not checked, run directly.
 		funcItems[1]._pFunc();
+		//DefferedLoadingData* parms = defferedLoad;
+		//if (parms)
+		//{
+		//	LogIs(2, "DefferedLoadingData %ld, %d", parms->bid, parms->articleType);
+		//	_MDText.mWebView0->updateArticle(parms->bid, parms->articleType, false, true);
+		//	defferedLoad = NULL;
+		//	delete parms;
+		//}
 		return;
 	}
 	// else check and judge whether to run.

@@ -90,8 +90,9 @@ void commandMenuCleanUp()
 
 void ToggleMDPanel()
 {
-	if(!NPPRunning) //  && (GetUIBoolReverse(5)||GetUIBool(6))
-	{
+	if(!NPPRunning && (GetUIBoolReverse(5)||GetUIBool(6)))
+	{// if not runnig and auto-run/never-run is checked, reject the initialization
+		// todo if auto-run is checked, maybe check the extension name and just don't reject?
 		_MDText.bRunRequested = true;
 		return;
 	}
@@ -250,7 +251,7 @@ void PauseUpdate()
 
 void ChainedUpdate()
 {
-	if (legacy&&GetUIBool(8))
+	if (legacy&&!GetUIBool(8))
 	{
 		WarnDlg* wdlg = new WarnDlg(TEXT("txt.xml"));
 		wdlg->Create(nppData._nppHandle
@@ -379,7 +380,7 @@ void commandMenuInit()
 
 	CPaintManagerUI::SetResourceType(UILIB_ZIPRESOURCE);
 	//CPaintManagerUI::SetResourceType(UILIB_ZIP);
-	CPaintManagerUI::SetResourceType(UILIB_FILE);
+	//CPaintManagerUI::SetResourceType(UILIB_FILE);
 
 	InitResource();
 

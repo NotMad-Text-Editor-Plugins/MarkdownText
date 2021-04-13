@@ -263,6 +263,12 @@
     <None Include="res\skin\ig.xml">
       <Filter>resource\skin</Filter>
     </None>
+    <None Include="res\skin\defaults.xml">
+      <Filter>resource\skin</Filter>
+    </None>
+    <None Include="res\skin\txt.xml">
+      <Filter>resource\skin</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
@@ -297,10 +303,5 @@
     <ResourceCompile Include="src\DialogFeatures\MDText.rc">
       <Filter>Source\DialogFeatures</Filter>
     </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Xml Include="res\skin\txt.xml">
-      <Filter>resource\skin</Filter>
-    </Xml>
   </ItemGroup>
 </Project>
