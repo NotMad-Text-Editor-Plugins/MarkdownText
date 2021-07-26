@@ -99,19 +99,7 @@ void ToggleMDPanel()
 	_MDText.setParent( nppData._nppHandle );
 	if ( !_MDText.isCreated() )
 	{
-		tTbData data = {0};
-		WindowOpaqueMsg = 0;
-		_MDText.create( &data );
-		WindowOpaqueMsg = 1;
-		// define the default docking behaviour
-		data.uMask          = DWS_DF_CONT_RIGHT | DWS_ICONTAB;
-		data.pszModuleName = _MDText.getPluginFileName();
-		// the dlgDlg should be the index of funcItem where the current function pointer is
-		data.dlgID = menuOption;
-		data.hIconTab       = ( HICON )::LoadImage( _MDText.getHinst(),
-			MAKEINTRESOURCE( IDI_ICON1 ), IMAGE_ICON, 14, 14,
-			LR_LOADMAP3DCOLORS | LR_LOADTRANSPARENT );
-		::SendMessage( nppData._nppHandle, NPPM_DMMREGASDCKDLG, 0, ( LPARAM )&data );
+		_MDText.create();
 		_MDText.display();
 	}
 	else {
@@ -176,7 +164,7 @@ void WrapTextWith(char* padStart, char* padEnd)
 			if(p2>=textLen) 
 			{
 				idealSTL+=textLen-1-p2;
-				p2=textLen-1;
+				p2=textLen;
 			}
 			//size_t len = SendMessage(currentSci, SCI_GETSELTEXT, 0, (LPARAM)(txUCS2+padLen))-1;
 			Sci_TextRange tr{0};
@@ -192,10 +180,9 @@ void WrapTextWith(char* padStart, char* padEnd)
 				if(strncmp(txUCS2, padStart, padLenSt)==0&&strncmp(txUCS2+len, padEnd, padLenEd)==0)
 				{ // 取消加粗
 					txUCS2[len]='\0';
-					txUCS2+=padLenSt;
 					SendMessage(currentSci, SCI_SETTARGETSTART, p1, 0);
 					SendMessage(currentSci, SCI_SETTARGETEND, p2, 0);
-					SendMessage(currentSci, SCI_REPLACETARGET, sellen, (LPARAM)txUCS2);
+					SendMessage(currentSci, SCI_REPLACETARGET, sellen, (LPARAM)(txUCS2+padLenSt));
 					SendMessage(currentSci, SCI_SETSEL, p1, p1+sellen);
 				}
 				else
@@ -211,6 +198,8 @@ void WrapTextWith(char* padStart, char* padEnd)
 				}
 				
 			}
+			
+			delete[] txUCS2;
 		}
 	}
 }
@@ -228,6 +217,10 @@ void TiltText()
 void UnderlineText()
 {
 	WrapTextWith("<u>", "</u>");
+}
+
+void voidFunc()
+{
 }
 
 void CheckMenu(FuncItem* funcItem, bool val)
@@ -349,6 +342,8 @@ void commandMenuInit()
 		"_b",
 		"_i",
 		"_u",
+		//NULL,
+		"_tls",
 		NULL,
 		"_pp",
 		"_cp",
@@ -364,6 +359,8 @@ void commandMenuInit()
 		,{TEXT("Bolden"), BoldenText, menuBolden, false, new ShortcutKey{0,0,0,NULL}} 
 		,{TEXT("Italic"), TiltText, menuItalic, false, new ShortcutKey{0,0,0,NULL}} 
 		,{TEXT("Underline"), UnderlineText, menuUnderLine, false, new ShortcutKey{0,0,0,NULL}} 
+		//,{TEXT("-SEPARATOR-"), NULL, NULL, false} 
+		,{TEXT("Tools"), voidFunc, menuTools, false, new ShortcutKey{0,0,0,NULL}} 
 		,{TEXT("-SEPARATOR-"), NULL, NULL, false} 
 		,{TEXT("Pause Update"), PauseUpdate, menuPause, GetUIBool(3), new ShortcutKey{0,0,0,NULL}} 
 		,{TEXT("Chained Update"), ChainedUpdate, menuChained, GetUIBool(8), new ShortcutKey{0,0,0,NULL}} 
@@ -380,7 +377,7 @@ void commandMenuInit()
 
 	CPaintManagerUI::SetResourceType(UILIB_ZIPRESOURCE);
 	//CPaintManagerUI::SetResourceType(UILIB_ZIP);
-	//CPaintManagerUI::SetResourceType(UILIB_FILE);
+	CPaintManagerUI::SetResourceType(UILIB_FILE);
 
 	InitResource();
 

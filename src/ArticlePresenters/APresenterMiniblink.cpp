@@ -166,7 +166,11 @@ void MB_CALL_TYPE onJsQuery(mbWebView webView, void* param, mbJsExecState es, in
 		mbResponseQuery(webView, queryId, customMsg, res);
 		delete[] res;
 	}
-	if(customMsg==0x996)
+	else if(customMsg==0x999)
+	{
+		presentee->NewDoc((char*)request);
+	}
+	else if(customMsg==0x996)
 	{
 		//::SendMessage(nppData._nppHandle, NPPM_SETSTATUSBAR, STATUSBAR_DOC_TYPE, (LPARAM)L"0x996");
 		if(strncmp(request, "scinllo", 7)==0)
@@ -179,6 +183,13 @@ void MB_CALL_TYPE onJsQuery(mbWebView webView, void* param, mbJsExecState es, in
 			{
 				presentee->doScintillaScroll(atoi(number));
 			}
+		}
+	}
+	else if(customMsg==0x997)
+	{
+		if(strncmp(request, "getDarkBG", 9)==0)
+		{
+			mbResponseQuery(webView, queryId, customMsg, presentee->getDarkBG()?"123":"");
 		}
 	}
 }
@@ -498,7 +509,8 @@ APresenterMiniblink::APresenterMiniblink(TCHAR* WKPath, const TCHAR* modulePath,
 
 void APresenterMiniblink::Refresh() 
 {
-	mbReload(mWebView);
+	//mbReload(mWebView);
+	EvaluateJavascript("location.reload()");
 }
 
 void APresenterMiniblink::GoBack() 

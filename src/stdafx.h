@@ -7,5 +7,3 @@
 #include <stdlib.h>
 #include <string>
 #include <tchar.h>
-
-#include <wrl.h>

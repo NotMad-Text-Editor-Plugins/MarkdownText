@@ -42,13 +42,16 @@ enum menuList
 	menuPreviewCurr = 0,
 	menuOption,
 
-	//menuSeparator0,
+	menuSeparator0,
 
 	menuBolden ,
 	menuItalic ,
 	menuUnderLine,
 
 	//menuSeparator2,
+	menuTools,
+
+	menuSeparator3,
 	menuPause,
 	menuChained,
 	menuSync,

@@ -149,6 +149,16 @@ CHAR* MarkDownTextDlg::loadPluginAsset(const char* path, DWORD & dataLen)
 			return data;
 		}
 	}
+	if (!strcmp("darkmode.js", path))
+	{
+		CHAR* data;
+		DWORD len=0;
+		if (CPaintManagerUI::ExtractItem(TEXT("darkmode.js"), &data, len)&&len)
+		{
+			dataLen = len;
+			return data;
+		}
+	}
 	else if (!strcmp("ui.js", path))
 	{
 		CHAR* data;
@@ -402,11 +412,37 @@ std::string* MarkDownTextDlg::setLibPathAt(std::vector<std::string*> & paths, in
 	return val;
 }
 
+void MarkDownTextDlg::refreshDarkMode() 
+{
+	//redraw(true);
+	NppDarkMode::refreshDarkMode(_MDText.getHSelf());
+
+	if (_MDText.isCreated())
+	{
+		::SendMessage(_MDText.getHSelf(), WM_SIZE, 0, 0);
+		NppDarkMode::setDarkScrollBar(hBrowser);
+	}
+
+	if (mWebView0)
+	{
+		int editorBgColor = NppDarkMode::isEnabled()?
+			SendMessage(nppData._nppHandle, NPPM_GETEDITORDEFAULTBACKGROUNDCOLOR, 0, 0)
+			:0;
+		CHAR buffer[200]={0};
+		sprintf(buffer,"if(!window._RDM) loadJs(\"http://mdbr/darkmode.js\", function(){window._RDM(%d)}); else window._RDM(%d)"
+			, editorBgColor, editorBgColor);
+		mWebView0->EvaluateJavascript(buffer);
+	}
+	if(checkFileExt(0))
+	{
+		LanguageToMarkdown();
+	}
+	//NppDarkMode::setDarkScrollBar
+}
+
 void MarkDownTextDlg::RefreshWebview(int source) 
 {
-	//TCHAR buffer[256]={0};
-	//wsprintf(buffer,TEXT("RefreshWebview source=%d"), source, _MDText.RendererTypeIdx);
-	//::SendMessage(nppData._nppHandle, NPPM_SETSTATUSBAR, STATUSBAR_DOC_TYPE, (LPARAM)buffer);
+	//LogIs("RefreshWebview source=%d", source, _MDText.RendererTypeIdx);
 	if(mWebView0&&NPPRunning)
 	{
 		LONG_PTR bidBk = lastBid;
@@ -487,7 +523,7 @@ void MarkDownTextDlg::RefreshWebview(int source)
 					releaseEnginesMenu();
 				}
 				prefRndTyps[bid] = RendererTypeIdx;
-				LogIs("RendererTypeIdx %d, %d", RendererTypeIdx, prefRndTyps[bid]);
+				//LogIs("RendererTypeIdx %d, %d", RendererTypeIdx, prefRndTyps[bid]);
 				b2=true;
 			}
 		}
@@ -587,6 +623,10 @@ int MarkDownTextDlg::getToolbarCommand(POINT &pointer)
 	return 0;
 }
 
+int mLastW, mLastH;
+bool resizing;
+bool darkInit = true;
+
 INT_PTR CALLBACK MarkDownTextDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message) 
@@ -614,6 +654,14 @@ INT_PTR CALLBACK MarkDownTextDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 			}
 		}
 		break;
+		//case WM_USER + 59://NPPM_INTERNAL_REFRESHDARKMODE
+		//{
+		//	LogIs(2, "NPPM_INTERNAL_REFRESHDARKMODE");
+		//}
+		//break;
+		//case WM_THEMECHANGED:
+		//	LogIs(2, "WM_THEMECHANGED");
+		//	break;
 		case SELF_REFRESH://WM_TIMER
 		{
 			
@@ -636,28 +684,64 @@ INT_PTR CALLBACK MarkDownTextDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 		{
 			RECT rc;
 			getClientRect(rc);
-			int toolbarHeight=toolBar.getHeight();//28;
-			bool showIGUnit = installGuide;// && WM_SIZE==message;
-			if (showIGUnit)
+			int W = rc.right - rc.left;
+			int H = rc.bottom - rc.top;
+			if (W!=0 && H!=0)
 			{
-				//::SetWindowPos(installGuide->GetHWND(),HWND_TOP,0, 0, 0, 0, SWP_SHOWWINDOW);
-				::MoveWindow(installGuide->GetHWND(), rc.left, rc.top+toolbarHeight, rc.right, rc.bottom-toolbarHeight,1);
-				if (hBrowser && IsWindowVisible(hBrowser))
+				int toolbarHeight=toolBar.getHeight();//28;
+				bool showIGUnit = installGuide;// && WM_SIZE==message;
+				if (showIGUnit)
 				{
-					ShowWindow(hBrowser, SW_HIDE);
+					//::SetWindowPos(installGuide->GetHWND(),HWND_TOP,0, 0, 0, 0, SWP_SHOWWINDOW);
+					::MoveWindow(installGuide->GetHWND(), rc.left, rc.top+toolbarHeight, rc.right, rc.bottom-toolbarHeight,1);
+					if (hBrowser && IsWindowVisible(hBrowser))
+					{
+						ShowWindow(hBrowser, SW_HIDE);
+					}
 				}
-			}
-			if(hBrowser)
-			{
-				if (currentkernelType==WEBVIEW2_TYPE) {
-					mWebView0->notifyWindowSizeChanged(rc);
+				if(hBrowser)
+				{
+					if (currentkernelType==WEBVIEW2_TYPE) {
+						mWebView0->notifyWindowSizeChanged(rc);
+					}
+					//LogIs(2, "MoveWindow %ld %ld %ld %ld", rc.left, rc.top, rc.right, rc.bottom);
+					//ShowWindow(hBrowser, SW_SHOW);
+					::MoveWindow(hBrowser, rc.left, rc.top+toolbarHeight, rc.right, rc.bottom-toolbarHeight,0);
+					if (darkInit)
+					{
+						//NppDarkMode::setDarkScrollBar(hBrowser);
+						darkInit = false;
+					}
 				}
-				::MoveWindow(hBrowser, rc.left, rc.top+toolbarHeight, rc.right, rc.bottom-toolbarHeight,1);
+				rc.bottom=toolbarHeight;
+				ListBoxPanel.reSizeTo(rc);
+				::UpdateWindow(_hSelf);
+				// redraw();
 			}
-			rc.bottom=toolbarHeight;
-			ListBoxPanel.reSizeTo(rc);
-			redraw();
+			//mLastW = W;
+			//mLastH = H;
 		} break;
+
+		//case WM_EXITSIZEMOVE:
+		//{
+		//	LogIs(2, "resizing %d", resizing);
+		//} break;
+		//
+		//case WM_ENTERSIZEMOVE:
+		//{
+		//	LogIs(2, "resizing %d", resizing);
+		//} break;
+		//
+		//case WM_SYSCOMMAND :
+		//{
+		//	switch (wParam & 0xfff0)
+		//	{
+		//	case SC_SIZE:
+		//		LogIs(2, "resizing %d", resizing);
+		//		return TRUE;
+		//	}
+		//}
+
 		case WM_NOTIFY: 
 		{
 			LPNMHDR	nmhdr	= (LPNMHDR)lParam;
@@ -668,6 +752,14 @@ INT_PTR CALLBACK MarkDownTextDlg::run_dlgProc(UINT message, WPARAM wParam, LPARA
 				case DMN_CLOSE:
 					{
 						setClosed(1);
+						break;
+					}
+				case DMN_FLOAT:
+				case DMN_DOCK:
+					{
+						//PostMessage(_hSelf, WM_SIZE, 0, 0);
+						//::InvalidateRect(hBrowser, nullptr, TRUE);
+
 						break;
 					}
 				default:
@@ -750,29 +842,42 @@ void GlobalOnPvMnCheckedStatic(HMENU hMenu, int idx)
 	_MDText.GlobalOnPvMnChecked(hMenu, idx);
 }
 
+#define ID_PLUGINS_CMD 22000
+#define ID_PLUGINS_CMD_LIMIT 22500
+
 void simulToolbarMenu(HMENU pluginMenu, RECT *rc, HWND _hSelf, FuncItem* items)
 {
 	int cmd = TrackPopupMenu(pluginMenu, TPM_RETURNCMD, rc->left,  rc->top, 0, _hSelf, NULL);
 
 	if(cmd) {
-		for(int idx=0,len=sizeof(*items);idx<len;idx++) {
-			if(items[idx]._cmdID==cmd) {
-				if(items[idx]._pFunc==(PFUNCPLUGINCMD)SwitchEnginesStatic) {
-					SwitchEnginesStatic(idx-MDCRST);
+		if (cmd >= ID_PLUGINS_CMD && cmd < ID_PLUGINS_CMD_LIMIT
+			|| cmd>=hToolsStartId && cmd<hToolsStartId+hToolsSz
+			)
+		{
+			SendMessage(nppData._nppHandle, WM_COMMAND, cmd, 0);
+		} 
+		else {
+			for(int idx=0,len=sizeof(*items);idx<len;idx++) {
+				if(items[idx]._cmdID==cmd) {
+					if(items[idx]._pFunc==(PFUNCPLUGINCMD)SwitchEnginesStatic) {
+						SwitchEnginesStatic(idx-MDCRST);
+					}
+					else if(items[idx]._pFunc==(PFUNCPLUGINCMD)GlobalOnPvMnCheckedStatic) {
+						GlobalOnPvMnCheckedStatic(pluginMenu, items[idx]._cmdID);
+					}
+					else
+					{
+						items[idx]._pFunc();
+					}
+					break;
 				}
-				else if(items[idx]._pFunc==(PFUNCPLUGINCMD)GlobalOnPvMnCheckedStatic) {
-					GlobalOnPvMnCheckedStatic(pluginMenu, items[idx]._cmdID);
-				}
-				else
-				{
-					items[idx]._pFunc();
-				}
-				if(pinMenu && getMenuItemNeedsKeep(idx) /*|| idx==nbFunc-2*/) {
-					simulToolbarMenu(pluginMenu, rc, _hSelf, items);
-				}
-				break;
 			}
 		}
+
+		////todo fix
+		//if(pinMenu && getMenuItemNeedsKeep(idx) /*|| idx==nbFunc-2*/) {
+		//	simulToolbarMenu(pluginMenu, rc, _hSelf, items);
+		//}
 	}
 }
 
@@ -924,6 +1029,8 @@ void MarkDownTextDlg::readExtensions(int channel, string * ret)
 	}
 }
 
+CHAR* _dataPath = NULL;
+
 void MarkDownTextDlg::readParameters()
 {
 	loadProf(g_ModulePath, configFileName);
@@ -973,6 +1080,12 @@ void MarkDownTextDlg::readParameters()
 		inval=0;
 	}
 	defaultRenderer = inval;
+
+
+	if(val=GetProfString("DataPath"))
+	{
+		_dataPath = (CHAR*)val->data();
+	}
 }
 
 BOOL CALLBACK removeAllChildren(HWND hwndChild, LPARAM lParam)
@@ -1010,15 +1123,16 @@ void MarkDownTextDlg::destroyWebViews(bool exit)
 	}
 }
 
-void MarkDownTextDlg::switchEngineByIndex(int id)
+void MarkDownTextDlg::switchWebViewByIndex(int id)
 {
 	if(currentkernelType!=id||(GetKeyState(VK_CONTROL) & 0x8000))
 	{
+		darkInit = true;
 		if(id<2&&presenter.wke_mb&&(id+1)^presenter.wke_mb)
 		{ // The miniblink kernels are not well designed in this aspect. It requires restarting of the editor.
 			requestedInvalidSwitch=id+1;
 			if(::MessageBox(nppData._nppHandle, TEXT("Restart is required to switch between wke and mb\r\n\r\nContinue?")
-				, TEXT("Need Restart！"), MB_YESNO|MB_DEFBUTTON2)==IDYES)
+				, TEXT("Need Restart！| 需要重启"), MB_YESNO|MB_DEFBUTTON2)==IDYES)
 			{
 				//before restart, save parameters in advance.
 				saveParameters();
@@ -1071,13 +1185,13 @@ void MarkDownTextDlg::switchEngineByIndex(int id)
 	}
 }
 
-void engineToWke(){ _MDText.switchEngineByIndex(0); }
+void engineToWke(){ _MDText.switchWebViewByIndex(0); }
 
-void engineToMb(){ _MDText.switchEngineByIndex(1); }
+void engineToMb(){ _MDText.switchWebViewByIndex(1); }
 
-void engineToChromium(){ _MDText.switchEngineByIndex(2); }
+void engineToChromium(){ _MDText.switchWebViewByIndex(2); }
 
-void engineToWebview2(){ _MDText.switchEngineByIndex(3); }
+void engineToWebview2(){ _MDText.switchWebViewByIndex(3); }
 
 HMENU GetLegacyPluginMenu() 
 {
@@ -1207,6 +1321,11 @@ void MarkDownTextDlg::destroyDynamicMenus()
 			LocateScroll.clear();
 			hMenuLocate=0;
 		}
+		if(hToolsMenu) 
+		{
+			if(IsMenu(hToolsMenu)) DestroyMenu(hToolsMenu);
+			hToolsMenu=0;
+		}
 	}
 }
 
@@ -1293,13 +1412,27 @@ int funcSz(FuncItem* funcs)
 	return sz;
 }
 
+void insertToolsMenu(HMENU hMenuPlugin)
+{
+	HMENU hToolsMenu = CreatePopupMenu();
+	InsertMenu(hToolsMenu, 0,MF_BYPOSITION|MF_POPUP, hToolsStartId, L"HTML 转 Markdown");
+	InsertMenu(hToolsMenu, 1,MF_BYPOSITION|MF_POPUP, hToolsStartId+1, L"HTML 转 Markdown（粘贴）");
+
+	ModifyMenu(hMenuPlugin, funcItems[menuTools]._cmdID
+		, MF_POPUP | MF_STRING | MF_BYCOMMAND, (UINT_PTR)hToolsMenu , L"工具");
+
+	_MDText.hToolsMenu = hToolsMenu;
+}
+
 void MarkDownTextDlg::setLanguageName(wstring & name, bool init) 
 {
 	if(currentLanguageFile!=name||init)
 	{
 		currentLanguageFile = name;
+		HMENU hMenuPlugin =  GetPluginMenu();
 		if(init&&(name.length()==0)) // ||name==TEXT("english.ini")
 		{
+			insertToolsMenu(hMenuPlugin);
 			return;
 		}
 		TCHAR path[MAX_PATH];
@@ -1308,9 +1441,9 @@ void MarkDownTextDlg::setLanguageName(wstring & name, bool init)
 		PathAppend(path, name.c_str());
 		loadLanguge(path);
 		destroyDynamicMenus();
-		HMENU hMenuPlugin =  GetPluginMenu();
 		if(hMenuPlugin)
 		{
+			insertToolsMenu(hMenuPlugin);
 			for (size_t pos = 0, len=funcSz(funcItems); pos < len; pos++)
 			{
 				int cmdID = ::GetMenuItemID(hMenuPlugin, pos);
@@ -1327,7 +1460,7 @@ void MarkDownTextDlg::setLanguageName(wstring & name, bool init)
 						newStr = funcItems[pos]._itemName;
 					}
 					::ModifyMenu(hMenuPlugin, pos, MF_BYPOSITION, cmdID, newStr);
-					if(getMenuItemChecked(cmdID-funcItems[0]._cmdID))
+					if(getMenuItemChecked(pos))
 						CheckMenuItem(hMenuPlugin, pos, MF_BYPOSITION|MF_CHECKED);
 				}
 			}
@@ -1482,6 +1615,191 @@ extern void BoldenText();
 extern void TiltText();
 extern void UnderlineText();
 
+void MarkDownTextDlg::TurnHtmlToMarkdown(int from)
+{
+
+}
+
+extern bool WindowOpaqueMsg;
+
+void MarkDownTextDlg::create()
+{
+	if (_hSelf==NULL)
+	{
+		NppDarkMode::initDarkMode();
+		_hParent = nppData._nppHandle;
+		tTbData data = {0};
+		WindowOpaqueMsg = 0;
+		DockingDlgInterface::create( &data );
+		WindowOpaqueMsg = 1;
+		// define the default docking behaviour
+		data.uMask          = DWS_DF_CONT_RIGHT | DWS_ICONTAB;
+		data.pszModuleName = _MDText.getPluginFileName();
+		// the dlgDlg should be the index of funcItem where the current function pointer is
+		data.dlgID = menuOption;
+		data.hIconTab       = ( HICON )::LoadImage( _MDText.getHinst(),
+			MAKEINTRESOURCE( IDI_ICON1 ), IMAGE_ICON, 14, 14,
+			LR_LOADMAP3DCOLORS | LR_LOADTRANSPARENT );
+		::SendMessage( nppData._nppHandle, NPPM_DMMREGASDCKDLG, 0, ( LPARAM )&data );
+	}
+}
+
+static UINT_PTR gTimerID = 0;
+
+static void CALLBACK TimerProcFun(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
+{
+	if (gTimerID == idEvent)
+	{
+		KillTimer(NULL, gTimerID);
+		//LogIs(2, "!!!");
+		_MDText.RunToolsCommand(0);
+		gTimerID = 0;
+	}
+}
+
+CHAR* js= "var w=window;function toMarkdown(e) {	if(!w.turndownService) {		if(!w.TurndownService) {			var url='http://mdbr/Turndown/dist/turndown.js';			let xhr = new XMLHttpRequest();			xhr.open('GET', url, false);			xhr.send();			var item = document.createElement('script');			item.innerHTML=xhr.responseText;			item.async = false;			document.head.append(item);		}		w.turndownService = new w.TurndownService();	}	return turndownService.turndown(e);}function copyTextV1(text) {	var tmpText = window.document.getElementById('copit'); 	if(!tmpText) {		tmpText = document.createElement('p');		document.body.appendChild(tmpText);		tmpText.id = 'copit';	}	tmpText.focus();	tmpText.innerText=text;	const range = document.createRange();	range.selectNode(tmpText);	const selection = window.getSelection();	if(selection.rangeCount > 0) selection.removeAllRanges();	selection.addRange(range);	document.execCommand('copy');}function toPasteMdoc(e) {	copyTextV1(toMarkdown(e));}  console.log(666); toPasteMdoc('<h1>Turndown Demo</h1>');";
+
+void MarkDownTextDlg::RunToolsCommand(int id)
+{
+	//if (!mWebView0)
+	//{
+	//	create();
+	//	presenter.initWebViewImpl(kernelType, this, true);
+	//	if (mWebView0)
+	//	{
+	//		gTimerID = ::SetTimer(NULL, 0, 220, TimerProcFun);
+	//	}
+	//	return;
+	//}
+	if (mWebView0)
+	{
+		DWORD len;
+		char* data = loadPluginAsset("TurnDown\\transformer.js", len);
+		data[len]=0;
+		mWebView0->EvaluateJavascript(data);
+	}
+}
+
+void MarkDownTextDlg::NewDoc(TCHAR* text)
+{
+	int len = WideCharToMultiByte(CP_ACP, 0, text, -1, 0, 0, 0, 0);
+	if (len>=0)
+	{
+		char* data = new char[len+1];
+		WideCharToMultiByte(CP_ACP, 0, text, -1, data, len, 0, 0);
+		NewDoc(data);
+		delete[] data;
+	}
+
+}
+
+bool isDarkUDL(TCHAR* name) 
+{
+	if (_tcsstr(name, TEXT("ark"))) // [Dd]ark
+	{
+		return true;
+	}
+	if (_tcsstr(name, TEXT("lack"))) // [Bb]lack
+	{
+		return true;
+	}
+	if (_tcsstr(name, TEXT("bsidian"))) // [Oo]bsidian
+	{
+		return true;
+	}
+	return false;
+}
+
+void MarkDownTextDlg::LanguageToMarkdown()
+{
+	HMENU hAppMenu = GetMenu(nppData._nppHandle);
+	if (hAppMenu)
+	{
+		bool isDark = NppDarkMode::isEnabled();
+		hAppMenu = GetSubMenu(hAppMenu, 5);
+		if (hAppMenu)
+		{
+			MENUITEMINFO mii; 
+			mii.cbSize = sizeof(MENUITEMINFO);
+			mii.fMask = MIIM_STRING|MIIM_ID;
+			TCHAR tmp[256];
+			mii.dwTypeData = tmp;
+			int found = 0;
+			bool opened = false;
+			for (size_t i = 26, len=GetMenuItemCount(hAppMenu); i < len; i++)
+			{
+				mii.cch=255;
+				::GetMenuItemInfo(hAppMenu, i, MF_BYPOSITION, &mii);
+				tmp[min(mii.cch+1, 255)]=0;
+				//LogIs(3, L"GetMenuItemInfo %d, %s", i, tmp);
+				if (_tcsnccmp(tmp, TEXT("Markdown"), 8)==0)
+				{ // 轮询全部Markdown开头的。
+					if (!opened)
+					{
+						opened=true;
+					}
+					if (!found)
+					{
+						found=mii.wID;
+					}
+					bool darkUdl = isDarkUDL(tmp+8);
+					if (isDark == darkUdl)
+					{ // 保持当前的合法选择。
+						found=mii.wID;
+						if (mii.fType&MFT_RADIOCHECK)
+						{ // useless when switching file 
+							// | 当切换文件时立即调用是无效的，因为菜单尚未更新。所以要deferred。
+							break;
+						}
+						//break;
+					}
+				} else if(opened) {
+					break;
+				}
+			}
+			//LogIs(2, L"anguageToMarkdown %s", tmp);
+			SendMessage(nppData._nppHandle, WM_COMMAND, MAKELONG(found, 66), 0);
+		}
+	}
+}
+
+void MarkDownTextDlg::NewDoc(CHAR* val)
+{
+	SendMessage(nppData._nppHandle, NPPM_SUPRESSSCIMACRO, true, 0);
+	int currentEdit=0;
+	SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&currentEdit);
+	auto currentSci = currentEdit?nppData._scintillaSecondHandle:nppData._scintillaMainHandle;
+
+	//SendMessage(currentSci, SCI_SETTARGETSTART, 0, 0);
+	//SendMessage(currentSci, SCI_SETTARGETEND, 1, 0);
+	//SendMessage(currentSci, SCI_REPLACETARGET, lstrlen(name), (LPARAM)name);
+
+	//SendMessage(currentSci, SCI_ADDTEXT, lstrlen(text), (LPARAM)text);
+
+	//::MessageBox(0, text, TEXT(""), MB_OK);
+
+	SendMessage(nppData._nppHandle, WM_COMMAND, MAKELONG(IDM_FILE_NEW, 66), 0);
+	SendMessage(currentSci, SCI_ADDTEXT, strlen(val), (LPARAM)val);
+	LanguageToMarkdown();
+	if (!isClosed())
+	{
+		LONG_PTR bid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
+		prefRndTyps[bid] = 0;
+		refreshDlg(false, false);
+	}
+	SendMessage(nppData._nppHandle, NPPM_SUPRESSSCIMACRO, false, 0);
+}
+
+int MarkDownTextDlg::getDarkBG()
+{
+	if (NppDarkMode::isEnabled())
+	{
+		return 0xff000000;
+	} else {
+		return 0;
+	}
+}
+
 // |source| 0=click 1=context_menu
 void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 { 
@@ -1490,6 +1808,7 @@ void MarkDownTextDlg::OnToolBarCommand(UINT CMDID, char source, POINT* pt)
 		{
 			if(source==0)
 				BoldenText();
+			// todo SendMessage(nppData._nppHandle, WM_COMMAND, id, 0);
 		}
 		return;
 		case IDM_EX_DEV:

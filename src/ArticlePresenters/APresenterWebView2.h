@@ -2,9 +2,6 @@
 #ifndef APRESENTERWEBVIEW2_H
 #define APRESENTERWEBVIEW2_H
 #include "ArticlePresenter.h"
-#include "CheckFailure.h"
-
-using namespace Microsoft::WRL;
 
 class APresenterWebView2 : public ArticlePresenter
 {
@@ -24,8 +21,5 @@ public:
 	void notifyWindowSizeChanged(RECT & rc) override;
 private:
 	// WebView2
-	wil::com_ptr<ICoreWebView2> mWebView;
-	wil::com_ptr<ICoreWebView2Environment> m_webViewEnvironment;
-	wil::com_ptr<ICoreWebView2Controller> webviewController;
 };
 #endif

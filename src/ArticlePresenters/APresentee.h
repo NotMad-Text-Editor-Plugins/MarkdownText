@@ -63,6 +63,12 @@ public:
 	virtual void RefreshWebview(int source=0)=0;
 
 	virtual std::wstring GetLocalWText(char* name, const TCHAR* defVal)=0;
+
+	virtual void NewDoc(TCHAR* name)=0;
+
+	virtual void NewDoc(CHAR* name)=0;
+
+	virtual int getDarkBG()=0;
 };
 
 #endif

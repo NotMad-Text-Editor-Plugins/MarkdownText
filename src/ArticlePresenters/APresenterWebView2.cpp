@@ -6,8 +6,13 @@
 
 #include "WarningDlg.hpp"
 
-#define kClassWindow L"TestMbWindow"
+#include "CheckFailure.h"
 
+using namespace Microsoft::WRL;
+
+wil::com_ptr<ICoreWebView2> mWebView;
+wil::com_ptr<ICoreWebView2Environment> m_webViewEnvironment;
+wil::com_ptr<ICoreWebView2Controller> webviewController;
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -50,6 +55,17 @@ BOOL unregWndClass(LPCTSTR lpcsClassName)
 	return TRUE;
 }
 
+extern CHAR* _dataPath;
+
+
+LPWSTR GetLastErrorAsString()  
+{  
+	HLOCAL LocalAddress=NULL;  
+	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_IGNORE_INSERTS|FORMAT_MESSAGE_FROM_SYSTEM,
+		NULL,GetLastError(),0,(PTSTR)&LocalAddress,0,NULL);  
+	return (LPWSTR)LocalAddress;  
+}
+
 APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND hParent) 
 {
 	error_code=1;
@@ -59,17 +75,49 @@ APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND h
 		, WS_CHILD , 0 , 0 , 840 , 680 , hParent , NULL , ::GetModuleHandle(NULL), NULL);
 	hBrowser=hWnd;
 	::ShowWindow(hWnd, 1);
+	//LogIs(2, ::GetCommandLine());
 	// todo, cannot set path here.
-	//TEXT("C:\\Program Files (x86)\\Microsoft\\EdgeWebView\\Application\\89.0.774.57")
+	//TEXT("C:\\Program Files (x86)\\Microsoft\\Edge Beta\\Application")
 	//	,TEXT("D:\\Code\\FigureOut\\Textrument\\PowerEditor\\bin64\\Textrument.exe.WebView2")
+	//
+	//options->put_AdditionalBrowserArguments(L"--mute-audio"); 
+	//options->put_AdditionalBrowserArguments(L"--disk-cache-size=0"); 
+
+	//options = new CoreWebView2EnvironmentOptions("–incognito ");
+
+	TCHAR* dataPath = NULL; // L"C:\\temp\\"
+	if (_dataPath && ::PathIsDirectoryA(_dataPath))
+	{
+		dataPath = new TCHAR[MAX_PATH];
+		MultiByteToWideChar(CP_ACP, 0, _dataPath, -1, dataPath, MAX_PATH-1);
+	}
+
+	//options->put_AdditionalBrowserArguments();
+
 	HRESULT hr = CreateCoreWebView2EnvironmentWithOptions(
-		NULL , NULL , NULL,
-		Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>([this, hBrowser, hParent](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
+		NULL , dataPath, options.Get(),
+		Callback<ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler>
+		([this, hBrowser, hParent](HRESULT result, ICoreWebView2Environment* env) -> HRESULT {
+		
+		//LPWSTR versionInfo; env->get_BrowserVersionString(&versionInfo);
+		//LogIs(2, L"Some BUG happened, ???. %ld  %d %s", result, (int)env, versionInfo);
+		
 		m_webViewEnvironment=env;
-		env->CreateCoreWebView2Controller(hBrowser, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>([this, hParent](HRESULT result, ICoreWebView2Controller* controller) -> HRESULT {
-			if (controller) {
+		env->CreateCoreWebView2Controller(hBrowser, Callback<ICoreWebView2CreateCoreWebView2ControllerCompletedHandler>
+			([this, hParent](HRESULT result, ICoreWebView2Controller* controller) -> HRESULT {
+			if (controller != nullptr) 
+			{
 				webviewController = controller;
 				webviewController->get_CoreWebView2(&mWebView);
+			}
+
+			if (!mWebView)
+			{
+				LogIs(2, L"\"%s\"\n\nSome BUG happened, webview2 failed to initialzie. ret=0x%lx controller=%d"
+					, GetLastError()?GetLastErrorAsString():L""
+					, result, (int)controller
+				);
+				return -1;
 			}
 			
 			ICoreWebView2Settings* Settings;
@@ -258,7 +306,7 @@ APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND h
 			}).Get(), &token);
 
 			mWebView->add_WebMessageReceived(Callback<ICoreWebView2WebMessageReceivedEventHandler>(
-				[](ICoreWebView2* webview, ICoreWebView2WebMessageReceivedEventArgs * args) -> HRESULT {
+				[](ICoreWebView2* sender, ICoreWebView2WebMessageReceivedEventArgs * args) -> HRESULT {
 				PWSTR message;
 				args->TryGetWebMessageAsString(&message);
 				if(wcsncmp(message, L"scinllo", 7)==0)
@@ -271,6 +319,11 @@ APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND h
 					{
 						presentee->doScintillaScroll(_wtoi(number));
 					}
+				}
+				if(wcsncmp(message, L"getDarkBG", 9)==0)
+				{
+					//LogIs(2, "asd");
+					CHECK_FAILURE(sender->PostWebMessageAsString(presentee->getDarkBG()?L"123":L""));
 				}
 				CoTaskMemFree(message);
 				return S_OK;
@@ -289,40 +342,55 @@ APresenterWebView2::APresenterWebView2(int & error_code, HWND & hBrowser, HWND h
 		}).Get());
 		return S_OK;
 	}).Get());
+	//if(true) return;
+	if (dataPath)
+	{
+		delete[] dataPath;
+	}
+
 	if (SUCCEEDED(hr))
 	{
 		error_code = 0;
 	}
 	else {
 		DestroyWindow(hBrowser);
-		if (presentee->RequestedSwitch && hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
+		if (presentee->RequestedSwitch)
 		{
 			//::MessageBox(hParent, TEXT("Runtime Not Found!"),, L"WebView2 not found. " MB_OK);
 			presentee->RequestedSwitch = false;
-			WarnDlg* wdlg = new WarnDlg(TEXT("wv2.xml"));
-			wdlg->Create(nppData._nppHandle
-				, presentee->GetLocalWText("no_rt", TEXT("Runtime Not Found !")).c_str()
-				, WS_OVERLAPPED | WS_SYSMENU | WS_CAPTION , WS_EX_DLGMODALFRAME );
-			wdlg->CenterWindow();
-			wdlg->ShowModal(nppData._nppHandle);
+			if (hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND))
+			{
+				WarnDlg* wdlg = new WarnDlg(TEXT("wv2.xml"));
+				wdlg->Create(nppData._nppHandle
+					, presentee->GetLocalWText("no_rt", TEXT("Runtime Not Found !")).c_str()
+					, WS_OVERLAPPED | WS_SYSMENU | WS_CAPTION , WS_EX_DLGMODALFRAME );
+				wdlg->CenterWindow();
+				wdlg->ShowModal(nppData._nppHandle);
+			}
+			else {
+				LogIs(2, "Unkonw Error!!! %ld ", hr);
+			}
 		}
 	}
 }
 
 void APresenterWebView2::Refresh() 
 {
+	if (mWebView)
 	mWebView->Reload();
 }
 
 void APresenterWebView2::GoBack() 
 {
 	//if(mWebView->CanGoBack())
+	if (mWebView)
 	mWebView->GoBack();
 }
 
 void APresenterWebView2::GoForward() 
 {
 	//if(mWebView->CanGoForward())
+	if (mWebView)
 	mWebView->GoForward();
 }
 
@@ -338,6 +406,7 @@ void APresenterWebView2::DestroyWebView(bool exit)
 
 void APresenterWebView2::EvaluateJavascript(char * JS) 
 {
+	if (!mWebView) return;
 	TCHAR * LJS = new TCHAR[strlen (JS) + 1];
 	MultiByteToWideChar (CP_ACP, 0, JS, strlen (JS) + 1, LJS, 256);
 	mWebView->ExecuteScript(LJS, 0);
@@ -346,11 +415,13 @@ void APresenterWebView2::EvaluateJavascript(char * JS)
 
 void APresenterWebView2::ResetZoom() 
 {
+	if(webviewController)
 	webviewController->put_ZoomFactor(1);
 }
 
 void APresenterWebView2::ZoomOut() 
 {
+	if(!webviewController) return;
 	double zoom;
 	webviewController->get_ZoomFactor(&zoom);
 	webviewController->put_ZoomFactor(zoom-0.15);
@@ -358,12 +429,14 @@ void APresenterWebView2::ZoomOut()
 
 void APresenterWebView2::ZoomIn() 
 {
+	if(!webviewController) return;
 	double zoom;
 	webviewController->get_ZoomFactor(&zoom);
 	webviewController->put_ZoomFactor(zoom+0.15);
 }
 
 void APresenterWebView2::ShowDevTools(TCHAR *res_path) {
+	if (mWebView)
 	mWebView->OpenDevToolsWindow();
 }
 

@@ -3,9 +3,9 @@
 #include "APresentee.h"
 #include "SU.h"
 
-BJSCV* GetDocText1(LONG_PTR funcName, int argc, LONG_PTR argv, int sizeofBJSCV)
+BJSCV* GetDocText(LONG_PTR funcName, int argc, LONG_PTR argv, int sizeofBJSCV)
 {
-	//::MessageBoxA(NULL, ("GetDocText1"), (""), MB_OK);
+	//::MessageBoxA(NULL, ("GetDocText"), (""), MB_OK);
 	if(argc<0)
 	{
 		auto str = (BJSCV*)funcName;
@@ -23,7 +23,7 @@ BJSCV* GetDocText1(LONG_PTR funcName, int argc, LONG_PTR argv, int sizeofBJSCV)
 	int structSize=0;
 	if(argc==1)
 	{
-		char* args = bwParseCefV8Args(argv, structSize);
+		char* args = bwParseCefV8Args(argv, structSize, false);
 		if(structSize)
 		{
 			BJSCV* val = (BJSCV*)(args+0*structSize);
@@ -41,6 +41,42 @@ BJSCV* GetDocText1(LONG_PTR funcName, int argc, LONG_PTR argv, int sizeofBJSCV)
 	return ret;
 }
 
+BJSCV* NewDoc(LONG_PTR funcName, int argc, LONG_PTR argv, int sizeofBJSCV)
+{
+	if(argc<0)
+	{
+		auto str = (BJSCV*)funcName;
+		if(str->delete_internal&&str->charVal)
+		{
+			delete[] str->charVal;
+			//HeapFree(GetProcessHeap(), 0, str->charVal);
+			str->charVal = nullptr;
+		}
+		if(argv==sizeofBJSCV==0)
+			delete (BJSCV*)funcName;
+		return 0;
+	}
+	LONG_PTR bid=0;
+	int structSize=0;
+	if(argc==1)
+	{
+		char* args = bwParseCefV8Args(argv, structSize, true);
+		if(structSize)
+		{
+			BJSCV* val = (BJSCV*)(args+0*structSize);
+			if(val->value_type==typeString)
+			{
+				::SendMessageA(nppData._nppHandle
+					, NPPM_SETSTATUSBAR, STATUSBAR_DOC_TYPE, (LPARAM)(CHAR*)val->charVal);
+
+				presentee->NewDoc((CHAR*)val->charVal);
+
+				bwReleaseString((LONG_PTR)val->charVal);
+			}
+		}
+	}
+	return NULL;
+}
 
 LRESULT WINAPI testWindowProc1(
 	__in HWND hWnd,
@@ -57,6 +93,7 @@ LRESULT WINAPI testWindowProc1(
 
 	case WM_SIZE:
 	{
+		//LogIs("WM_SIZE");
 		return 0;
 	}
 	case WM_KEYDOWN:
@@ -102,7 +139,7 @@ BJSCV* ScintillaScroll(LONG_PTR funcName, int argc, LONG_PTR argv, int sizeofBJS
 			LONG_PTR bid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
 			if(presentee->lastBid==bid)
 			{
-				char* args = bwParseCefV8Args(argv, structSize);
+				char* args = bwParseCefV8Args(argv, structSize, false);
 				if(structSize)
 				{
 					BJSCV* val = (BJSCV*)(args+0*structSize);
@@ -115,6 +152,14 @@ BJSCV* ScintillaScroll(LONG_PTR funcName, int argc, LONG_PTR argv, int sizeofBJS
 		}
 	}
 	return 0;
+}
+
+
+BJSCV* getDarkBG(LONG_PTR funcName, int argc, LONG_PTR argv, int sizeofBJSCV)
+{
+	auto ret = new BJSCV{typeInt, presentee->getDarkBG()};
+	ret->delete_internal = true;
+	return ret;
 }
 
 
@@ -134,6 +179,7 @@ url_intercept_result* InterceptBrowserWidget(const char* url, const url_intercep
 
 	if(strncmp(url, InternalResHead1, 12)==0)
 	{
+		//LogIs(2, url);
 		auto path = url+12;
 		if(path)
 		{
@@ -157,6 +203,7 @@ url_intercept_result* InterceptBrowserWidget(const char* url, const url_intercep
 
 	if(strncmp(url, "http://tests/MDT/", 17)==0)
 	{
+		//LogIs(2, url);
 		LONG_PTR bid=0;
 		int from = STR2LONGPTRA((CHAR*)url+17, bid);
 		if(bid&&from) {
@@ -169,6 +216,32 @@ url_intercept_result* InterceptBrowserWidget(const char* url, const url_intercep
 			if(data) {
 				url_intercept_result* result = new url_intercept_result{data, dataLen, 200, (CHAR*)"OK"};
 				result->delete_internal = shouldDel;
+				//strcpy(result->mime, "text/html; charset=utf-8");
+				//LogIs(2, result->mime);
+				return result;
+			}
+		}
+	}
+
+	if(strncmp(url, "http://mdt/", 11)==0)
+	{
+		//LogIs(2, url);
+		LONG_PTR bid=0;
+		int from = STR2LONGPTRA((CHAR*)url+17, bid);
+		if(bid&&from) {
+			auto path = url+12+from;
+			char decodedUrl[MAX_PATH];
+			UrlDecode(decodedUrl, path);
+			bool shouldDel = false;
+
+			size_t len;
+			auto data = presentee->GetDocTex(len, bid, &shouldDel);
+
+			if(data) {
+				url_intercept_result* result = new url_intercept_result{data, len, 200, (CHAR*)"OK"};
+				result->delete_internal = shouldDel;
+				//strcpy(result->mime, "text/html; charset=utf-8");
+				//LogIs(2, result->mime);
 				return result;
 			}
 		}
@@ -179,14 +252,16 @@ url_intercept_result* InterceptBrowserWidget(const char* url, const url_intercep
 
 void onBrowserPrepared(bwWebView browserPtr)
 {
-	bwInstallJsNativeToWidget(browserPtr, "GetDocText1", GetDocText1);
+	bwInstallJsNativeToWidget(browserPtr, "GetDocText", GetDocText);
+	bwInstallJsNativeToWidget(browserPtr, "NewDoc", NewDoc);
 	bwInstallJsNativeToWidget(browserPtr, "Scinllo", ScintillaScroll);
+	bwInstallJsNativeToWidget(browserPtr, "getDarkBG", getDarkBG);
 	if (APresenterBWidget* wv = dynamic_cast<APresenterBWidget*>(presentee->mWebView0)) {
 		wv->mWebView = browserPtr;
 		presentee->hBrowser = bwGetHWNDForBrowser(browserPtr);
 		::SendMessage(presentee->getHWND(), WM_SIZE, 0, 0);
 	}
-	//SetWindowLongPtr(_MDText.hBrowser, GWLP_WNDPROC, (LONG_PTR)testWindowProc1);
+	//SetWindowLongPtr(presentee->hBrowser, GWLP_WNDPROC, (LONG_PTR)testWindowProc1);
 }
 
 bool onBrowserFocused(bwWebView browserPtr)
@@ -220,7 +295,7 @@ APresenterBWidget::APresenterBWidget(TCHAR* WKPath, int & error_code, HWND & hBr
 	error_code=1;
 	if(PathFileExists(WKPath))
 	{
-		if(bwInit(WKPath) && bwCreateBrowser({hwnd, "https://tests/home", onBrowserPrepared, InterceptBrowserWidget, onBrowserFocused, onBrowserClose}))
+		if(bwInit(WKPath) && bwCreateBrowser({hwnd, "https://tests/home", onBrowserPrepared, InterceptBrowserWidget, onBrowserFocused, onBrowserClose, NULL, presentee->getDarkBG()}))
 		{
 			error_code=0;
 			presentee->browser_deferred_create_time = clock();
@@ -300,7 +375,10 @@ void APresenterBWidget::updateArticle(LONG_PTR bid, int articleType, bool softUp
 		if(softUpdate||update) {
 			strcpy(page_id+(ed=(int)strlen(page_id)), "/doc.html");
 			size_t len;
-			bwLoadStrData(mWebView, page_id+13, presentee->GetDocTex(len, bid, 0), 0);
+			//bwLoadStrData(mWebView, page_id+13, presentee->GetDocTex(len, bid, 0), 0);
+
+			bwLoadUrl(mWebView, page_id+13);
+
 			if(update) {
 				presentee->lastBid=bid;
 				lstrcpy(last_updated, last_actived);
@@ -309,16 +387,18 @@ void APresenterBWidget::updateArticle(LONG_PTR bid, int articleType, bool softUp
 		return;
 	}
 	strcpy(page_id+(ed=(int)strlen(page_id)), "/text.html");
-	if(softUpdate && STRSTARTWITH(bwGetUrl(mWebView), page_id))
+	// Workaround for the Win7, random first char.
+	//LogIs(L"bwSoftUpdate::%s", bwGetUrl(mWebView));
+	if(softUpdate && STRSTARTWITH(bwGetUrl(mWebView)+1, page_id+1))
 	{
 		bwExecuteJavaScript(mWebView, "update()"); // bw soft update
 	}
 	else if(update)
 	{
 		CHAR* page_content = new CHAR[512];
-		strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/ui.js\"></script><script>window.update=function(){window.APMD(GetDocText1('");
+		strcpy(page_content, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/ui.js\"></script><script>window.update=function(){window.APMD(GetDocText('");
 
-		auto nxt_st=page_content+136;
+		auto nxt_st=page_content+135;
 		strncpy(nxt_st, page_id+st, ed-st);
 		nxt_st+=ed-st;
 
@@ -330,6 +410,6 @@ void APresenterBWidget::updateArticle(LONG_PTR bid, int articleType, bool softUp
 		lstrcpy(last_updated, last_actived);
 	}
 	delete[] page_id;
-	//bwLoadStrData(mWebView, url_, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/main.js\"></script><body><script>window.APMD(GetDocText1(0));</script></body>", 0);
+	//bwLoadStrData(mWebView, url_, "<!doctype html><meta charset=\"utf-8\"><script src=\"http://mdbr/main.js\"></script><body><script>window.APMD(GetDocText(0));</script></body>", 0);
 }
 

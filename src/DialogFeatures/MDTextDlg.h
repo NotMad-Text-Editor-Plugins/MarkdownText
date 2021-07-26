@@ -47,6 +47,9 @@ struct ReadExtContext{
 	const char* defVal;
 };
 
+__declspec(selectany) int hToolsStartId = 0;
+__declspec(selectany) int hToolsSz = 2;
+
 class MarkDownTextDlg : public DockingDlgInterface, public APresentee
 {
 public :
@@ -61,6 +64,8 @@ public :
 	// Refresh the webview. |source| 0=switch docs;1=edit texts;2=switch engines;
 	void RefreshWebview(int source=0);
 
+	void refreshDarkMode();
+
 	void refreshDlg(bool updateList, bool fromEditor);
 
 	HWND getHWND() {
@@ -74,7 +79,7 @@ public :
 	void readParameters();
 	void  readExtensions(int channel, string * ret);
 	void destroyWebViews(bool exit=false);
-	void switchEngineByIndex(int id);
+	void switchWebViewByIndex(int id);
 
 	// empty=use internal md renderer;
 	char MDRoutine[MAX_PATH_HALF]={0};
@@ -103,8 +108,6 @@ protected :
 	bool bAutoSwitchEngines=0;
 
 	void releaseEnginesMenu();
-
-	bool checkFileExt(int type);
 
 	std::vector<FuncItem> ZOOMER;
 	std::vector<FuncItem> EngineSwicther;
@@ -193,6 +196,17 @@ public :
 
 	int defaultRenderer;
 	int lastPickedRenderer;
+	HMENU hToolsMenu=0;
+
+	void TurnHtmlToMarkdown(int from);
+	void create();
+	void LanguageToMarkdown();
+	void RunToolsCommand(int id);	
+	void NewDoc(TCHAR* name) override;
+	void NewDoc(CHAR* name) override;
+	int getDarkBG() override;
+
+	bool checkFileExt(int type);
 };
 
 #endif //LNHISTORY_DLG_H

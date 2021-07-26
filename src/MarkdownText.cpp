@@ -64,13 +64,37 @@ extern "C" __declspec(dllexport) const TCHAR * getName()
 // export functions
 extern "C" __declspec(dllexport) FuncItem * getFuncsArray(int *nbF)
 {
-	*nbF = 11;
+	*nbF = menuCount;
 	return funcItems;
 }
 
 __declspec(selectany)  toolbarIcons		g_TBMarkdown{0,0,0x666,0,IDI_ICON_MD,0,0,IDB_BITMAP1};
 
 bool autoRunChecking=false;
+
+extern HMENU GetPluginMenu();
+
+int EditorBG;
+void refreshDarkModeIfEditorBgChanged()
+{
+	int editorBg = SendMessage(nppData._nppHandle, NPPM_GETEDITORDEFAULTBACKGROUNDCOLOR, 0, 0);
+	if (EditorBG!=editorBg)
+	{
+		_MDText.refreshDarkMode();
+		EditorBG = editorBg;
+	}
+}
+
+bool deferredUpdateRequested = false;
+
+void changeLanguageToMarkdown()
+{
+	if (_MDText.checkFileExt(0))
+	{
+		_MDText.LanguageToMarkdown();
+	}
+	deferredUpdateRequested = false;
+}
 
 // export the listener
 extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
@@ -89,7 +113,10 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 				legacy = version<0x666;
 
 				g_TBMarkdown.HRO = HRO;
-				if(legacy)g_TBMarkdown.hToolbarBmp = (HBITMAP)::LoadImage(HRO, MAKEINTRESOURCE(IDB_BITMAP1), IMAGE_BITMAP, 0,0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
+				if(legacy) {
+					g_TBMarkdown.hToolbarBmp = (HBITMAP)::LoadImage(HRO, MAKEINTRESOURCE(IDB_BITMAP1), IMAGE_BITMAP, 0,0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
+					g_TBMarkdown.hToolbarIcon = ::LoadIcon(HRO, MAKEINTRESOURCE(IDI_ICON_MD));
+				}
 				::SendMessage(nppData._nppHandle, NPPM_ADDTOOLBARICON, (WPARAM)funcItems[menuOption]._cmdID, (LPARAM)&g_TBMarkdown);
 
 				if(!_MDText.localeSet) {
@@ -98,9 +125,12 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 					ZH_CN=mStr[0]==L'文';
 					if(!ZH_CN)
 					{
-						_MDText.currentLanguageFile = TEXT("");
+						_MDText.currentLanguageFile = TEXT("english.ini");
 					}
 				}
+				
+				::SendMessage(nppData._nppHandle, NPPM_ALLOCATECMDID, (WPARAM)2, (LPARAM)&hToolsStartId);
+				
 				_MDText.setLanguageName(_MDText.currentLanguageFile, true);
 			}
 		break;
@@ -168,6 +198,16 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 			}
 		}
 		break;
+		// 切换黑暗模式
+		case NPPN_DARKCONF_CHANGED:
+		{
+			//LogIs(2, "NPPN_DARKCONF_CHANGED");
+			if(NPPRunning)
+			{
+				_MDText.refreshDarkMode();
+			}
+		}
+		break;
 		case SCN_MODIFIED:
 		{
 			if(NPPRunning && notifyCode->length>0 
@@ -181,6 +221,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 		break;
 		case SCN_PAINTED:
 		{
+			//static int paint_cc = 0; LogIs("paint_cc %d ", paint_cc++);
 			if(NPPRunning)
 			{
 				LONG_PTR bid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
@@ -188,15 +229,21 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 				{
 					_MDText.syncWebToline();
 				}
+				if(deferedUpdateRequested) changeLanguageToMarkdown(); 
 			}
 		}
 		break;
 		case SCN_UPDATEUI:
 		{
+			//static int paint_cc = 0; LogIs("SCN_UPDATEUI %d %d ", paint_cc++, notifyCode->updated);
 			if (autoRunChecking)
 			{
 				_MDText.checkAutoRun();
 				autoRunChecking = false;
+			}
+			if (legacy && 9==notifyCode->updated) // SC_UPDATE_CONTENT
+			{
+				refreshDarkModeIfEditorBgChanged();
 			}
 		}
 		break;
@@ -226,11 +273,11 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 			} else {
 				pszNewPath = (TCHAR*)::SendMessage(nppData._nppHandle,NPPM_GETRAWFULLCURRENTPATH, 0, 0);
 			}
-
 			if(lstrcmp(last_actived, pszNewPath)==0) { 
 				return;
 			} else {
 				lstrcpy(last_actived, pszNewPath);
+				deferredUpdateRequested = true; // todo make optional.
 			}
 		}
 		else
@@ -243,7 +290,8 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 			LONG_PTR bid = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
 			doUpdate = _MDText.lastBid==bid;
 		}
-		if(doUpdate) {
+		if(doUpdate) 
+		{
 			_MDText.refreshDlg(false, NeedUpdate==2);
 		}
 		// _MDText.RendererTypeIdx==1&&
@@ -259,10 +307,17 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 	}
 }
 
-// 
+// see relayNppMessages 
 extern "C" __declspec(dllexport) LRESULT messageProc(UINT Message, WPARAM wParam, LPARAM lParam)
 {
-	// only support WM_SIZE and  WM_MOVE
+	if (Message==WM_COMMAND) 
+	{
+		if (wParam==hToolsStartId)
+		{
+			LogIs("hToolsStartId!!!");
+			_MDText.RunToolsCommand(hToolsStartId);
+		}
+	}
 	return TRUE;
 }
 

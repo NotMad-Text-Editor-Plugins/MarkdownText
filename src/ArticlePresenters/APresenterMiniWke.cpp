@@ -114,8 +114,7 @@ jsValue WKE_CALL_TYPE GetDocText(jsExecState es, void* param)
 		jsValue arg0 = jsArg(es, 0);
 		if (jsIsString(arg0))
 		{
-			std::string path;
-			path = jsToTempString(es, arg0);
+			std::string path = jsToTempString(es, arg0);
 			LONG_PTR bid=0;
 			STR2LONGPTRA((CHAR*)path.data(), bid);
 			size_t len;
@@ -124,6 +123,27 @@ jsValue WKE_CALL_TYPE GetDocText(jsExecState es, void* param)
 		}
 	}
 	return jsString(es, "# Hello World!");
+}
+
+jsValue WKE_CALL_TYPE NewDoc(jsExecState es, void* param)
+{
+	if (1 == jsArgCount(es))
+	{
+		jsValue arg0 = jsArg(es, 0);
+		if (jsIsString(arg0))
+		{
+			std::string text = jsToTempString(es, arg0);
+			presentee->NewDoc((char*)text.c_str());
+			return 0;
+		}
+	}
+	return jsString(es, "# Hello World!");
+}
+
+jsValue WKE_CALL_TYPE getDarkBG(jsExecState es, void* param)
+{
+	//LogIs(3, L"position=%s", 0);
+	return jsInt(presentee->getDarkBG());
 }
 
 jsValue WKE_CALL_TYPE ScintillaScroll1(jsExecState es, void* param)
@@ -180,7 +200,9 @@ APresenterMiniWke::APresenterMiniWke(TCHAR* WKPath, int & error_code, HWND & hBr
 			wkeOnLoadUrlEnd(mWebView, onLoadUrlEnd, this);
 			wkeSetDebugConfig(mWebView, "decodeUrlRequest", nullptr);
 			wkeJsBindFunction("GetDocText", &GetDocText, nullptr, 1);
+			wkeJsBindFunction("NewDoc", &NewDoc, nullptr, 1);
 			wkeJsBindFunction("Scinllo", &ScintillaScroll1, nullptr, 1);
+			wkeJsBindFunction("getDarkBG", &getDarkBG, nullptr, 0);
 			error_code = 0;
 		} else {
 			error_code = 101;
@@ -192,39 +214,47 @@ APresenterMiniWke::APresenterMiniWke(TCHAR* WKPath, int & error_code, HWND & hBr
 
 void APresenterMiniWke::Refresh() 
 {
-	wkeReload(mWebView);
+	//if (mWebView) wkeReload(mWebView);
+	EvaluateJavascript("location.reload()");
 }
 
 
 void APresenterMiniWke::GoBack() {
+	if (mWebView)
 	wkeGoBack(mWebView);
 }
 
 void APresenterMiniWke::GoForward() {
+	if (mWebView)
 	wkeGoForward(mWebView);
 }
 
 void APresenterMiniWke::DestroyWebView(bool exit) {
+	if (mWebView)
 	wkeDestroyWebView(mWebView);
 }
 
 void APresenterMiniWke::EvaluateJavascript(char * JS) {
+	if (mWebView)
 	wkeRunJS(mWebView, JS);
 }
 
 void APresenterMiniWke::ResetZoom() {
+	if (mWebView)
 	wkeSetZoomFactor(mWebView, 1);
 }
 
 void APresenterMiniWke::ZoomOut() {
 	float zoom=wkeZoomFactor(mWebView)-mbzd;
 	if(zoom<0.25) zoom=0.25;
+	if (mWebView)
 	wkeSetZoomFactor(mWebView, zoom);
 }
 
 void APresenterMiniWke::ZoomIn() {
 	float zoom=wkeZoomFactor(mWebView)+mbzd;
 	if(zoom>5) zoom=5;
+	if (mWebView)
 	wkeSetZoomFactor(mWebView, zoom);
 }
 
@@ -232,10 +262,12 @@ void APresenterMiniWke::ShowDevTools(TCHAR *res_path) {
 	TCHAR tmp[MAX_PATH]{};
 	lstrcpy(tmp, MBPath);
 	::PathAppend(tmp, TEXT("front_end\\inspector.html"));
+	if (mWebView)
 	wkeShowDevtools(mWebView, tmp, 0, 0);
 }
 
 void APresenterMiniWke::ShowWindow() {
+	if (mWebView)
 	wkeShowWindow(mWebView, TRUE);
 }
 
