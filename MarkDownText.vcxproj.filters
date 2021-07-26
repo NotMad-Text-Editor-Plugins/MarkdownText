@@ -61,6 +61,12 @@
     <ClCompile Include="..\..\PowerEditor\src\WinControls\InsituDebug.cpp">
       <Filter>Source\PluginFeatures</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\PowerEditor\src\NppDarkMode.cpp">
+      <Filter>Source\DarkMode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\PowerEditor\src\DarkMode\DarkMode.cpp">
+      <Filter>Source\DarkMode</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\ArticlePresenters\APresenterMiniblink.h">
@@ -146,6 +152,18 @@
     </ClInclude>
     <ClInclude Include="..\..\PowerEditor\src\WinControls\InsituDebug.h">
       <Filter>Source\PluginFeatures</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\PowerEditor\src\NppDarkMode.h">
+      <Filter>Source\DarkMode</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\PowerEditor\src\DarkMode\DarkMode.h">
+      <Filter>Source\DarkMode</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\PowerEditor\src\DarkMode\IatHook.h">
+      <Filter>Source\DarkMode</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\PowerEditor\src\DarkMode\UAHMenuBar.h">
+      <Filter>Source\DarkMode</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -297,6 +315,9 @@
     </Filter>
     <Filter Include="Source\ArticlePresenters\Miniblink">
       <UniqueIdentifier>{944ef1d0-f130-461c-89a3-ef0873037e3b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\DarkMode">
+      <UniqueIdentifier>{8dacdecd-e9f2-484e-ba80-ff421b699ed9}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
