@@ -20,10 +20,12 @@ if not isdir(MDEngRepo):
 
 mjs="main.js"
 ui="ui.js"
+darmode="darkmode.js"
 
 mjs_file = join(MDEngRepo, mjs)
 ui_file =  join(MDEngRepo, ui)
-if isfile(mjs_file) and isfile(ui_file):
+darmode_file =  join(MDEngRepo, darmode)
+if isfile(mjs_file) and isfile(ui_file) and isfile(darmode_file):
 	package = ZipFile(join(root, "MDRes.zip"),
 	 "w"
 	 #, ZIP_LZMA
@@ -32,6 +34,7 @@ if isfile(mjs_file) and isfile(ui_file):
 	f = open('filelist', 'r')
 	package.write(ui_file , ui )
 	package.write(mjs_file, mjs)
+	package.write(darmode_file, darmode)
 	for pathname in f:
 		pathname = pathname.strip()
 		filename = pathname[len(root)+1:]
@@ -41,7 +44,7 @@ if isfile(mjs_file) and isfile(ui_file):
 				print(filename)
 	package.close()
 else:
-	print("\n\nError!!!\n\nRequires main.js and ui.js from the MarkdownEngines repository.")
+	print("\n\nError!!!\n\nRequire main.js and ui.js from the MarkdownEngines repository.")
 	print("\nPlease download : https://github.com/KnIfER/Extesions/tree/master/MarkdownEngines\n")
 	os.system("pause")
 
