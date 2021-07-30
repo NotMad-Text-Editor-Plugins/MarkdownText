@@ -415,11 +415,11 @@ std::string* MarkDownTextDlg::setLibPathAt(std::vector<std::string*> & paths, in
 void MarkDownTextDlg::refreshDarkMode() 
 {
 	//redraw(true);
-	NppDarkMode::refreshDarkMode(_MDText.getHSelf());
+	NppDarkMode::refreshDarkMode(getHSelf());
 
-	if (_MDText.isCreated())
+	if (isCreated())
 	{
-		::SendMessage(_MDText.getHSelf(), WM_SIZE, 0, 0);
+		::SendMessage(getHSelf(), WM_SIZE, 0, 0);
 		NppDarkMode::setDarkScrollBar(hBrowser);
 	}
 
@@ -1749,10 +1749,11 @@ void MarkDownTextDlg::LanguageToMarkdown()
 						if (mii.fType&MFT_RADIOCHECK)
 						{ // useless when switching file 
 							// | 当切换文件时立即调用是无效的，因为菜单尚未更新。所以要deferred。
-							break;
+							//break;
 						}
 						//break;
 					}
+					//LogIs(2, L"LanguageToMarkdown %d %s", isDark, mii.fType&MFT_RADIOCHECK, tmp);
 				} else if(opened) {
 					break;
 				}

@@ -67,6 +67,9 @@
     <ClCompile Include="..\..\PowerEditor\src\DarkMode\DarkMode.cpp">
       <Filter>Source\DarkMode</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\PowerEditor\src\WinControls\Window.cpp">
+      <Filter>Source\DialogFeatures</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\ArticlePresenters\APresenterMiniblink.h">

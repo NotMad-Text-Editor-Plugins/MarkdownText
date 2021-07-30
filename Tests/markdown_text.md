@@ -3,8 +3,10 @@
 [asd](123.png)
 
 http://bilibili.com
-   
+
 # 一级目录
+asd
+adasd
 
 ## SVG 图标
 
@@ -30,6 +32,12 @@ $\bold{Bold\ test}$
 
 $\textit{Italic\ test}$
 
+- sdas
+- asd
+
+
+1. asd
+2. asdasd
 
 显示直立文本： $\textup{文本}$
 
@@ -120,8 +128,8 @@ Sum(x,(x,0,n)).doit()
 
 ```
 
-### 求导数：$\sin({x})'$  
-aa = diff(sin(n),n)  
+### 求导数：$\sin({x})'$
+aa = diff(sin(n),n)
 返回sin(n)关于n的一阶导数。
 
 ### 解微分方程：
@@ -178,7 +186,7 @@ C --> D
 
 ~~删除文本~~
 
-> 引用文本  
+> 引用文本
 > \
 > asd
 

@@ -212,6 +212,7 @@
     <ClCompile Include="..\..\PowerEditor\src\WinControls\InsituDebug.cpp" />
     <ClCompile Include="..\..\PowerEditor\src\WinControls\StaticDialog\StaticDialog.cpp" />
     <ClCompile Include="..\..\PowerEditor\src\WinControls\ToolBar\ToolBar.cpp" />
+    <ClCompile Include="..\..\PowerEditor\src\WinControls\Window.cpp" />
     <ClCompile Include="..\CPPCommon\common_patch.cpp" />
     <ClCompile Include="..\CPPCommon\ProfileStd.cpp" />
     <ClCompile Include="..\CPPCommon\ToolbarPanel.cpp" />

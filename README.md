@@ -1,5 +1,4 @@
 #  What's MarkDown Text? 
-
 1. A new versatile markdown previewer based on [Miniblink](https://github.com/weolar/miniblink49), [Libcef](https://github.com/chromiumembedded/cef) and [Webview2](https://github.com/MicrosoftEdge/WebView2Samples) . The shipped renderers are based on **Remark.js**, **Marked.js** and **AsciiDoctor**. 
 2. A **HTML** renderer and an offline **ShaderToy** previewer.
 3. A part of the Textrument Editor Project. It needs to be compiled against [Textrument](https://github.com/KnIfER/Textrument) and is compatible with the "legacy editor".
@@ -28,3 +27,5 @@
 \
 \
 （本插件设置界面及部分警告、指示对话框基于Duilib制作。）
+
+最低支持Win7，不支持XP。

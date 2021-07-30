@@ -132,6 +132,8 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 				::SendMessage(nppData._nppHandle, NPPM_ALLOCATECMDID, (WPARAM)2, (LPARAM)&hToolsStartId);
 				
 				_MDText.setLanguageName(_MDText.currentLanguageFile, true);
+			
+				NppDarkMode::pluginReadDarkMode();
 			}
 		break;
 		case NPPN_SHUTDOWN:
@@ -229,7 +231,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 				{
 					_MDText.syncWebToline();
 				}
-				if(deferedUpdateRequested) changeLanguageToMarkdown(); 
+				if(deferredUpdateRequested) changeLanguageToMarkdown(); 
 			}
 		}
 		break;
